@@ -178,7 +178,7 @@ void trajectory (){
       temp2 = delQ[q-4];
       jointcommands.position[q] = temp1+temp2;
     }
-std::cout << "FUCK" << std::endl; 
+
     // publish commands
     pub_joint_commands_.publish(jointcommands);
 
@@ -187,7 +187,8 @@ std::cout << "FUCK" << std::endl;
 
     // calculate current poses
     currentPose = fk(current);
-
+  printf("Fuck\n");
+  fflush(stdout);
   }
 }
 
@@ -278,7 +279,7 @@ int main(int argc, char** argv)
     ros::SubscribeOptions::create<sensor_msgs::JointState>(
     "/atlas/joint_states", 1, SetJointStates,
     ros::VoidPtr(), rosnode->getCallbackQueue());
-trajectory();
+
 
   // Because TCP causes bursty communication with high jitter,
   // declare a preference on UDP connections for receiving
@@ -297,7 +298,7 @@ trajectory();
   pub_joint_commands_ =
     rosnode->advertise<osrf_msgs::JointCommands>(
     "/atlas/joint_commands", 1, true);
-
+trajectory();
  // ros::spin();
 
   return 0;
