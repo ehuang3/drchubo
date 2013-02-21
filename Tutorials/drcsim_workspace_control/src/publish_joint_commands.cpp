@@ -22,7 +22,7 @@ public:
 
   MatrixXf jacobian(){ 
 
-    trans.resize(24,4);
+    //trans.resize(24,4);
 
     MatrixXf temp(4,4);
     temp << MatrixXf::Identity(4,4);
@@ -55,6 +55,12 @@ void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js)
 }
 
 void trans(float q[]){
+
+  lleg.trans.resize(24,4);
+  rleg.trans.resize(24,4);
+  larm.trans.resize(24,4);
+  rarm.trans.resize(24,4);
+
   // Define homogeneous transformation matrices for the left leg  
   lleg.trans << -sin(q[4]), -cos(q[4]), 0, 0, cos(q[4]) ,  -sin(q[4]), 0, 0.089, 0,  0, 1, 0, 0,0, 0, 1,
     cos(q[5]), -sin(q[5]),0, 0,0, 0, -1, 0, sin(q[5]), cos(q[5]), 0, 0, 0, 0, 0, 1,
@@ -62,7 +68,7 @@ void trans(float q[]){
     cos(q[7]), -sin(q[7]), 0, 0.374, sin(q[7]),  cos(q[7]), 0,   -0.05, 0,0, 1,0,0,0, 0, 1,
     cos(q[8]), -sin(q[8]), 0, 0.422, sin(q[8]),  cos(q[8]), 0, 0,0, 0, 1, 0,0, 0, 0, 1,
     cos(q[9]), -sin(q[9]),0, 0,0, 0, -1, 0,sin(q[9]), cos(q[9]),0, 0,0, 0,  0, 1;
- std::cout << "FUCK" << std::endl;
+
   // Define homogeneous transformation matrices for the right leg  
   rleg.trans << -sin(q[10]), -cos(q[10]), 0, 0, cos(q[10]) ,  -sin(q[10]), 0, -0.089, 0,  0, 1, 0, 0,0, 0, 1,
     cos(q[11]), -sin(q[11]),0, 0,0, 0, -1, 0, sin(q[11]), cos(q[11]), 0, 0, 0, 0, 0, 1,
@@ -110,10 +116,10 @@ VectorXf fk(float current[]){
     larmFk = llegFk*larm.trans.block<4,4>(4*i,0);
     rarmFk = llegFk*rarm.trans.block<4,4>(4*i,0);
   }
-  currentPose.block<3,1>(0,0) = llegFk.block<3,1>(3,0);
-  currentPose.block<3,1>(6,0) = rlegFk.block<3,1>(3,0);
-  currentPose.block<3,1>(12,0) = larmFk.block<3,1>(3,0);
-  currentPose.block<3,1>(18,0) = rarmFk.block<3,1>(3,0);
+  currentPose.segment<3>(0) = llegFk.block<3,1>(0,3);
+  currentPose.segment<3>(6) = rlegFk.block<3,1>(0,3);
+  currentPose.segment<3>(12) = larmFk.block<3,1>(0,3);
+  currentPose.segment<3>(18) = rarmFk.block<3,1>(0,3);
 
 return currentPose;
 }
@@ -140,12 +146,13 @@ void trajectory (){
   // Define the goal pose
   VectorXf goalPose(24);
   goalPose = currentPose + goal;
+
    while (abs(goalPose.norm()-currentPose.norm()) > abs(step.norm())){//this is wrong, do this better
     // calculate jacobian for each limb
-     VectorXf llegJ(6);
-     VectorXf rlegJ(6);
-     VectorXf larmJ(6);
-     VectorXf rarmJ(6);
+     MatrixXf llegJ(6,6);
+     MatrixXf rlegJ(6,6);
+     MatrixXf larmJ(6,6);
+     MatrixXf rarmJ(6,6);
 
     llegJ = lleg.jacobian();
     rlegJ = rleg.jacobian();
@@ -171,6 +178,7 @@ void trajectory (){
       temp2 = delQ[q-4];
       jointcommands.position[q] = temp1+temp2;
     }
+//std::cout << "FUCK" << std::endl; 
     // publish commands
     pub_joint_commands_.publish(jointcommands);
 
@@ -178,7 +186,8 @@ void trajectory (){
     ros::spinOnce();
 
     // calculate current poses
-    currentPose - fk(current);
+    currentPose = fk(current);
+
   }
 }
 
