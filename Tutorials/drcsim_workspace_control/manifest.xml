@@ -1,0 +1,17 @@
+<package>
+  <description brief="drcsim_workspace_control">
+
+     drcsim_workspace_control
+
+  </description>
+  <author>Kyle</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/drcsim_workspace_control</url>
+  <depend package="roscpp"/>
+  <depend package="trajectory_msgs"/>
+  <depend package="osrf_msgs"/>
+
+</package>
+
+
