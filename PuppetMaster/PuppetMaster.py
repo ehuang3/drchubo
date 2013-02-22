@@ -52,8 +52,8 @@ while True:
 	#Can drop z component, since we can't assign z movements.
 	p2 = p2[0]
 	print (round(p2,1)) #Drop some sig figs
-	f.write('  - [1.0, \"')
-	f.write('0   0  -1.7 1.8 -0.10 0       0   0   -1.7 1.8 -0.1 0     -1.6 -1.6 0 0 0 0      1.6 1.6 0 0 0 ')
+	f.write('  - [0.05, \"')
+	f.write('0   0  0 0 0 0       0   0   0 0 0 0     0 0 0 0 0 0      0 0 0 0 0 ')
 	f.write(str(round(p2,1)) + '        0 0 0 0')
 	f.write('   \" ]\n')
 f.close()
