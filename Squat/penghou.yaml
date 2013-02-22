@@ -1,3 +1,16 @@
+# Read leg length from atlas.urdf file:
+#	upper_leg = 0.374
+#	lower_leg = 0.422
+# 	Limit radians value for
+#	    knee: 		kny = {0, 2.45}
+#	    ankle:  	uay = {-0.698, 0.698}	    
+#		lower hip:  lhy = {-1.745, 0.524}
+# Calculation:
+#	Assume the back and ankle align. so we get the relationship
+#		cos(uay)*lower_leg = cos(lhy)*upper_leg
+#		kny = uay + lhy
+#	choose a random value for any joint, we can calculate other values.
+#
 # you probably want to get a really wide window to edit this file. sorry 80 char windows.
 # the first column is the number of seconds to take to reach this point, relative to the previous point
 # spaces separate the following sub-vectors:
