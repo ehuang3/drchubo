@@ -10,7 +10,7 @@ $ mkdir ~/ros
 $ echo "export ROS_PACKAGE_PATH=~/ros:\$ROS_PACKAGE_PATH" >> ~/.bashrc
 $ source ~/.bashrc
 $ cd ~/ros
-
+u
 Now clone the git repo into this folder
 
 ~/ros$ git clone https://github.com/golems/vrc-golem.git
@@ -30,7 +30,7 @@ $ roslaunch atlas_utils atlas.launch
 In a seperate terminal, run:
 
 $ cd ~/ros
-~/ros$ roscd vrc-golem/Tutorials/tutorial_atlas_control
+~/ros$ cd vrc-golem/Tutorials/tutorial_atlas_control
 ~/ros/vrc-golem/Tutorials/tutorial_atlas_control$ python traj_yaml.py Traj_data2.yaml touchdown.
 
 To try it again, go the Gazebo "Edit" menu and click on "Reset Model Poses"

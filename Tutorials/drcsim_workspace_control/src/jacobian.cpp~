@@ -11,6 +11,7 @@ public:
   MatrixXf trans;// Contains all 6 4x4 matrices
   MatrixXf fk;
   MatrixXf J;
+  MatrixXf pose;
 
   MatrixXf jacobian(VectorXf q){ 
 
@@ -37,12 +38,7 @@ public:
   }
 } lleg, rleg, larm,rarm;
 
-void trans(const sensor_msgs::JointState::ConstPtr &_js){
-  float q(28);
-  for (int z = 0; z<28; z++){
-    q[z] = _js->position[z];
-  }
-  q = JointStateSo.positon;
+void trans(float q[]){
 
   // Define homogeneous transformation matrices for the left leg  
   lleg.trans << -sin(q(4)), -cos(q(4)), 0, 0, cos(q(4)) ,  -sin(q(4)), 0, 0.089, 0,  0, 1, 0, 0,0, 0, 1,

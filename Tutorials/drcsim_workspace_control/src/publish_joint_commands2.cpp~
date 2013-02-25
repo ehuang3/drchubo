@@ -12,21 +12,53 @@ using namespace Eigen;
 ros::Publisher pub_joint_commands_;
 osrf_msgs::JointCommands jointcommands;
 
+// TODO Add function to get current pose
+
 class limb {
 public:
   MatrixXf trans;// Contains all 6 4x4 matrices
   MatrixXf fk;
   MatrixXf J;
   MatrixXf pose;
-  VectorXf goal;
-  VectorXf goalPose;
-  VectorXf step;
+  Vectorxf goal(6);
+  VectorXf goalPose(6);
 
-  MatrixXf jacobian(float q[]);
+  MatrixXf jacobian(q[]){ 
 
+    MatrixXf temp(4,4);
+    temp << MatrixXf::Identity(4,4);
+    J.resize(6,6);
+
+    trans(q);
+
+    //fk.resize(4,4);
+    fk << MatrixXf::Identity(4,4);
+    for (int i=0;i<6;i++){
+      fk = fk*trans.block<4,4>(4*i,0);
+      for (int j=i;j<6;j++){
+         temp = temp*trans.block<4,4>(4*j,0);
+      }
+      temp = temp.inverse();
+      J.block<3,1>(0,i) << temp.block<3,1>(0,3).cross(fk.block<3,1>(0,2));
+      J.block<3,1>(3,i) << fk.block<3,1>(0,2);
+      temp << MatrixXf::Identity(4,4);
+    }
+    return J;
+
+  /*VectorXf fk(float q[]){
+
+    fk << MatrixXf::Identity(4,4);
+   
+    trans(q);
+
+    for (int i=0;i<6;i++){
+      fk = fk*trans.block<4,4>(4*i,0);
+    }
+  return fk
+  }*/
 } lleg, rleg, larm,rarm;
 
-void transforms(float q[]){
+void trans(float q[]){
 
   lleg.trans.resize(24,4);
   rleg.trans.resize(24,4);
@@ -68,113 +100,73 @@ void transforms(float q[]){
 
 }
 
-  MatrixXf limb::jacobian(float q[]){ 
-
-    MatrixXf temp(4,4);
-    temp << MatrixXf::Identity(4,4);
-    J.resize(6,6);
-
-    transforms(q);
-    //fk.resize(4,4);
-
-    fk.resize(4,4);
-    fk << MatrixXf::Identity(4,4);
-
-    for (int i=0;i<6;i++){
-      fk = fk*trans.block<4,4>(4*i,0);
-      for (int j=i;j<6;j++){
-         temp = temp*trans.block<4,4>(4*j,0);
-      }
-      temp = temp.inverse();
-
-      J.block<3,1>(0,i) << temp.block<3,1>(0,3).cross(fk.block<3,1>(0,2));
-      J.block<3,1>(3,i) << fk.block<3,1>(0,2);
-      temp << MatrixXf::Identity(4,4);
-    }
-    return J;
-  }
-
-void initJointStates(const sensor_msgs::JointState::ConstPtr &_js)
+void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js)
 {
   float current[28];
   static ros::Time startTime = ros::Time::now();
   // for testing round trip time
   jointcommands.header.stamp = _js->header.stamp;
-  for (int z = 0; z<28; z++)
+  for (int z = 0; z<28; z++){
     current[z] = _js->position[z];
 
   // Define the HTMs for the current joint angles
-  transforms(current);
+  trans(current);
 
   // Define goal poses for each joint
-  lleg.goalPose.resize(6);
-  rleg.goalPose.resize(6);
-  larm.goalPose.resize(6);
-  rarm.goalPose.resize(6);
-
-  lleg.jacobian(current);
-  rleg.jacobian(current);
-  larm.jacobian(current);
-  rarm.jacobian(current);
 
   lleg.goalPose.segment<3>(0) = lleg.fk.block<3,1>(0,3) + lleg.goal.segment<3>(0);
-  lleg.goalPose.segment<3>(3) = lleg.fk.block<3,1>(0,2) + lleg.goal.segment<3>(3);
+  lleg.goalPose.segment<3><3> = lleg.fk.block<3,1>(0,2) + lleg.goal.segment<3>(3);
   rleg.goalPose.segment<3>(0) = rleg.fk.block<3,1>(0,3) + rleg.goal.segment<3>(0);
-  rleg.goalPose.segment<3>(3) = rleg.fk.block<3,1>(0,2) + rleg.goal.segment<3>(3);
+  rleg.goalPose.segment<3><3> = reg.fk.block<3,1>(0,2) + rleg.goal.segment<3>(3);
   larm.goalPose.segment<3>(0) = larm.fk.block<3,1>(0,3) + larm.goal.segment<3>(0);
-  larm.goalPose.segment<3>(3) = larm.fk.block<3,1>(0,2) + larm.goal.segment<3>(3);
+  larm.goalPose.segment<3><3> = larm.fk.block<3,1>(0,2) + larm.goal.segment<3>(3);
   rarm.goalPose.segment<3>(0) = rarm.fk.block<3,1>(0,3) + rarm.goal.segment<3>(0);
-  rarm.goalPose.segment<3>(3) = rarm.fk.block<3,1>(0,2) + rarm.goal.segment<3>(3);
-
+  rarm.goalPose.segment<3><3> = rarm.fk.block<3,1>(0,2) + rarm.goal.segment<3>(3);
 }
 
-void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js){
 
+void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js)
+{
   float current[28];
   static ros::Time startTime = ros::Time::now();
   // for testing round trip time
   jointcommands.header.stamp = _js->header.stamp;
-
-  for (int z = 0; z<28; z++)
+  for (int z = 0; z<28; z++){
     current[z] = _js->position[z];
 
+  // Define the HTMs for the current joint angles
+  trans(current);
   // calculate jacobian for each limb
-
-  lleg.jacobian(current);
-  rleg.jacobian(current);
-  larm.jacobian(current);
-  rarm.jacobian(current);
+  lleg.jacobian();
+  rleg.jacobian();
+  larm.jacobian();
+  rarm.jacobian();
 
   // Define the current pose
   VectorXf currentPose(24);
-  currentPose.segment<3>(0) = lleg.fk.block<3,1>(0,3);
-  currentPose.segment<3>(3) = lleg.fk.block<3,1>(0,2);
-  currentPose.segment<3>(6) = rleg.fk.block<3,1>(0,3);
-  currentPose.segment<3>(9) = rleg.fk.block<3,1>(0,2);
-  currentPose.segment<3>(12) = larm.fk.block<3,1>(0,3);
-  currentPose.segment<3>(15) = larm.fk.block<3,1>(0,2);
-  currentPose.segment<3>(18) = rarm.fk.block<3,1>(0,3);
-  currentPose.segment<3>(21) = rarm.fk.block<3,1>(0,2);
+  currentPose.segment<3>(0) = lleg.fk.block<3,1><0,3>;
+  currentPose.segment<3>(3) = lleg.fk.block<3,1><0,2>;
+  currentPose.segment<3>(0) = rleg.fk.block<3,1><0,3>;
+  currentPose.segment<3>(3) = rleg.fk.block<3,1><0,2>;
+  currentPose.segment<3>(0) = larm.fk.block<3,1><0,3>;
+  currentPose.segment<3>(3) = larm.fk.block<3,1><0,2>;
+  currentPose.segment<3>(0) = rarm.fk.block<3,1><0,3>;
+  currentPose.segment<3>(3) = rarm.fk.block<3,1><0,2>;
+  
 
-  float a=lleg.goalPose.segment<3>(0).norm();
-  float b=currentPose.segment<3>(0).norm();
-  std::cout << "Step: " << lleg.step.norm() << "   " << a-b << std::endl;
-  ros::Duration(0.5).sleep();
-  if (lleg.step.norm()< a-b){//this is wrong, do this better
+   if (abs(lleg.goalPose.segment<3>(0).norm()-lleg.currentPose,segment<3>(0).norm()) > abs(step.norm())){//this is wrong, do this better
 
     // delQ = inverse jacobian multiplied by step.
-    VectorXf delQ(24); 
+    VectorXf delQ(24);
     MatrixXf temp(6,6);
-
     temp = lleg.J.inverse();
-
-    delQ.segment<6>(0) = temp*lleg.step;
+    delQ.segment<6>(0) = temp*step.segment<6>(0);
     temp =  rleg.J.inverse();
-    delQ.segment<6>(6) = temp*rleg.step;
+    delQ.segment<6>(6) = temp*step.segment<6>(6);
     temp = larm.J.inverse();
-    delQ.segment<6>(12) = temp*larm.step;
+    delQ.segment<6>(12) = temp*step.segment<6>(12);
     temp = rarm.J.inverse();
-    delQ.segment<6>(18) = temp*rarm.step;    
+    delQ.segment<6>(18) = temp*step.segment<6>(18);    
 
     // cmd = current + delQ
     float temp1, temp2;
@@ -184,9 +176,8 @@ void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js){
       if (temp2 != temp2)
           temp2 = 0.01745;
       jointcommands.position[q] = temp1+temp2;
-      printf("%6.3f ",jointcommands.position[q]);
+
     }
-    printf("\n\n");
     pub_joint_commands_.publish(jointcommands);
   }
 }
@@ -196,6 +187,8 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "pub_joint_command_test");
 
   ros::NodeHandle* rosnode = new ros::NodeHandle();
+
+  std::cout << "starting main function..." << std::endl;
 
   ros::Time last_ros_time_;
   bool wait = true;
@@ -280,7 +273,7 @@ int main(int argc, char** argv)
     ros::VoidPtr(), rosnode->getCallbackQueue());
 
 //~~~~~~~~~~~~~Create first subscriber ~~~~~~~~~~~~~~~~~~~~~
-  jointStatesINIT.transport_hints = ros::TransportHints().unreliable();
+  jointStatesSo.transport_hints = ros::TransportHints().unreliable();
 
   ros::Subscriber initJointStates = rosnode->subscribe(jointStatesINIT);
 
@@ -289,23 +282,17 @@ int main(int argc, char** argv)
     "/atlas/joint_commands", 1, true);
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Define 4 goals;  
-  lleg.goal.resize(6);
-  rleg.goal.resize(6);
-  larm.goal.resize(6);
-  rarm.goal.resize(6);
-  
+  VectorXf goal(24);
   lleg.goal << 0.05,0.10,0,0,0,0;
   rleg.goal << 0,0,0,0,0,0;
   larm.goal << 0,0,0,0,0,0;
   rarm.goal << 0,0,0,0,0,0;
-
-  while(lleg.goalPose.size() == 0)
-    ros::spinOnce();
+  // Divide into steps
+ 
+  ros::spinOnce();
 
 //~~~~~~~~~~~~~Destroy first subscriber ~~~~~~~~~~~~~~~~~~~~~
 
-//ros::Subscriber::shutdown();
-  initJointStates.shutdown();
 //~~~~~~~~~~~~~Trajectory Stuff~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   // ros topic subscribtions
@@ -331,28 +318,14 @@ int main(int argc, char** argv)
   pub_joint_commands_ =
     rosnode->advertise<osrf_msgs::JointCommands>(
     "/atlas/joint_commands", 1, true);
-  // Divide into steps
-  lleg.step.resize(6);
-  rleg.step.resize(6);
-  larm.step.resize(6);
-  rarm.step.resize(6);
 
-  lleg.step << (0.002/lleg.goal.block<3,1>(0,0).norm())*lleg.goal;
-  if (lleg.goal.block<3,1>(0,0).norm() == 0)
-    lleg.step << 0, 0, 0,0,0,0;
-  std::cout << lleg.step << std::endl;
-  rleg.step << (0.002/rleg.goal.block<3,1>(0,0).norm())*rleg.goal;
-  if (rleg.goal.block<3,1>(0,0).norm() == 0)
-    rleg.step << 0, 0, 0,0,0,0;
-  std::cout << rleg.goal.block<3,1>(0,0).norm()<< std::endl;
-  larm.step<< (0.002/larm.goal.block<3,1>(0,0).norm())*larm.goal;
-  if (larm.goal.block<3,1>(0,0).norm() == 0)
-    larm.step << 0, 0, 0,0,0,0;
-  std::cout << larm.step << std::endl;
-  rarm.step << (0.002/rarm.goal.block<3,1>(0,0).norm())*rarm.goal;
-  if (rarm.goal.block<3,1>(0,0).norm() == 0)
-    rarm.step << 0, 0, 0,0,0,0;
-  std::cout << rarm.step << std::endl;
+
+  VectorXf step(24);
+  step.block<6,1>(0,0) << (0.002/goal.block<3,1>(0,0).norm())*goal.block<6,1>(0,0);
+  step.block<6,1>(6,0) << (0.002/goal.block<3,1>(6,0).norm())*goal.block<6,1>(6,0);
+  step.block<6,1>(12,0) << (0.002/goal.block<3,1>(12,0).norm())*goal.block<6,1>(12,0);
+  step.block<6,1>(18,0) << (0.002/goal.block<3,1>(18,0).norm())*goal.block<6,1>(18,0);
+
 
   ros::spin();
 
