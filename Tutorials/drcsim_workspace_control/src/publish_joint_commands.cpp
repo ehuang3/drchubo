@@ -105,7 +105,7 @@ void initJointStates(const sensor_msgs::JointState::ConstPtr &_js)
     current[z] = _js->position[z];
   float init[28] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.507,0.3927,-0.7535,0,0,0,1.507,0.3927,-0.7535,0};
   for (int a =0;a<28;a++){
-    jointcommands.position[a] = init[a];
+    jointcommands.position[a] = init[a];TODO
   }
   pub_joint_commands_.publish(jointcommands);
 
@@ -165,7 +165,7 @@ void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js){
 
   float a=rarm.goalPose.segment<3>(0).norm();
   float b=currentPose.segment<18>(0).norm();
-  ros::Duration(0.25).sleep();
+  ros::Duration(0.5).sleep();
 
   if (rarm.step.norm() < std::abs(a-b)){//this is wrong, do this better
 
@@ -180,14 +180,16 @@ void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js){
     temp = larm.J.inverse();
     delQ.segment<6>(12) = temp*larm.step;
     temp = rarm.J.inverse();
-    delQ.segment<6>(18) = temp*rarm.step;    
-
+    delQ.segment<6>(18) = temp*rarm.step;
     for (int s=0; s<24;s++){
       while(delQ(s) > 3.1416)
         delQ(s) = delQ(s)-3.1416;
+      while(delQ(s) < -3.1416)
+        delQ(s) = delQ(s)+3.1416;
     }
-//std::cout << rarm.goalPose.transpose() << std::endl;
-//std::cout << currentPose.segment<6>(18).transpose() << std::endl;//delQ.segment<6>(18).transpose() << std::endl;
+std::cout << "J: " << rarm.J<< std::endl << std::endl;
+std::cout << "S: " << rarm.step <<std::endl << std::endl;
+std::cout << "Q: " << delQ.segment<6>(18).transpose() << std::endl <<std::endl;;
 //std::cout << currentPose.segment<6>(0).transpose() << std::endl;
     // cmd = current + delQ
     float temp1, temp2;
@@ -199,7 +201,7 @@ void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js){
       if (temp2 != temp2)
           temp2 = 0.01745;
       jointcommands.position[q] = current[q]+delQ[q-4];
-      printf("%6.3f ",jointcommands.position[q]);
+//      printf("%6.3f ",jointcommands.position[q]);
     }
     printf("\n\n");
     pub_joint_commands_.publish(jointcommands);
@@ -289,9 +291,7 @@ int main(int argc, char** argv)
     jointcommands.kp_velocity[i]  = 0;
   }
 
-  for (int j=0;j<28;j++)
-    jointcommands.kd_position[j]=jointcommands.kd_position[j]*1.5;
-
+  
   // ros topic subscribtions
   ros::SubscribeOptions jointStatesINIT =
     ros::SubscribeOptions::create<sensor_msgs::JointState>(
@@ -357,19 +357,19 @@ int main(int argc, char** argv)
   larm.step.resize(6);
   rarm.step.resize(6);
   printf("Generating steps\n");
-  lleg.step << (0.002/lleg.goal.block<3,1>(0,0).norm())*lleg.goal;
+  lleg.step << (0.00005/lleg.goal.block<3,1>(0,0).norm())*lleg.goal;
   if (lleg.goal.block<3,1>(0,0).norm() == 0)
     lleg.step << 0, 0, 0,0,0,0;
   //std::cout << lleg.step << std::endl;
-  rleg.step << (0.002/rleg.goal.block<3,1>(0,0).norm())*rleg.goal;
+  rleg.step << (0.00005/rleg.goal.block<3,1>(0,0).norm())*rleg.goal;
   if (rleg.goal.block<3,1>(0,0).norm() == 0)
     rleg.step << 0, 0, 0,0,0,0;
   //std::cout << rleg.goal.block<3,1>(0,0).norm()<< std::endl;
-  larm.step<< (0.002/larm.goal.block<3,1>(0,0).norm())*larm.goal;
+  larm.step<< (0.00005/larm.goal.block<3,1>(0,0).norm())*larm.goal;
   if (larm.goal.block<3,1>(0,0).norm() == 0)
     larm.step << 0, 0, 0,0,0,0;
   //std::cout << larm.step << std::endl;
-  rarm.step << (0.002/rarm.goal.block<3,1>(0,0).norm())*rarm.goal;
+  rarm.step << (0.00005/rarm.goal.block<3,1>(0,0).norm())*rarm.goal;
   if (rarm.goal.block<3,1>(0,0).norm() == 0)
     rarm.step << 0, 0, 0,0,0,0;
   //std::cout << rarm.step << std::endl;
