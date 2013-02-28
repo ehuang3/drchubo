@@ -105,7 +105,7 @@ void initJointStates(const sensor_msgs::JointState::ConstPtr &_js)
     current[z] = _js->position[z];
   float init[28] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.507,0.3927,-0.7535,0,0,0,1.507,0.3927,-0.7535,0};
   for (int a =0;a<28;a++){
-    jointcommands.position[a] = init[a];TODO
+    jointcommands.position[a] = init[a];
   }
   pub_joint_commands_.publish(jointcommands);
 
@@ -167,7 +167,7 @@ void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js){
   float b=currentPose.segment<18>(0).norm();
   ros::Duration(0.5).sleep();
 
-  if (rarm.step.norm() < std::abs(a-b)){//this is wrong, do this better
+  if (rarm.step.norm() < .005){//std::abs(a-b)){//this is wrong, do this better
 
     // delQ = inverse jacobian multiplied by step.
     VectorXf delQ(24); 
@@ -316,7 +316,7 @@ int main(int argc, char** argv)
   lleg.goal << 0.00,0.00,0,0,0,0;
   rleg.goal << 0,0,0,0,0,0;
   larm.goal << 0,0,0,0,0,0;
-  rarm.goal << 0.05,0.05,0.05,0,0,0;
+  rarm.goal << 0.04,0.010,0.015,0,0,0;
   printf("\nWaiting on initial pose\n");
   while(lleg.goalPose.size() == 0)
     ros::spinOnce();
@@ -357,19 +357,19 @@ int main(int argc, char** argv)
   larm.step.resize(6);
   rarm.step.resize(6);
   printf("Generating steps\n");
-  lleg.step << (0.00005/lleg.goal.block<3,1>(0,0).norm())*lleg.goal;
+  lleg.step << (0.0001/lleg.goal.block<3,1>(0,0).norm())*lleg.goal;
   if (lleg.goal.block<3,1>(0,0).norm() == 0)
     lleg.step << 0, 0, 0,0,0,0;
   //std::cout << lleg.step << std::endl;
-  rleg.step << (0.00005/rleg.goal.block<3,1>(0,0).norm())*rleg.goal;
+  rleg.step << (0.0001/rleg.goal.block<3,1>(0,0).norm())*rleg.goal;
   if (rleg.goal.block<3,1>(0,0).norm() == 0)
     rleg.step << 0, 0, 0,0,0,0;
   //std::cout << rleg.goal.block<3,1>(0,0).norm()<< std::endl;
-  larm.step<< (0.00005/larm.goal.block<3,1>(0,0).norm())*larm.goal;
+  larm.step<< (0.0001/larm.goal.block<3,1>(0,0).norm())*larm.goal;
   if (larm.goal.block<3,1>(0,0).norm() == 0)
     larm.step << 0, 0, 0,0,0,0;
   //std::cout << larm.step << std::endl;
-  rarm.step << (0.00005/rarm.goal.block<3,1>(0,0).norm())*rarm.goal;
+  rarm.step << (0.0001/rarm.goal.block<3,1>(0,0).norm())*rarm.goal;
   if (rarm.goal.block<3,1>(0,0).norm() == 0)
     rarm.step << 0, 0, 0,0,0,0;
   //std::cout << rarm.step << std::endl;
