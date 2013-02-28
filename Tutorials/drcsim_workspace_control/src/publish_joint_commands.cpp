@@ -163,6 +163,26 @@ void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js){
   currentPose.segment<3>(18) = rarm.fk.block<3,1>(0,3);
   currentPose.segment<3>(21) = rarm.fk.block<3,1>(0,2);
 
+//~~~~~~~~~~~Find distance to goal
+lleg.goal.block<3,1>(0,0)=lleg.goalPose.segment<3>(0) - currentPose.segment<3>(0);
+rleg.goal.block<3,1>(0,0)=rleg.goalPose.segment<3>(0) - currentPose.segment<3>(6);
+larm.goal.block<3,1>(0,0)=larm.goalPose.segment<3>(0) - currentPose.segment<3>(12);
+rarm.goal.block<3,1>(0,0)=rarm.goalPose.segment<3>(0) - currentPose.segment<3>(18);
+
+//~~~~~~~~~~~Redefine steps on each iteration
+  lleg.step << (0.0001/lleg.goal.block<3,1>(0,0).norm())*lleg.goal;
+  if (lleg.goal.block<3,1>(0,0).norm() == 0)
+    lleg.step << 0, 0, 0,0,0,0;
+  rleg.step << (0.0001/rleg.goal.block<3,1>(0,0).norm())*rleg.goal;
+  if (rleg.goal.block<3,1>(0,0).norm() == 0)
+    rleg.step << 0, 0, 0,0,0,0;
+  larm.step<< (0.0001/larm.goal.block<3,1>(0,0).norm())*larm.goal;
+  if (larm.goal.block<3,1>(0,0).norm() == 0)
+    larm.step << 0, 0, 0,0,0,0;
+  rarm.step << (0.0001/rarm.goal.block<3,1>(0,0).norm())*rarm.goal;
+  if (rarm.goal.block<3,1>(0,0).norm() == 0)
+    rarm.step << 0, 0, 0,0,0,0;
+
   float a=rarm.goalPose.segment<3>(0).norm();
   float b=currentPose.segment<18>(0).norm();
   ros::Duration(0.5).sleep();
@@ -187,21 +207,20 @@ void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js){
       while(delQ(s) < -3.1416)
         delQ(s) = delQ(s)+3.1416;
     }
-std::cout << "J: " << rarm.J<< std::endl << std::endl;
-std::cout << "S: " << rarm.step <<std::endl << std::endl;
-std::cout << "Q: " << delQ.segment<6>(18).transpose() << std::endl <<std::endl;;
-//std::cout << currentPose.segment<6>(0).transpose() << std::endl;
+
+    std::cout << "Current:\t" << currentPose.segment<3>(18).transpose() << std::endl;
+    std::cout << "     Goal:\t" << rarm.goalPose.segment<3>(0).transpose() << std::endl;
     // cmd = current + delQ
     float temp1, temp2;
-    for (int q = 0;q<4;q++)
-      jointcommands.position[q] = current[q];
-    for (int q = 4;q<28;q++){
+    for (int q = 0;q<22;q++)//TODO this is just temporary to hold body fixed
+      jointcommands.position[q] = 0;//current[q];
+    for (int q = 22;q<28;q++){//fix these lines
       temp1=current[q];
       temp2=delQ[q-4];
       if (temp2 != temp2)
           temp2 = 0.01745;
       jointcommands.position[q] = current[q]+delQ[q-4];
-//      printf("%6.3f ",jointcommands.position[q]);
+
     }
     printf("\n\n");
     pub_joint_commands_.publish(jointcommands);
