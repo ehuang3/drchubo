@@ -191,7 +191,7 @@ rarm.goal.block<3,1>(0,0)=rarm.goalPose.segment<3>(0) - currentPose.segment<3>(1
 
   float a=rarm.goalPose.segment<3>(0).norm();
   float b=currentPose.segment<18>(0).norm();
-  ros::Duration(0.25).sleep();
+  ros::Duration(0.5).sleep();
 
   if (rarm.goal(1) < 1){//std::abs(a-b)){//this is wrong, do this better
 

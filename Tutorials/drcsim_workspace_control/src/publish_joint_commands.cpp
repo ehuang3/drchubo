@@ -220,7 +220,7 @@ rarm.goal.block<3,1>(0,0)=rarm.goalPose.segment<3>(0) - currentPose.segment<3>(1
     float temp1, temp2;
     for (int q = 0;q<16;q++)//TODO this is just temporary to hold body fixed
       jointcommands.position[q] = 0;//current[q];
-    for (int q = 16;q<28;q++){//fix these lines
+    for (int q = 16;q<22;q++){//fix these lines
       temp1=current[q];
       temp2=delQ[q-4];
       if (temp2 != temp2)
@@ -228,9 +228,9 @@ rarm.goal.block<3,1>(0,0)=rarm.goalPose.segment<3>(0) - currentPose.segment<3>(1
       jointcommands.position[q] = current[q]+delQ[q-4];
 
     }
-   /* for (int q =22;q<28;q++)
+    for (int q =22;q<28;q++)
       jointcommands.position[q]=0;
-    printf("\n\n");*/
+    printf("\n\n");
     pub_joint_commands_.publish(jointcommands);
   }
   else {printf("DONE\n");}
@@ -245,12 +245,12 @@ int main(int argc, char** argv)
   printf("ROS started\n");
   ros::Time last_ros_time_;
   bool wait = true;
-  /*while (wait)
+  while (wait)
   {
     last_ros_time_ = ros::Time::now();
     if (last_ros_time_.toSec() > 0)
       wait = false;
-  }*/
+  }
 
   // must match those inside AtlasPlugin
   jointcommands.name.push_back("atlas::back_lbz");
@@ -345,7 +345,7 @@ int main(int argc, char** argv)
   lleg.goal << 0.00,0.00,0,0,0,0;
   rleg.goal << 0,0,0,0,0,0;
   larm.goal << 0.09,-0.15,0.15,0,0,0;
-  rarm.goal << 0.09,0.15,0.15,0,0,0;
+  rarm.goal << 0.00,0.0,0.0,0,0,0;
   printf("\nWaiting on initial pose\n");
   int n2=1;
   while(lleg.goalPose.size() == 0){
