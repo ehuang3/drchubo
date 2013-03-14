@@ -27,7 +27,7 @@ public:
   VectorXf delQ;
   VectorXf currentPose;
 
-  void jacobian(float q[]);
+  MatrixXf jacobian(float q[]);
   void stepDefine(float q[]);
   void calcAndMove(float current[]);
 
@@ -82,15 +82,14 @@ void transforms(float q[]){
   rarm.counterStop = 28;
 }
 
-//  MatrixXf limb::jacobian(float q[]){ 
-  void limb::jacobian(float q[]){
-
-    transforms(q);
+  MatrixXf limb::jacobian(float q[]){ 
 
     MatrixXf temp(4,4);
     temp << MatrixXf::Identity(4,4);
     J.resize(6,6);
 
+    transforms(q);
+    //fk.resize(4,4);
 
     fk.resize(4,4);
     fk << MatrixXf::Identity(4,4);
@@ -135,7 +134,6 @@ void limb::calcAndMove(float current[]){
 
     delQ = J.inverse()*step;
 
-     // Correct for rotations larger than 180 degrees
     for(int s =0; s <6;s++){
       while(delQ(s) > 3.1416)
         delQ(s) = delQ(s)-3.1416;
@@ -143,20 +141,18 @@ void limb::calcAndMove(float current[]){
         delQ(s) = delQ(s)+3.1416;
     }
 
-    // Output the current and goal poses
     std::cout << "Current:\t" << currentPose.transpose() << std::endl;
     std::cout << "     Goal:\t" << goalPose.transpose() << std::endl;
+    // cmd = current + delQ
 
     for (int q = 0;q<counterStart;q++)//TODO this is just temporary to hold body fixed
       jointcommands.position[q] = 0;//current[q];
-    for (int q = counterStart;q<counterStop;q++){
-      // Print out the relative joint numer for the limb
-      printf("\nCounter: %d\n\n",q-counterStart);
+    for (int q = counterStart;q<counterStop;q++){//fix these lines
+printf("\nCounter: %d\n\n",q-counterStart);
       if (delQ[q-counterStart] != delQ[q-counterStart]){
-        printf("Error on next line\n");
-        delQ[q-counterStart] = 0.01745;
+printf("Error on next line\n");
+          delQ[q-counterStart] = 0.01745;
 }
-      // Add the differential joint position to the current position for the relevant joints
       jointcommands.position[q] = current[q]+delQ[q-4];
     }
     for (int q =counterStop;q<28;q++)
@@ -210,22 +206,22 @@ void initJointStates(const sensor_msgs::JointState::ConstPtr &_js)
 void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js){
 
   float current[28];
-  //static ros::Time startTime = ros::Time::now();
+  static ros::Time startTime = ros::Time::now();
   // for testing round trip time
-  //jointcommands.header.stamp = _js->header.stamp;
+  jointcommands.header.stamp = _js->header.stamp;
 
   for (int z = 0; z<28; z++)
     current[z] = (current[z]+_js->position[z])/2;
 
-  // lleg.stepDefine(current);
-  // rleg.stepDefine(current);
+  lleg.stepDefine(current);
+  rleg.stepDefine(current);
   larm.stepDefine(current);
   rarm.stepDefine(current);
 
   ros::Duration(0.5).sleep();
 
-  // lleg.calcAndMove(current);
-  // rleg.calcAndMove(current);
+  lleg.calcAndMove(current);
+  //rleg.calcAndMove(current);
   larm.calcAndMove(current);
   rarm.calcAndMove(current);
 }
