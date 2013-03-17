@@ -3,6 +3,10 @@
 # C extensions
 *.so
 
+# Eclipse
+.cproject
+.project
+
 # Packages
 *.egg
 *.egg-info
