@@ -22,14 +22,8 @@ public:
   VectorXf goal;
   VectorXf goalPose;
   VectorXf step;
-  int counterStart;
-  int counterStop;
-  VectorXf delQ;
-  VectorXf currentPose;
 
   MatrixXf jacobian(float q[]);
-  void stepDefine(float q[]);
-  void calcAndMove(float current[]);
 
 } lleg, rleg, larm,rarm;
 
@@ -47,8 +41,6 @@ void transforms(float q[]){
     cos(q[7]), -sin(q[7]), 0, 0.374, sin(q[7]),  cos(q[7]), 0,   -0.05, 0,0, 1,0,0,0, 0, 1,
     cos(q[8]), -sin(q[8]), 0, 0.422, sin(q[8]),  cos(q[8]), 0, 0,0, 0, 1, 0,0, 0, 0, 1,
     cos(q[9]), -sin(q[9]),0, 0,0, 0, -1, 0,sin(q[9]), cos(q[9]),0, 0,0, 0,  0, 1;
-  lleg.counterStart =4;
-  lleg.counterStop = 10;
 
   // Define homogeneous transformation matrices for the right leg  
   rleg.trans << -sin(q[10]), -cos(q[10]), 0, 0, cos(q[10]) ,  -sin(q[10]), 0, -0.089, 0,  0, 1, 0, 0,0, 0, 1,
@@ -57,29 +49,23 @@ void transforms(float q[]){
     cos(q[13]), -sin(q[13]), 0, 0.374, sin(q[13]),  cos(q[13]), 0,   -0.05, 0,0, 1,0,0,0, 0, 1,
     cos(q[14]), -sin(q[14]), 0, 0.422, sin(q[14]),  cos(q[14]), 0, 0,0, 0, 1, 0,0, 0, 0, 1,
     cos(q[15]), -sin(q[15]),0, 0,0, 0, -1, 0,sin(q[15]), cos(q[15]),0, 0,0, 0,  0, 1;
-  rleg.counterStart = 10;
-  rleg.counterStop = 16;
 
   // Define homogeneous transformation matrices for the left arm
-  larm.trans << cos(q[16]),-sin(q[16]), 0, 0,0.866*sin(q[16]), 0.866*cos(q[16]), -0.5, 0,0.5*sin(q[16]), 0.5*cos(q[16]),  0.866, 0, 0,0,0, 1,
-    0,0, 1,0,0.866*cos(q[17]) + 0.5*sin(q[17]), 0.5*cos(q[17]) - 0.866*sin(q[17]),0,0.0830,0.866*sin(q[17]) - 0.5*cos(q[17]), 0.866*cos(q[17]) + 0.5*sin(q[17]), 0,     -0.0063,0,0, 0,1,
-    0,0, 1,0.1850,sin(q[18]), cos(q[18]),0,0,-cos(q[18]), sin(q[18]), 0,0,0,0, 0,1,
-    0,0, -1,0,sin(q[19]),cos(q[19]), 0,0.013,cos(q[19]), -sin(q[19]),0, 0.121,0,0, 0,1,
-    0,0,1,0.188,sin(q[20]), cos(q[20]), 0, -0.013,-cos(q[20]), sin(q[20]), 0,0,0,0,0,1,
-    0,0, -1,0,sin(q[21]),cos(q[21]), 0,0,cos(q[21]),-sin(q[21]), 0, 0.0580,0,0, 0, 1; 
-  larm.counterStart = 16;
-  larm.counterStop = 22;
+larm.trans << cos(q[16]),-sin(q[16]), 0, 0,0.866*sin(q[16]), 0.866*cos(q[16]), -0.5, 0,0.5*sin(q[16]), 0.5*cos(q[16]),  0.866, 0, 0,0,0, 1,
+ 0,0, 1,0,0.866*cos(q[17]) + 0.5*sin(q[17]), 0.5*cos(q[17]) - 0.866*sin(q[17]),0,0.0830,0.866*sin(q[17]) - 0.5*cos(q[17]), 0.866*cos(q[17]) + 0.5*sin(q[17]), 0, -0.0063,0,0, 0,1,
+0,0, 1,0.1850,sin(q[18]), cos(q[18]),0,0,-cos(q[18]), sin(q[18]), 0,0,0,0, 0,1,
+0,0, -1,0,sin(q[19]),cos(q[19]), 0,0.013,cos(q[19]), -sin(q[19]),0, 0.121,0,0, 0,1,
+0,0,1,0.188,sin(q[20]), cos(q[20]), 0, -0.013,-cos(q[20]), sin(q[20]), 0,0,0,0,0,1,
+0,0, -1,0,sin(q[21]),cos(q[21]), 0,0,cos(q[21]),-sin(q[21]), 0, 0.0580,0,0, 0, 1; 
 
   // Define homogeneous transformation matrices for the right arm
   // Due to unconventional notation, this is probably wrong
- rarm.trans << cos(q[22]), -sin(q[22]),0, 0,0.866*sin(q[22]), 0.866*cos(q[22]), -0.5, 0,0.51*sin(q[22]), 0.5*cos(q[22]), 0.866, 0,0,0, 0, 1,
-0, 0, 1, 0,-0.866*cos(q[23]) - 0.5*sin(q[23]),   0.866*sin(q[23]) - 0.5*cos(q[23]), 0, -0.0470,0.5*cos(q[23]) - 0.866*sin(q[23]), - 0.866*cos(q[23]) - 0.5*sin(q[23]), 0,  0.0687,0, 0, 0, 1,
-0,0, -1, 0.1850,sin(q[24]),  cos(q[24]),  0, 0,cos(q[24]), -sin(q[24]),  0, 0,0, 0, 0, 1,
-0,0, 1,0,sin(q[25]), cos(q[25]), 0,  -0.013,-cos(q[25]), sin(q[25]), 0, -0.121,0, 0, 0,1,
-0,0, -1, 47/250,sin(q[26]),  cos(q[26]),  0, 0.013,cos(q[26]), -sin(q[26]), 0, 0,0, 0, 0, 1,
-0, 0, 1, 0,sin(q[27]), cos(q[27]), 0, 0,-cos(q[27]), sin(q[27]), 0, -0.0580,0, 0, 0, 1;
-  rarm.counterStart = 22;
-  rarm.counterStop = 28;
+rarm.trans << cos(q[22]), -sin(q[22]), 0, 0,0.866*sin(q[22]), 0.866*cos(q[22]), -0.5, 0,0.5*sin(q[22]), 0.5*cos(q[22]),  0.5, 0,0, 0,0, 1,
+0, 0, -1, 0,0.866*cos(q[23]) - 0.5*sin(q[23]), - 0.5*cos(q[23]) - 0.866*sin(q[23]),  0, -0.0470,-0.5*cos(q[23]) - 0.866*sin(q[23]), 0.5*sin(q[23]) - 0.866*cos(q[23]),  0,  0.0687,0,0,0,1,
+0, 0, 1, -0.1850,sin(q[24]), cos(q[24]), 0, 0,-cos(q[24]), sin(q[24]), 0, 0,0, 0, 0, 1, 
+0, 0, -1, 0,sin(q[25]),  cos(q[25]), 0,  -0.013,cos(q[25]), -sin(q[25]), 0, -0.121,0, 0, 0, 1, 
+0, 0, 1, 0.188,sin(q[26]), cos(q[26]), 0, 0.013,-cos(q[26]), sin(q[26]), 0,0,0, 0, 0,1, 
+0, 0, -1, 0,sin(q[27]),  cos(q[27]),  0, 0,cos(q[27]), -sin(q[27]),  0, -29/500,0, 0,  0,  1;
 }
 
   MatrixXf limb::jacobian(float q[]){ 
@@ -113,54 +99,6 @@ void transforms(float q[]){
     }
     return J;
   }
-
-/*~~~~~~~~~~~~~~~~~~~~~~Step Define Function~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-void limb::stepDefine(float q[]){
-
-  jacobian(q);
-
-  currentPose.resize(6);
-  currentPose.segment<3>(0) = fk.block<3,1>(0,3);
-  currentPose.segment<3>(3) = fk.block<3,1>(0,2);
-
-  goal.block<3,1>(0,0)=goalPose.segment<3>(0) - currentPose.segment<3>(0);
-  step << (0.005/goal.block<3,1>(0,0).norm())*goal;
-  if (goal.block<3,1>(0,0).norm() == 0)
-    step << 0, 0, 0,0,0,0;
-
-}
-
-void limb::calcAndMove(float current[]){
-
-    delQ = J.inverse()*step;
-
-    for(int s =0; s <6;s++){
-      while(delQ(s) > 3.1416)
-        delQ(s) = delQ(s)-3.1416;
-      while(delQ(s) < -3.1416)
-        delQ(s) = delQ(s)+3.1416;
-    }
-
-    std::cout << "Current:\t" << currentPose.transpose() << std::endl;
-    std::cout << "     Goal:\t" << goalPose.transpose() << std::endl;
-    // cmd = current + delQ
-
-    for (int q = 0;q<counterStart;q++)//TODO this is just temporary to hold body fixed
-      jointcommands.position[q] = 0;//current[q];
-    for (int q = counterStart;q<counterStop;q++){//fix these lines
-printf("\nCounter: %d\n\n",q-counterStart);
-      if (delQ[q-counterStart] != delQ[q-counterStart]){
-printf("Error on next line\n");
-          delQ[q-counterStart] = 0.01745;
-}
-      jointcommands.position[q] = current[q]+delQ[q-4];
-    }
-    for (int q =counterStop;q<28;q++)
-      jointcommands.position[q]=0;
-    printf("\n\n");
-    pub_joint_commands_.publish(jointcommands);
-}
-
 
 void initJointStates(const sensor_msgs::JointState::ConstPtr &_js)
 {
@@ -213,17 +151,89 @@ void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js){
   for (int z = 0; z<28; z++)
     current[z] = (current[z]+_js->position[z])/2;
 
-  lleg.stepDefine(current);
-  rleg.stepDefine(current);
-  larm.stepDefine(current);
-  rarm.stepDefine(current);
+  // calculate jacobian for each limb
 
+  lleg.jacobian(current);
+  rleg.jacobian(current);
+  larm.jacobian(current);
+  rarm.jacobian(current);
+
+  // Define the current pose
+  VectorXf currentPose(24);
+  currentPose.segment<3>(0) = lleg.fk.block<3,1>(0,3);
+  currentPose.segment<3>(3) = lleg.fk.block<3,1>(0,2);
+  currentPose.segment<3>(6) = rleg.fk.block<3,1>(0,3);
+  currentPose.segment<3>(9) = rleg.fk.block<3,1>(0,2);
+  currentPose.segment<3>(12) = larm.fk.block<3,1>(0,3);
+  currentPose.segment<3>(15) = larm.fk.block<3,1>(0,2);
+  currentPose.segment<3>(18) = rarm.fk.block<3,1>(0,3);
+  currentPose.segment<3>(21) = rarm.fk.block<3,1>(0,2);
+
+//~~~~~~~~~~~Find distance to goal
+lleg.goal.block<3,1>(0,0)=lleg.goalPose.segment<3>(0) - currentPose.segment<3>(0);
+rleg.goal.block<3,1>(0,0)=rleg.goalPose.segment<3>(0) - currentPose.segment<3>(6);
+larm.goal.block<3,1>(0,0)=larm.goalPose.segment<3>(0) - currentPose.segment<3>(12);
+rarm.goal.block<3,1>(0,0)=rarm.goalPose.segment<3>(0) - currentPose.segment<3>(18);
+
+//~~~~~~~~~~~Redefine steps on each iteration
+  lleg.step << (0.01/lleg.goal.block<3,1>(0,0).norm())*lleg.goal;
+  if (lleg.goal.block<3,1>(0,0).norm() == 0)
+    lleg.step << 0, 0, 0,0,0,0;
+  rleg.step << (0.01/rleg.goal.block<3,1>(0,0).norm())*rleg.goal;
+  if (rleg.goal.block<3,1>(0,0).norm() == 0)
+    rleg.step << 0, 0, 0,0,0,0;
+  larm.step<< (0.01/larm.goal.block<3,1>(0,0).norm())*larm.goal;
+  if (larm.goal.block<3,1>(0,0).norm() == 0)
+    larm.step << 0, 0, 0,0,0,0;
+  rarm.step << (0.01/rarm.goal.block<3,1>(0,0).norm())*rarm.goal;
+  if (rarm.goal.block<3,1>(0,0).norm() == 0)
+    rarm.step << 0, 0, 0,0,0,0;
+
+  float a=rarm.goalPose.segment<3>(0).norm();
+  float b=currentPose.segment<18>(0).norm();
   ros::Duration(0.5).sleep();
+//std::cout << rarm.goal(1) << std::endl;
+  if (11 > 10){//std::abs(a-b)){//this is wrong, do this better
 
-  lleg.calcAndMove(current);
-  //rleg.calcAndMove(current);
-  larm.calcAndMove(current);
-  rarm.calcAndMove(current);
+    // delQ = inverse jacobian multiplied by step.
+    VectorXf delQ(24); 
+    MatrixXf temp(6,6);
+
+    temp = lleg.J.inverse();
+    delQ.segment<6>(0) = temp*lleg.step;
+    temp =  rleg.J.inverse();
+    delQ.segment<6>(6) = temp*rleg.step;
+    temp = larm.J.inverse();
+    delQ.segment<6>(12) = temp*larm.step;
+    temp = rarm.J.inverse();
+    delQ.segment<6>(18) = temp*rarm.step;
+    for (int s=0; s<24;s++){
+      while(delQ(s) > 3.1416)
+        delQ(s) = delQ(s)-3.1416;
+      while(delQ(s) < -3.1416)
+        delQ(s) = delQ(s)+3.1416;
+    }
+
+    std::cout << "Current:\t" << currentPose.segment<3>(12).transpose() << std::endl;
+    std::cout << "   Goal:\t" << larm.goalPose.segment<3>(0).transpose() << std::endl;
+    // cmd = current + delQ
+    float temp1, temp2;
+    for (int q = 0;q<16;q++)//TODO this is just temporary to hold body fixed
+      jointcommands.position[q] = 0;//current[q];
+    for (int q = 16;q<22;q++){//fix these lines
+      temp1=current[q];
+      temp2=delQ[q-4];
+      if (temp2 != temp2)
+          temp2 = 0.01745;
+      jointcommands.position[q] = current[q]+delQ[q-4];
+
+    }
+    for (int q =22;q<28;q++)
+      jointcommands.position[q]=0;
+    printf("\n\n");
+    pub_joint_commands_.publish(jointcommands);
+  }
+  else {printf("DONE\n");}
 }
 
 int main(int argc, char** argv)

@@ -33,3 +33,4 @@ link_directories(
 )
 
 rosbuild_add_executable(publish_joint_commands src/publish_joint_commands.cpp)
+#rosbuild_add_executable(atlasKin src/atlasKin.cpp)

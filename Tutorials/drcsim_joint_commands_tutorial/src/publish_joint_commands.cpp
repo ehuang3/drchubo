@@ -8,12 +8,15 @@
 #include <osrf_msgs/JointCommands.h>
 #include <eigen3/Eigen/Dense>
 
+
 using namespace Eigen;
 
 ros::Publisher pub_joint_commands_;
 osrf_msgs::JointCommands jointcommands;
 
-class limb {
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class atlasKin {
 public:
   MatrixXf trans;// Contains all 6 4x4 matrices
   MatrixXf fk;
@@ -26,12 +29,14 @@ public:
   int counterStop;
   VectorXf delQ;
   VectorXf currentPose;
+  int name;
 
   void jacobian(float q[]);
   void stepDefine(float q[]);
   void calcAndMove(float current[]);
+} lleg, rleg, larm, rarm;
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-} lleg, rleg, larm,rarm;
 
 void transforms(float q[]){
 
@@ -49,6 +54,7 @@ void transforms(float q[]){
     cos(q[9]), -sin(q[9]),0, 0,0, 0, -1, 0,sin(q[9]), cos(q[9]),0, 0,0, 0,  0, 1;
   lleg.counterStart =4;
   lleg.counterStop = 10;
+  lleg.name = 1;
 
   // Define homogeneous transformation matrices for the right leg  
   rleg.trans << -sin(q[10]), -cos(q[10]), 0, 0, cos(q[10]) ,  -sin(q[10]), 0, -0.089, 0,  0, 1, 0, 0,0, 0, 1,
@@ -59,6 +65,7 @@ void transforms(float q[]){
     cos(q[15]), -sin(q[15]),0, 0,0, 0, -1, 0,sin(q[15]), cos(q[15]),0, 0,0, 0,  0, 1;
   rleg.counterStart = 10;
   rleg.counterStop = 16;
+  rleg.name = 2;
 
   // Define homogeneous transformation matrices for the left arm
   larm.trans << cos(q[16]),-sin(q[16]), 0, 0,0.866*sin(q[16]), 0.866*cos(q[16]), -0.5, 0,0.5*sin(q[16]), 0.5*cos(q[16]),  0.866, 0, 0,0,0, 1,
@@ -69,7 +76,7 @@ void transforms(float q[]){
     0,0, -1,0,sin(q[21]),cos(q[21]), 0,0,cos(q[21]),-sin(q[21]), 0, 0.0580,0,0, 0, 1; 
   larm.counterStart = 16;
   larm.counterStop = 22;
-
+  larm.name = 3;
   // Define homogeneous transformation matrices for the right arm
   // Due to unconventional notation, this is probably wrong
  rarm.trans << cos(q[22]), -sin(q[22]),0, 0,0.866*sin(q[22]), 0.866*cos(q[22]), -0.5, 0,0.51*sin(q[22]), 0.5*cos(q[22]), 0.866, 0,0,0, 0, 1,
@@ -80,10 +87,10 @@ void transforms(float q[]){
 0, 0, 1, 0,sin(q[27]), cos(q[27]), 0, 0,-cos(q[27]), sin(q[27]), 0, -0.0580,0, 0, 0, 1;
   rarm.counterStart = 22;
   rarm.counterStop = 28;
+  rarm.name = 4;
 }
 
-//  MatrixXf limb::jacobian(float q[]){ 
-  void limb::jacobian(float q[]){
+  void atlasKin::jacobian(float q[]){
 
     transforms(q);
 
@@ -112,11 +119,11 @@ void transforms(float q[]){
       J.block<3,1>(3,i) << fk.block<3,1>(0,2);
       temp << MatrixXf::Identity(4,4);
     }
-    return J;
+   // return J;
   }
 
 /*~~~~~~~~~~~~~~~~~~~~~~Step Define Function~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-void limb::stepDefine(float q[]){
+void atlasKin::stepDefine(float q[]){
 
   jacobian(q);
 
@@ -125,18 +132,23 @@ void limb::stepDefine(float q[]){
   currentPose.segment<3>(3) = fk.block<3,1>(0,2);
 
   goal.block<3,1>(0,0)=goalPose.segment<3>(0) - currentPose.segment<3>(0);
-  step << (0.005/goal.block<3,1>(0,0).norm())*goal;
+  step << (0.01/goal.block<3,1>(0,0).norm())*goal;
   if (goal.block<3,1>(0,0).norm() == 0)
     step << 0, 0, 0,0,0,0;
 
 }
 
-void limb::calcAndMove(float current[]){
+void atlasKin::calcAndMove(float current[]){
 
     delQ = J.inverse()*step;
-
+    std::cout << delQ << std::endl << std::endl;
+//    printf("Current: ");
+    //for (int i = counterStart;i<counterStop;i++)
+    for (int i = 0; i<28; i++)
+//      printf("%f ",current[i]);
+//    printf("\n");
      // Correct for rotations larger than 180 degrees
-    for(int s =0; s <6;s++){
+    for (int s =0; s <6;s++){
       while(delQ(s) > 3.1416)
         delQ(s) = delQ(s)-3.1416;
       while(delQ(s) < -3.1416)
@@ -144,26 +156,36 @@ void limb::calcAndMove(float current[]){
     }
 
     // Output the current and goal poses
-    std::cout << "Current:\t" << currentPose.transpose() << std::endl;
-    std::cout << "     Goal:\t" << goalPose.transpose() << std::endl;
 
-    for (int q = 0;q<counterStart;q++)//TODO this is just temporary to hold body fixed
+
+   // std::cout << " Joints:\t" << delQ.transpose() << std::endl;
+    std::cout << "  Current:\t" << currentPose.transpose() << std::endl;
+    std::cout << "     Goal:\t" << goal.block<3,1>(0,0).transpose() <<std::endl;
+    std::cout << "Goal Pose:\t" << goalPose.transpose() << std::endl;
+//    printf("Command: ");
+    for (int q = 0;q<counterStart;q++){//TODO this is just temporary to hold body fixed
       jointcommands.position[q] = 0;//current[q];
-    for (int q = counterStart;q<counterStop;q++){
-      // Print out the relative joint numer for the limb
-      printf("\nCounter: %d\n\n",q-counterStart);
-      if (delQ[q-counterStart] != delQ[q-counterStart]){
-        printf("Error on next line\n");
-        delQ[q-counterStart] = 0.01745;
-}
-      // Add the differential joint position to the current position for the relevant joints
-      jointcommands.position[q] = current[q]+delQ[q-4];
+//      printf("%f ",jointcommands.position[q]);
     }
-    for (int q =counterStop;q<28;q++)
+    for (int q = counterStart;q<counterStop;q++){
+      if (delQ[q-counterStart] != delQ[q-counterStart]){
+        delQ[q-counterStart] = 0.05;
+      }
+      // Add the differential joint position to the current position for the relevant joints
+      jointcommands.position[q] = current[q]+delQ[q-counterStart];
+//      printf("%f ",jointcommands.position[q]);
+    }
+    for (int q =counterStop;q<28;q++){
       jointcommands.position[q]=0;
-    printf("\n\n");
+//      printf("%f ",jointcommands.position[q]);
+    }
+//    printf("\n\n");
     pub_joint_commands_.publish(jointcommands);
+//FIXME printf("%f\n",current[17]);
+
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////t
 
 
 void initJointStates(const sensor_msgs::JointState::ConstPtr &_js)
@@ -174,11 +196,15 @@ void initJointStates(const sensor_msgs::JointState::ConstPtr &_js)
   jointcommands.header.stamp = _js->header.stamp;
   for (int z = 0; z<28; z++)
     current[z] = _js->position[z];
+  //float init[28] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1.35,1.507,0.3927,-0.7535,0,0,1.35,1.507,-0.3927,-0.7535,0};
   float init[28] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.507,0.3927,-0.7535,0,0,0,1.507,0.3927,-0.7535,0};
   for (int a =0;a<28;a++){
     jointcommands.position[a] = init[a];
   }
   pub_joint_commands_.publish(jointcommands);
+
+  // ros::Duration(1).sleep();
+
   for (int z = 0; z<28;z++)
     current[z] = init[z];
 
@@ -204,7 +230,9 @@ void initJointStates(const sensor_msgs::JointState::ConstPtr &_js)
   larm.goalPose.segment<3>(3) = larm.fk.block<3,1>(0,2) + larm.goal.segment<3>(3);
   rarm.goalPose.segment<3>(0) = rarm.fk.block<3,1>(0,3) + rarm.goal.segment<3>(0);
   rarm.goalPose.segment<3>(3) = rarm.fk.block<3,1>(0,2) + rarm.goal.segment<3>(3);
-
+std::cout << std::endl << larm.fk.block<3,1>(0,3).transpose() <<std::endl;
+std::cout << larm.goal.segment<3>(0).transpose() << std::endl;
+std::cout <<larm.goalPose.segment<3>(0).transpose() << std::endl << std::endl;
 }
 
 void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js){
@@ -215,19 +243,22 @@ void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js){
   //jointcommands.header.stamp = _js->header.stamp;
 
   for (int z = 0; z<28; z++)
-    current[z] = (current[z]+_js->position[z])/2;
+    //current[z] = (current[z]+_js->position[z])/2;
+    current[z] = _js->position[z];
 
   // lleg.stepDefine(current);
   // rleg.stepDefine(current);
   larm.stepDefine(current);
-  rarm.stepDefine(current);
+  // rarm.stepDefine(current);
 
-  ros::Duration(0.5).sleep();
-
+  ros::Duration(0.25).sleep();
+/*for (int f = 0;f<28;f++)
+  printf("%4.2f ",current[f]);
+printf("\n");*/
   // lleg.calcAndMove(current);
   // rleg.calcAndMove(current);
-  larm.calcAndMove(current);
-  rarm.calcAndMove(current);
+ larm.calcAndMove(current);
+  // rarm.calcAndMove(current);
 }
 
 int main(int argc, char** argv)
@@ -338,8 +369,9 @@ int main(int argc, char** argv)
   
   lleg.goal << 0.00,0.00,0,0,0,0;
   rleg.goal << 0,0,0,0,0,0;
+ // larm.goal << 0.10,0.30,0.16,0,0,0;
   larm.goal << 0.09,-0.15,0.15,0,0,0;
-  rarm.goal << 0.00,0.0,0.0,0,0,0;
+  rarm.goal << 0.09,0.055,-0.05,0,0,0;
   printf("\nWaiting on initial pose\n");
   int n2=1;
   while(lleg.goalPose.size() == 0){
@@ -402,7 +434,7 @@ n2 =n2+1;
     rarm.step << 0, 0, 0,0,0,0;
   //std::cout << rarm.step << std::endl;
   printf("Spin Time\n");
-  ros::spin();
 
+  ros::spin();
   return 0;
 }

@@ -2,7 +2,7 @@
 \mainpage
 \htmlinclude manifest.html
 
-\b drcsim_workspace_control 
+\b drcsim_joint_commands_tutorial 
 
 <!-- 
 Provide an overview of your package.
