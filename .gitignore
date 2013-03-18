@@ -1,3 +1,4 @@
+*~
 *.py[cod]
 
 # C extensions
@@ -17,6 +18,7 @@ develop-eggs
 .installed.cfg
 lib
 lib64
+build
 
 # Installer logs
 pip-log.txt
