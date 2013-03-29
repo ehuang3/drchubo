@@ -109,6 +109,7 @@ void initJointStates(const sensor_msgs::JointState::ConstPtr &_js)
   for (int z = 0; z<28; z++)
     current[z] = _js->position[z];
   float init[28] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.507,0.3927,-0.7535,0,0,0,1.507,0.3927,-0.7535,0};
+  //float init[28] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1.35,1.507,0.3927,-0.7535,0,0,1.35,1.507,-0.3927,-0.7535,0};
   for (int a =0;a<28;a++){
     jointcommands.position[a] = init[a];
   }
@@ -150,7 +151,12 @@ void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js){
 
   for (int z = 0; z<28; z++)
     current[z] = (current[z]+_js->position[z])/2;
-
+    //current[z] = _js->position[z];
+    
+    
+  for (int a = 16;a<22;a++)
+    printf("%f ",current[a]);
+  printf("\n");
   // calculate jacobian for each limb
 
   lleg.jacobian(current);
@@ -226,11 +232,12 @@ rarm.goal.block<3,1>(0,0)=rarm.goalPose.segment<3>(0) - currentPose.segment<3>(1
       if (temp2 != temp2)
           temp2 = 0.01745;
       jointcommands.position[q] = current[q]+delQ[q-4];
-
+    //  printf("%f ",jointcommands.position[q]);
     }
+    // printf("\n");
     for (int q =22;q<28;q++)
       jointcommands.position[q]=0;
-    printf("\n\n");
+    // printf("\n\n");
     pub_joint_commands_.publish(jointcommands);
   }
   else {printf("DONE\n");}
@@ -344,7 +351,8 @@ int main(int argc, char** argv)
   
   lleg.goal << 0.00,0.00,0,0,0,0;
   rleg.goal << 0,0,0,0,0,0;
-  larm.goal << 0.09,-0.15,0.15,0,0,0;
+ // larm.goal << 0.09,-0.15,0.15,0,0,0;
+  larm.goal << 0.10,-0.20,0.1,0,0,0;
   rarm.goal << 0.00,0.0,0.0,0,0,0;
   printf("\nWaiting on initial pose\n");
   int n2=1;
