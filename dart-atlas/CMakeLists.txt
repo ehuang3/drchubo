@@ -1,17 +1,21 @@
 cmake_minimum_required (VERSION 2.8)
 
 project (dart-atlas)
-message (STATUS "Creating Makefile for dart-atlas") # Was planningTab
 
+message(STATUS "Creating Makefile for dart-atlas")
 message(STATUS "CMAKE_SOURCE_DIR = ${CMAKE_SOURCE_DIR}")
 message(STATUS "CMAKE_BINARY_DIR = ${CMAKE_BINARY_DIR}")
 
+###############
+# Build type
 IF(NOT CMAKE_BUILD_TYPE)
    SET(CMAKE_BUILD_TYPE Release CACHE STRING
        "Choose the type of build, options are: None Debug Release RelWithDebInfo Profile."
        FORCE)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
+###############
+# Compile flags
 if(WIN32)
   set (CMAKE_INSTALL_PREFIX "C:/Golems" CACHE PATH "Install prefix" FORCE)
   message (STATUS "Setup Visual Studio Specific Flags")
@@ -29,6 +33,15 @@ else ()
   set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_DEBUG} -pg")
 endif()
 
+set(CMAKE_DEBUG_POSTFIX "d")
+
+###############
+# Generate the path header file
+set(PATH_HEADER_DIR ${CMAKE_SOURCE_DIR}/src/utils/Paths.h)
+message(STATUS "Generate the path header file to ${PATH_HEADER_DIR}")
+configure_file(${PATH_HEADER_DIR}.in ${PATH_HEADER_DIR} @ONLY)
+
+###############
 # Link with DART and GRIP
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_INSTALL_PREFIX}/share/dart")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_INSTALL_PREFIX}/share/grip")
@@ -43,9 +56,11 @@ include_directories(${GRIP_INCLUDEDIR})
 link_directories(${DART_LIBRARY_DIRS})
 link_directories(${GRIP_LIBRARY_DIRS})
 
+###############
 # Build source
 message(STATUS "Building DART-ATLAS source")
 include_directories(BEFORE src)
+link_directories(${CMAKE_SOURCE_DIR}/lib)
 add_subdirectory(src)
 
 enable_testing()

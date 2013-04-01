@@ -8,7 +8,7 @@ project(dart-atlas)
 # endif()
 
 # Setup directory structure
-set(SUBDIRS atlas)
+set(SUBDIRS atlas utils)
 foreach(SUBDIR ${SUBDIRS})
 	file(GLOB_RECURSE dir_files ${SUBDIR}/*.h ${SUBDIR}/*.hpp ${SUBDIR}/*.cpp)
 	source_group(${SUBDIR} FILES ${dir_files})
