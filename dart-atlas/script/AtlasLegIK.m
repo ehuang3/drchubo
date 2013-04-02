@@ -11,29 +11,44 @@ x2 = Tf(3,1); y2 = Tf(3,2); z2 = Tf(3,3); t2 = Tf(3,4);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Solve u6, u1, u2
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% For solution method, see AtlasSymbolicKinematics.m and Springer Handbook
-% of Robotics - 1.7 Kinematics - Closed Form solutions
+% For solution method, see AtlasSymbolicKinematics.m
+% u6
 C1 = t0*y0 + t1*y1 + t2*y2;
 C2 = t0*x0 + t1*x1 + t2*x2;
 
-u6(1) = 2*atan( ( C2 + sqrt(C2^2 + C1^2) ) / C1 );
-u6(2) = 2*atan( ( C2 - sqrt(C2^2 + C1^2) ) / C1 );
+u6(1) = atan(-C1/C2);
+u6(2) = u6(1) + pi;
 
-for i = 1:2
+u6 = [u6(1) u6(1) u6(2) u6(2)];
+
+% u2
+for i = 1:2:3
    u2(i) = acos(y2*cos(u6(i)) + x2*sin(u6(i)));
-   u1(i) = asin( -( y1*cos(u6(i)) + x1*sin(u6(i)) ) / sin(u2(i)) );
+   u2(i+1) = -u2(i);
 end
 
-u6 = [u6 u6(2:-1:1)]; % reverse second half for next loop
-u2 = [u2 u2(2:-1:1)];
-u1 = [u1 u1(2:-1:1)];
+% u1
+for i = 1:4
+   u1(i) = atan2( -( y1*cos(u6(i)) + x1*sin(u6(i)) ) / sin(u2(i)), ...
+                  -( y0*cos(u6(i)) + x0*sin(u6(i)) ) / sin(u2(i)) );
+end
+
+% shift by constant offset
+u2 = u2 + pi/2;
+u1 = u1 - pi/2;
+
+% extend
+I = [1, 1, 2, 2, 3, 3, 4, 4];
+u6 = u6(I);
+u2 = u2(I);
+u1 = u1(I);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Solve u3, u4, u5
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Geometric solution using Craig - Introduction to Robotics - 4.4
 
-% Constant DH parameters - link lengths
+%% Constant DH parameters - link lengths
 T = AtlasLegTransforms(0,0,0,0,0,0);
 T01 = T{1};
 T12 = T{2};
@@ -47,8 +62,8 @@ L2 = -T12(2,4);
 L3 = T34(1,4);
 L4 = T45(1,4);
 
-% Find variables in plane defined by frame 2
-for i = 1:2:3
+%% Find variables in plane defined by frame 2
+for i = 1:2:8
    T = AtlasLegTransforms(u1(i), u2(i), 0, 0, 0, u6(i));
    T2f = T{2}^-1 * T{1}^-1 * Tf;
    p2f = T2f(:,4);
@@ -59,7 +74,7 @@ for i = 1:2:3
    u4(i+1) = -u4(i);
 end
 
-for i = 1:4
+for i = 1:8
    T = AtlasLegTransforms(u1(i), u2(i), 0, 0, 0, u6(i));
    T2f = T{2}^-1 * T{1}^-1 * Tf;
    p2f = T2f(:,4);
@@ -90,6 +105,7 @@ u = [ u1 ;
       u4 ;
       u5 ;
       u6 ];
+u = real(u);
 
 end
 

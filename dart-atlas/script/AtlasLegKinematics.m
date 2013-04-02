@@ -2,4 +2,11 @@
 %% Test FK
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Tf = AtlasLegFK(0,0,0,0,0,0)
+Tf = AtlasLegFK(0,0,0,1,0,0)
+
+u = AtlasLegIK(Tf)
+
+for i = 1:8
+   i
+   disp(AtlasLegFK(u(1,i), u(2,i), u(3,i), u(4,i), u(5,i), u(6,i)))
+end
