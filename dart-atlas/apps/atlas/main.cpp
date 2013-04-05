@@ -6,7 +6,7 @@
 #include <robotics/parser/dart_parser/DartLoader.h>
 #include <robotics/World.h>
 
-#include "utils/Paths.h"
+#include <utils/AtlasPaths.h>
 
 #include <iostream>
 

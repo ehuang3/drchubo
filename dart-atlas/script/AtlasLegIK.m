@@ -70,6 +70,16 @@ for i = 1:2:8
    x = p2f(1) - L1;
    y = -p2f(3);
    
+%    disp('>>>>>>>>>>>>>>>>>>>>')
+%    T{1}
+%    T{2}
+%    T2f
+%    u1(i)
+%    u2(i)
+%    x
+%    y
+%    acs = (x^2 + y^2 - L3^2 - L4^2) / (2*L3*L4)
+   
    u4(i) = acos( (x^2 + y^2 - L3^2 - L4^2) / (2*L3*L4) );
    u4(i+1) = -u4(i);
 end
@@ -81,7 +91,7 @@ for i = 1:8
    x = p2f(1) - L1;
    y = -p2f(3);
    
-   phi = acos( T2f(3,3) );
+   phi = atan2( T2f(1,3), T2f(3,3) );
    
    beta = atan2(y,x);
    psi = acos( (x^2 + y^2 + L3^2 - L4^2) / (2*L3*sqrt(x^2 + y^2)) );
@@ -105,7 +115,7 @@ u = [ u1 ;
       u4 ;
       u5 ;
       u6 ];
-u = real(u);
+%u = real(u);
 
 end
 
