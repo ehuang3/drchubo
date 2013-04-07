@@ -2,7 +2,7 @@
 #ifndef UTILS_PATHS_H
 #define UTILS_PATHS_H
 
-#define ATLAS_ROOT_PATH "/home/eric/ros/vrc-golem/dart-atlas/"
-#define ATLAS_DATA_PATH "/home/eric/ros/vrc-golem/dart-atlas/data/"
+#define ATLAS_ROOT_PATH "/home/matt/vrc-golem/dart-atlas/"
+#define ATLAS_DATA_PATH "/home/matt/vrc-golem/dart-atlas/data/"
 
 #endif // ifndef UTILS_PATHS_H

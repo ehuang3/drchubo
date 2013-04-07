@@ -90,9 +90,10 @@ TEST(KINEMATICS, INVERSE_NEAREST) {
 	AK.init(atlas);
 
 	Vector6d u, a;
-	u << 0, 0, 0, 0, 0, 1;
+	u << 0, 0, 0, 0, 0, 0;
 
 	Matrix4d Tfoot = AK.legFK(u);
+	cout << Tfoot << endl;
 
 	a = AK.legIK(Tfoot, u);
 	cout << a << endl;
