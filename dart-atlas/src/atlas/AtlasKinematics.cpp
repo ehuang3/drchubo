@@ -4,6 +4,7 @@
 #include <kinematics/Skeleton.h>
 #include <kinematics/BodyNode.h>
 #include <kinematics/Dof.h>
+#include <kinematics/Joint.h>
 
 #include <iostream>
 
@@ -45,14 +46,25 @@ void AtlasKinematics::init(Skeleton *_atlas) {
 		// joint 6 - ankle roll
 		BodyNode *LAR = _atlas->getNode("l_foot");
 
-//		cout << "LHY\n" << LHY->getWorldTransform() << endl;
-//		cout << "LHR\n" << LHR->getWorldTransform() << endl;
-//		cout << "LHP\n" << LHP->getWorldTransform() << endl;
-//		cout << "LKP\n" << LKP->getWorldTransform() << endl;
-//		cout << "LAP\n" << LAP->getWorldTransform() << endl;
-//		cout << "LAR\n" << LAR->getWorldTransform() << endl;
+		cout << "LHY\n" << LHY->getWorldTransform() << endl;
+		cout << "LHR\n" << LHR->getWorldTransform() << endl;
+		cout << "LHP\n" << LHP->getWorldTransform() << endl;
+		cout << "LKP\n" << LKP->getWorldTransform() << endl;
+		cout << "LAP\n" << LAP->getWorldTransform() << endl;
+		cout << "LAR\n" << LAR->getWorldTransform() << endl;
 
-		// ? world origin is at Atlas's waist
+		// BLARGS
+//		BodyNode *LT = _atlas->getNode("ltorso");
+//		BodyNode *MT = _atlas->getNode("mtorso");
+//		BodyNode *UT = _atlas->getNode("utorso");
+//		BodyNode *P = _atlas->getNode("pelvis");
+//
+//		cout << "LT\n" << LT->getWorldTransform() << endl;
+//		cout << "MT\n" << MT->getWorldTransform() << endl;
+//		cout << "UT\n" << UT->getWorldTransform() << endl;
+//		cout << "P\n" << P->getWorldTransform() << endl;
+
+		// ? world origin is at Atlas's waist pelvis
 
 		Matrix4d Tw1 = LHY->getWorldTransform();
 		Matrix4d Tw3 = LHP->getWorldTransform();
@@ -82,6 +94,15 @@ void AtlasKinematics::init(Skeleton *_atlas) {
 
 		for(int i=0; i < 6; ++i) {
 			//cout << "u" << i << "= " << u_off[i] << endl;
+		}
+
+		// joint limits
+		BodyNode* node[6] = { LHY, LHR, LHP, LKP, LAP, LAR };
+		for(int i=0; i < 6; i++) {
+			u_lim[i][0] = node[i]->getParentJoint()->getDof(0)->getMin();
+			u_lim[i][1] = node[i]->getParentJoint()->getDof(0)->getMax();
+
+			cout << "u lim " << i << ": " << u_lim[i][0] << " " << u_lim[i][1] << endl;
 		}
 
 	} else {
@@ -150,11 +171,33 @@ Matrix4d AtlasKinematics::legFK(double _u1, double _u2, double _u3, double _u4, 
 				  _u6 + u_off[5]);
 }
 
+Vector6d AtlasKinematics::legIK(const Matrix4d& _Tbf, const Vector6d& _p, bool _left) {
+	Vector6d u;
+	return u;
+}
+
 Vector6d AtlasKinematics::legIK(const Matrix4d& _Tf, const Vector6d& _p) {
 	MatrixXd u = legIK(_Tf);
 	Vector6d v = _p;
 	double min_dist = -1;
+	bool within_lim;
 	for(int i=0; i < 8; ++i) {
+		within_lim = true;
+		for(int j=0; j < 6; j++) {
+			if(std::isnan(u(j,i))) {
+				within_lim = false;
+				break;
+			}
+			if(u_lim[j][0] <= u(j,i) && u(j,i) <= u_lim[j][1]) {
+				continue;
+			}
+			within_lim = false;
+			break;
+		}
+		if(!within_lim) {
+			cout << "not within limits= \n" << u.block(0,i,6,1) << endl;
+			break;
+		}
 		double dist = (u.block(0,i,6,1) - _p).norm();
 		if((min_dist == -1 || dist < min_dist) && !std::isnan(dist)) {
 			v = u.block(0,i,6,1);
