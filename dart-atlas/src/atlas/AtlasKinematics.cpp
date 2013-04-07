@@ -72,6 +72,7 @@ void AtlasKinematics::init(Skeleton *_atlas) {
 		Matrix4d Tw5 = LAP->getWorldTransform();
 
 		double h3;
+		l0 = abs(Tw1(1,3));
 		l1 = abs(Tw3(2,3));
 		l2 = abs(Tw3(0,3));
 		h3 = abs(Tw4(2,3)) - l1; // l3 is at an angle
@@ -79,6 +80,7 @@ void AtlasKinematics::init(Skeleton *_atlas) {
 
 		l3 = sqrt(h3*h3 + l2*l2);
 
+		cout << "l0= " << l0 << endl;
 //		cout << "l1= " << l1 << endl;
 //		cout << "l2= " << l2 << endl;
 //		cout << "l3= " << l3 << endl;
@@ -110,6 +112,7 @@ void AtlasKinematics::init(Skeleton *_atlas) {
 		for(int i=0; i < 6; ++i) {
 			u_off[i] = 0;
 		}
+		l0 = 0;
 		l1 = 1;
 		l2 = 1;
 		l3 = 3;
@@ -173,31 +176,17 @@ Matrix4d AtlasKinematics::legFK(double _u1, double _u2, double _u3, double _u4, 
 
 Vector6d AtlasKinematics::legIK(const Matrix4d& _Tbf, const Vector6d& _p, bool _left) {
 	Vector6d u;
-	return u;
+
 }
 
 Vector6d AtlasKinematics::legIK(const Matrix4d& _Tf, const Vector6d& _p) {
+
+	//FIXME: Matt I leave this to you
 	MatrixXd u = legIK(_Tf);
 	Vector6d v = _p;
 	double min_dist = -1;
 	bool within_lim;
 	for(int i=0; i < 8; ++i) {
-		within_lim = true;
-		for(int j=0; j < 6; j++) {
-			if(std::isnan(u(j,i))) {
-				within_lim = false;
-				break;
-			}
-			if(u_lim[j][0] <= u(j,i) && u(j,i) <= u_lim[j][1]) {
-				continue;
-			}
-			within_lim = false;
-			break;
-		}
-		if(!within_lim) {
-			cout << "not within limits= \n" << u.block(0,i,6,1) << endl;
-			break;
-		}
 		double dist = (u.block(0,i,6,1) - _p).norm();
 		if((min_dist == -1 || dist < min_dist) && !std::isnan(dist)) {
 			v = u.block(0,i,6,1);
