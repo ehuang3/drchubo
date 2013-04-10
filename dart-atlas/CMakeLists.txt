@@ -15,6 +15,16 @@ IF(NOT CMAKE_BUILD_TYPE)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
 ###############
+# Color gcc
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_GNUCPP)
+   option(COLOR_GCC "Use GCCFilter to color compiler output messages" ON)
+   set(COLOR_GCC_OPTIONS "-c -r -w -p")
+   if(COLOR_GCC)
+      set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_SOURCE_DIR}/tools/gccfilter ${COLOR_GCC_OPTIONS}")
+   endif()
+endif()
+
+###############
 # Compile flags
 if(WIN32)
   set (CMAKE_INSTALL_PREFIX "C:/Golems" CACHE PATH "Install prefix" FORCE)

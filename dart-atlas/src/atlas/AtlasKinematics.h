@@ -7,6 +7,14 @@ namespace kinematics { class Skeleton; }
 namespace atlas
 {
 
+enum ManipIndex {
+	MANIP_L_FOOT,
+	MANIP_R_FOOT,
+	MANIP_L_HAND,
+	MANIP_R_HAND,
+	NUM_MANIPULATORS,
+};
+
 class AtlasKinematics {
 public:
 	AtlasKinematics();
@@ -17,6 +25,15 @@ public:
 	Eigen::Matrix4d legT(int _frame, double _u);
 	Eigen::Matrix4d legFK(const Eigen::Vector6d& _u);
 	Eigen::Matrix4d legFK(double _u1, double _u2, double _u3, double _u4, double _u5, double _u6);
+
+	// FIXME: Finish this
+	/* @function: bool comIK(const Eigen::Vector3d& _com,
+	 * 						 Eigen::VectorXd& _dofs,
+	 * 						 Eigen::Matrix4d _Tb,
+	 * 						 const Eigen::Matrix4d& _Tm[NUM_MANIPULATORS])
+	 *
+	 */
+	bool comIK(const Eigen::Vector3d& _com, Eigen::VectorXd& _dofs, Eigen::Matrix4d& _Tb, const Eigen::Matrix4d _Tm[NUM_MANIPULATORS]);
 
 	//TODO: Matt, use the pelvis node as body frame center.
 	//		Implement the functions below (shake dem atlas hips!)
@@ -42,7 +59,7 @@ public:
 	 * 					bool _left)
 	 * @brief: solves for joint angles given the foot transform
 	 * @parameters:
-	 * 		 _Tbf: transfrom from body (frame b) to foot (frame f)
+	 * 		 _Tbf: transfrom from body (frame b) to foot (frame f/6)
 	 * 		   _p: joint angles for nearest-based selection
 	 * 	   	_left: true for left foot
 	 * @return:
@@ -54,7 +71,7 @@ public:
 	 * 					const Eigen::Vector6d& _p)
 	 * @brief: solves for joint angles given the foot transform
 	 * @parameters:
-	 * 		_Tf: transfrom from hip (frame 0) to foot (frame f)
+	 * 		_Tf: transfrom from hip (frame 0) to foot (frame f/6)
 	 * 		 _p: joint angles for nearest-based selection
 	 * @return:
 	 * 		  u: joint angle solution closest to _p
@@ -64,7 +81,7 @@ public:
 	/* @function: legIK(const Eigen::Matrix4d& _T0f)
 	 * @brief: solves for joint angles given the foot transform
 	 * @parameters:
-	 * 		_Tf: transfrom from hip (frame 0) to foot (frame f)
+	 * 		_Tf: transfrom from hip (frame 0) to foot (frame f/6)
 	 * @return:
 	 *		  u: 6x8 matrix of 8 joint angle solutions
 	*/
@@ -72,6 +89,7 @@ public:
 
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 private:
+	kinematics::Skeleton *atlas;  //warning: shared and modified across classes
 	double l0;  // pelvis to hip
 	double l1;  // hip yaw to hip pitch z
 	double l2;  // hip yaw to hip pitch x

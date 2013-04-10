@@ -22,10 +22,7 @@ AtlasKinematics::~AtlasKinematics() {
 
 void AtlasKinematics::init(Skeleton *_atlas) {
 	if(_atlas) {
-		for(int i=0; i < _atlas->getNumDofs(); ++i) {
-			Dof *dof = _atlas->getDof(i);
-			//cout << dof->getName() << "= " << dof->getValue() << endl;
-		}
+		atlas = _atlas;
 
 		// zero atlas
 		VectorXd dofs = _atlas->getPose();
@@ -46,26 +43,10 @@ void AtlasKinematics::init(Skeleton *_atlas) {
 		// joint 6 - ankle roll
 		BodyNode *LAR = _atlas->getNode("l_foot");
 
-		cout << "LHY\n" << LHY->getWorldTransform() << endl;
-		cout << "LHR\n" << LHR->getWorldTransform() << endl;
-		cout << "LHP\n" << LHP->getWorldTransform() << endl;
-		cout << "LKP\n" << LKP->getWorldTransform() << endl;
-		cout << "LAP\n" << LAP->getWorldTransform() << endl;
-		cout << "LAR\n" << LAR->getWorldTransform() << endl;
-
 		// BLARGS
-//		BodyNode *LT = _atlas->getNode("ltorso");
-//		BodyNode *MT = _atlas->getNode("mtorso");
-//		BodyNode *UT = _atlas->getNode("utorso");
-//		BodyNode *P = _atlas->getNode("pelvis");
-//
-//		cout << "LT\n" << LT->getWorldTransform() << endl;
-//		cout << "MT\n" << MT->getWorldTransform() << endl;
-//		cout << "UT\n" << UT->getWorldTransform() << endl;
-//		cout << "P\n" << P->getWorldTransform() << endl;
+		// BodyNode *P = _atlas->getNode("pelvis");
 
-		// ? world origin is at Atlas's waist pelvis
-
+		// ? world origin is at Atlas's pelvis
 		Matrix4d Tw1 = LHY->getWorldTransform();
 		Matrix4d Tw3 = LHP->getWorldTransform();
 		Matrix4d Tw4 = LKP->getWorldTransform();
@@ -80,31 +61,18 @@ void AtlasKinematics::init(Skeleton *_atlas) {
 
 		l3 = sqrt(h3*h3 + l2*l2);
 
-		cout << "l0= " << l0 << endl;
-//		cout << "l1= " << l1 << endl;
-//		cout << "l2= " << l2 << endl;
-//		cout << "l3= " << l3 << endl;
-//		cout << "l4= " << l4 << endl;
-
+		// angle offs
 		for(int i=0; i < 6; ++i) {
 			u_off[i] = 0;
 		}
-
-		// angle offs
 		u_off[2] = atan2(l2, h3);
 		u_off[3] = -u_off[2];
-
-		for(int i=0; i < 6; ++i) {
-			//cout << "u" << i << "= " << u_off[i] << endl;
-		}
 
 		// joint limits
 		BodyNode* node[6] = { LHY, LHR, LHP, LKP, LAP, LAR };
 		for(int i=0; i < 6; i++) {
 			u_lim[i][0] = node[i]->getParentJoint()->getDof(0)->getMin();
 			u_lim[i][1] = node[i]->getParentJoint()->getDof(0)->getMax();
-
-			cout << "u lim " << i << ": " << u_lim[i][0] << " " << u_lim[i][1] << endl;
 		}
 
 	} else {
@@ -174,9 +142,13 @@ Matrix4d AtlasKinematics::legFK(double _u1, double _u2, double _u3, double _u4, 
 				  _u6 + u_off[5]);
 }
 
+bool AtlasKinematics::comIK(const Vector3d& _com, VectorXd& _dofs, Matrix4d& _Tb, const Matrix4d _Tm[NUM_MANIPULATORS]) {
+	return true;
+}
+
 Vector6d AtlasKinematics::legIK(const Matrix4d& _Tbf, const Vector6d& _p, bool _left) {
 	Vector6d u;
-
+	return u;
 }
 
 Vector6d AtlasKinematics::legIK(const Matrix4d& _Tf, const Vector6d& _p) {
