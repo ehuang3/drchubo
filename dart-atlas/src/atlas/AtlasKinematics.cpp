@@ -43,7 +43,6 @@ void AtlasKinematics::init(Skeleton *_atlas) {
 		// joint 6 - ankle roll
 		BodyNode *LAR = _atlas->getNode("l_foot");
 
-		// BLARGS
 		// BodyNode *P = _atlas->getNode("pelvis");
 
 		// ? world origin is at Atlas's pelvis
@@ -158,13 +157,32 @@ Vector6d AtlasKinematics::legIK(const Matrix4d& _Tf, const Vector6d& _p) {
 	Vector6d v = _p;
 	double min_dist = -1;
 	bool within_lim;
+	bool foundSolution = false;
 	for(int i=0; i < 8; ++i) {
+		within_lim = true;
+		for(int j=0; j < 6; j++) {
+			if(std::isnan(u(j,i))) {
+				within_lim = false;
+				continue;
+			}
+			if( !( u_lim[j][0] <= u(j,i) && u(j,i) <= u_lim[j][1] ) ) {
+				within_lim = false;
+				continue;
+			}
+		}
+		if(!within_lim) {
+			//cout << "Solution " << i << " does not respect joint limits= \n" << u.col(i) << endl;
+			continue;
+		}
 		double dist = (u.block(0,i,6,1) - _p).norm();
 		if((min_dist == -1 || dist < min_dist) && !std::isnan(dist)) {
 			v = u.block(0,i,6,1);
 			min_dist = dist;
 		}
+		foundSolution = true;
 	}
+	if(!foundSolution)
+		throw "NO SOLUTION!";
 	return v;
 }
 

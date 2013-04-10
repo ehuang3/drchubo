@@ -22,8 +22,27 @@
 #include <sensor_msgs/JointState.h>
 #include <osrf_msgs/JointCommands.h>
 
+
+#include <atlas/AtlasKinematics.h>
+#include <atlas/AtlasUtils.h>
+#include <utils/AtlasPaths.h>
+#include <robotics/parser/dart_parser/DartLoader.h>
+#include <robotics/World.h>
+#include <kinematics/Skeleton.h>
+#include <dynamics/SkeletonDynamics.h>
+
+using namespace std;
+using namespace atlas;
+using namespace kinematics;
+using namespace Eigen;
+using namespace dynamics;
+using namespace robotics;
+
 ros::Publisher pub_joint_commands_;
 osrf_msgs::JointCommands jointcommands;
+
+Vector6d angles;
+AtlasKinematics AK;
 
 void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js)
 {
@@ -32,10 +51,57 @@ void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js)
     // for testing round trip time
     jointcommands.header.stamp = _js->header.stamp;
 
+    double dt = (ros::Time::now() - startTime).toSec();
+    double r = 0.25;
+    double x = r * cos(dt);
+    double z = r * sin(dt) + r;
+
+    Matrix4d Tfoot;
+    Tfoot.row(0) <<  0, 0, 1,  x    ;
+    Tfoot.row(1) <<  0, 1, 0,  0    ;
+    Tfoot.row(2) << -1, 0, 0, -0.846 + z;
+    Tfoot.row(3) <<  0, 0, 0,  1    ;
+
+    Vector6d u;
+    u << 0, 0, 0, 0, 0, 0;
+    try {
+    angles = AK.legIK(Tfoot, u);
+    } catch (char const* msg) {
+      cerr << msg << endl;
+      return;
+    }
+
     // assign sinusoidal joint angle targets
     for (unsigned int i = 0; i < jointcommands.name.size(); i++)
-      jointcommands.position[i] =
-        3.2* sin((ros::Time::now() - startTime).toSec());
+    {
+      string name = jointcommands.name[i];
+      jointcommands.position[i] = 0;
+      if(name == "atlas::l_leg_uhz")
+      {
+        jointcommands.position[i] = angles[0];
+      }
+      if(name == "atlas::l_leg_mhx")
+      {
+        jointcommands.position[i] = angles[1];
+      }
+      if(name == "atlas::l_leg_lhy")
+      {
+        jointcommands.position[i] = angles[2];
+      }
+      if(name == "atlas::l_leg_kny")
+      {
+        jointcommands.position[i] = angles[3];
+      }
+      if(name == "atlas::l_leg_uay")
+      {
+        jointcommands.position[i] = angles[4];
+      }
+      if(name == "atlas::l_leg_lax")
+      {
+        jointcommands.position[i] = angles[5];
+      }
+    }
+      //jointcommands.position[i] = 3.2* sin((ros::Time::now() - startTime).toSec());
 
     pub_joint_commands_.publish(jointcommands);
   }
@@ -43,6 +109,16 @@ void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js)
 
 int main(int argc, char** argv)
 {
+  cout << "-----DART init-----" << endl;
+  DartLoader dart_loader;
+  World *mWorld = dart_loader.parseWorld(ATLAS_DATA_PATH "atlas/atlas_world.urdf");
+  SkeletonDynamics *atlas = mWorld->getSkeleton("atlas");
+  cout << endl << "-----done-----" << endl << endl;
+
+  AK.init(atlas);
+
+  // Begin ROS init code
+
   ros::init(argc, argv, "pub_joint_command_test");
 
   ros::NodeHandle* rosnode = new ros::NodeHandle();

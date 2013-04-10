@@ -93,6 +93,7 @@ TEST(KINEMATICS, INVERSE_NEAREST) {
 	u << 0, 0, 0, 0, 0, 0;
 
 	Matrix4d Tfoot = AK.legFK(u);
+	cout << Tfoot << endl;
 
 	Tfoot(3,3) += 0.01;
 
