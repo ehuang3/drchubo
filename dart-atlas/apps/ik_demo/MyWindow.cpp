@@ -12,6 +12,10 @@
 #include <renderer/OpenGLRenderInterface.h>
 #include <atlas/AtlasGraphics.h>
 
+#include <kinematics/BodyNode.h>
+#include <kinematics/Shape.h>
+#include <kinematics/ShapeBox.h>
+
 using namespace dynamics;
 using namespace utils;
 using namespace std;
@@ -58,10 +62,11 @@ void MyWindow::initDyn()
         mDofs[i].setZero();
         mDofVels[i].setZero();
     }
+
     // ground
     mDofs[0][0] = 0.00;
     mDofs[0][1] = 0.00;
-    mDofs[0][2] = -0.97;
+    mDofs[0][2] = -0.927119 - 0.025;
 
     for (unsigned int i = 0; i < mSkels.size(); i++) {
         mSkels[i]->initDynamics();
@@ -71,6 +76,16 @@ void MyWindow::initDyn()
     mSkels[0]->setImmobileState(true);
     // create a collision handler
     mCollisionHandle = new dynamics::ContactDynamics(mSkels, mTimeStep);
+
+    // zero ground at atlas's feet
+    double z = mSkels[0]->getNode("ground1_root")->getCollisionShape()->getDim()(2)/2;
+    kinematics::BodyNode *LAR = mSkels[1]->getNode("l_foot");
+    kinematics::Shape *feet = LAR->getCollisionShape();
+    z += feet->getDim()(2)/2 - feet->getTransform().matrix()(2,3);
+    z += -LAR->getWorldTransform()(2,3);
+
+    mDofs[0][2] = -z;
+    mSkels[0]->setPose(mDofs[0], true, false);
 }
 
 VectorXd MyWindow::getState() {
@@ -151,7 +166,7 @@ void MyWindow::displayTimer(int _val)
 
 void MyWindow::draw()
 {
-    glDisable(GL_LIGHTING);
+    //glDisable(GL_LIGHTING);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDisable(GL_CULL_FACE);
     glEnable(GL_NORMALIZE);
@@ -202,14 +217,15 @@ void MyWindow::draw()
     renderer::OpenGLRenderInterface *mGLRI = dynamic_cast<renderer::OpenGLRenderInterface *>(mRI);
     
     for (unsigned int i = 0; i < mSkels.size(); i++) {
-        //mGLRI->draw(mSkels[i], false, false);
+        //mGLRI->draw(mSkels[i], false, true); //FIXME: dart sucks at openGL settings
         mSkels[i]->draw(mRI);
     }
 
     glClear(GL_DEPTH_BUFFER_BIT);
     atlas::AtlasGraphics AG;
-    AG.renderCOM(mSkels[1], mRI);
     AG.renderJoints(mSkels[1], mRI);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    AG.renderCOM(mSkels[1], mRI);
 
     // display the frame count in 2D text
     char buff[64];

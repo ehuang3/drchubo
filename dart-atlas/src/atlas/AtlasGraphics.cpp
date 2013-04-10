@@ -49,7 +49,7 @@ void AtlasGraphics::renderCOM(BodyNode *_node, RenderInterface *_ri) {
 
 	mass = mass / 10 * 0.05;
 
-	glColor3d(1.0, 0.0, 0.0);
+	glColor3d(1.0, 0.1, 0.2);
 	_ri->pushMatrix();
 	_ri->translate(com_off);
 	_ri->drawEllipsoid(Vector3d(1,1,1) * mass);
@@ -74,20 +74,21 @@ void AtlasGraphics::renderJoints(BodyNode *_node, RenderInterface *_ri) {
 	for(int i=0; i < _jointParent->getNumTransforms(); ++i) {
 		_jointParent->getTransform(i)->applyGLTransform(_ri);
 
-		if(i == _jointParent->getNumTransforms()-1) {
-			// dof transform
-			cout << "BodyNode: " << _node->getName() << endl;
-			cout << "Trfm: " << _jointParent->getTransform(i)->getName() << endl;
-			cout << "Tfrm Type: " << _jointParent->getTransform(i)->getType() << endl;
-			cout << "= \n" << _jointParent->getTransform(i)->getTransform() << endl;
-			cout << "ParentJoint: " << _jointParent->getName() << endl;
-			for(int i=0; i < 3; i++) {
-				cout << "axis " << i << "= \n"
-					 << _jointParent->getAxis(i) << endl;
-			}
-		}
+//		if(i == _jointParent->getNumTransforms()-1) {
+//			// dof transform
+//			cout << "BodyNode: " << _node->getName() << endl;
+//			cout << "Trfm: " << _jointParent->getTransform(i)->getName() << endl;
+//			cout << "Tfrm Type: " << _jointParent->getTransform(i)->getType() << endl;
+//			cout << "= \n" << _jointParent->getTransform(i)->getTransform() << endl;
+//			cout << "ParentJoint: " << _jointParent->getName() << endl;
+//			for(int i=0; i < 3; i++) {
+//				cout << "axis " << i << "= \n"
+//					 << _jointParent->getAxis(i) << endl;
+//			}
+//		}
 	}
 
+	// axis 0 is joint axis of rotation (i think)
 	Vector3d ax = _jointParent->getAxis(0).normalized();
 	Vector3d zx = Vector3d::UnitZ();
 	Vector3d perp = zx.cross(ax);
@@ -104,7 +105,7 @@ void AtlasGraphics::renderJoints(BodyNode *_node, RenderInterface *_ri) {
 
 		_ri->pushMatrix();
 		glTranslated(0.0,0.0,-height/2);
-		glColor3d(0.0, 0.0, 1.0);
+		glColor3d(0.0, 0.3, 1.0);
 		QUAD_OBJ_INIT;
 		gluCylinder(quadObj, radius, radius, height, 16, 16);
 		gluDisk(quadObj, 0, radius, 16, 16);
@@ -119,7 +120,8 @@ void AtlasGraphics::renderJoints(BodyNode *_node, RenderInterface *_ri) {
 
 	// render subtree
 	for(int i=0; i < _node->getNumChildJoints(); ++i) {
-		renderJoints(_node->getChildJoint(i)->getChildNode(), _ri);
+		BodyNode *child = _node->getChildJoint(i)->getChildNode();
+		renderJoints(child, _ri);
 	}
 	_ri->popMatrix();
 }
