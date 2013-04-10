@@ -42,6 +42,7 @@ ros::Publisher pub_joint_commands_;
 osrf_msgs::JointCommands jointcommands;
 
 Vector6d angles;
+AtlasKinematics AK;
 
 void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js)
 {
@@ -49,6 +50,26 @@ void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js)
   {
     // for testing round trip time
     jointcommands.header.stamp = _js->header.stamp;
+
+    double dt = (ros::Time::now() - startTime).toSec();
+    double r = 0.25;
+    double x = r * cos(dt);
+    double z = r * sin(dt) + r;
+
+    Matrix4d Tfoot;
+    Tfoot.row(0) <<  0, 0, 1,  x    ;
+    Tfoot.row(1) <<  0, 1, 0,  0    ;
+    Tfoot.row(2) << -1, 0, 0, -0.846 + z;
+    Tfoot.row(3) <<  0, 0, 0,  1    ;
+
+    Vector6d u;
+    u << 0, 0, 0, 0, 0, 0;
+    try {
+    angles = AK.legIK(Tfoot, u);
+    } catch (char const* msg) {
+      cerr << msg << endl;
+      return;
+    }
 
     // assign sinusoidal joint angle targets
     for (unsigned int i = 0; i < jointcommands.name.size(); i++)
@@ -88,36 +109,15 @@ void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js)
 
 int main(int argc, char** argv)
 {
+  cout << "-----DART init-----" << endl;
   DartLoader dart_loader;
   World *mWorld = dart_loader.parseWorld(ATLAS_DATA_PATH "atlas/atlas_world.urdf");
   SkeletonDynamics *atlas = mWorld->getSkeleton("atlas");
+  cout << endl << "-----done-----" << endl << endl;
 
-  AtlasKinematics AK;
   AK.init(atlas);
 
-  Matrix4d Tfoot;
-  Tfoot.row(0) <<  0, 0, 1,  0    ;
-  Tfoot.row(1) <<  0, 1, 0,  0    ;
-  Tfoot.row(2) << -1, 0, 0, -0.746;
-  Tfoot.row(3) <<  0, 0, 0,  1    ;
-
-  Vector6d u;
-  u << 0, 0, 0, 0, 0, 0;
-  MatrixXd solutions = AK.legIK(Tfoot);
-
-  //cout << endl << solutions << endl;
-  
-  for(int i = 0; i < solutions.cols(); i++)
-  {
-    Vector6d solution = solutions.col(i);
-    if( !(/*isNan*/solution[3] != solution[3]) && solution[3] > 0)
-    {
-      angles = solution;
-      break;
-    }
-  }
-
-  cout << endl << angles << endl;
+  // Begin ROS init code
 
   ros::init(argc, argv, "pub_joint_command_test");
 
