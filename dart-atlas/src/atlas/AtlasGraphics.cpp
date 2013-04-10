@@ -74,36 +74,33 @@ void AtlasGraphics::renderJoints(BodyNode *_node, RenderInterface *_ri) {
 	for(int i=0; i < _jointParent->getNumTransforms(); ++i) {
 		_jointParent->getTransform(i)->applyGLTransform(_ri);
 
-//		if(i == _jointParent->getNumTransforms()-1) {
-//			// dof transform
-//			cout << "BodyNode: " << _node->getName() << endl;
-//			cout << "Trfm: " << _jointParent->getTransform(i)->getName() << endl;
-//			cout << "Tfrm Type: " << _jointParent->getTransform(i)->getType() << endl;
-//			cout << "= \n" << _jointParent->getTransform(i)->getTransform() << endl;
-//		}
+		if(i == _jointParent->getNumTransforms()-1) {
+			// dof transform
+			cout << "BodyNode: " << _node->getName() << endl;
+			cout << "Trfm: " << _jointParent->getTransform(i)->getName() << endl;
+			cout << "Tfrm Type: " << _jointParent->getTransform(i)->getType() << endl;
+			cout << "= \n" << _jointParent->getTransform(i)->getTransform() << endl;
+			cout << "ParentJoint: " << _jointParent->getName() << endl;
+			for(int i=0; i < 3; i++) {
+				cout << "axis " << i << "= \n"
+					 << _jointParent->getAxis(i) << endl;
+			}
+		}
 	}
 
-
+	Vector3d ax = _jointParent->getAxis(0).normalized();
+	Vector3d zx = Vector3d::UnitZ();
+	Vector3d perp = zx.cross(ax);
+	double y = perp.norm();
+	double x = zx.dot(ax);
+	double ang = atan2(y,x) * 180.0 / M_PI;
 
 	_ri->pushMatrix();
 
 	double radius = 0.02;
 	double height = 0.05;
 
-	Vector3d axis;
-	switch (_jointParent->getTransform(nt-1)->getType()) {
-	case Transformation::TransFormType::T_ROTATEX:
-		axis << 0, 1, 0;
-		break;
-	case Transformation::TransFormType::T_ROTATEY:
-		axis << 1, 0, 0;
-		break;
-	case Transformation::TransFormType::T_ROTATEZ:
-		axis << 0, 0, 1;
-		break;
-	}
-
-	_ri->rotate(axis, 90);
+	_ri->rotate(perp, ang);
 
 		_ri->pushMatrix();
 		glTranslated(0.0,0.0,-height/2);
