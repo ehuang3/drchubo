@@ -10,6 +10,8 @@
 #include <robotics/parser/dart_parser/DartLoader.h>
 #include <robotics/World.h>
 #include <kinematics/Skeleton.h>
+#include <kinematics/Dof.h>
+#include <kinematics/BodyNode.h>
 #include <dynamics/SkeletonDynamics.h>
 
 using namespace std;
@@ -20,91 +22,214 @@ using namespace kinematics;
 using namespace dynamics;
 using namespace robotics;
 
+
+atlas::AtlasKinematics *_ak;
+kinematics::Skeleton *_atlas;
+/* ********************************************************************************************* */
+atlas::AtlasKinematics *prepareAtlasKinematics() {
+	if(!_ak) {
+		DartLoader dart_loader;
+		World *mWorld = dart_loader.parseWorld(ATLAS_DATA_PATH "atlas/atlas_world.urdf");
+		_atlas = mWorld->getSkeleton("atlas");
+		_ak = new AtlasKinematics();
+		_ak->init(_atlas);
+	}
+	_atlas->setPose(_atlas->getPose().setZero(), true);
+	return _ak;
+}
 /* ********************************************************************************************* */
 TEST(KINEMATICS, INIT) {
-	DartLoader dart_loader;
-	World *mWorld = dart_loader.parseWorld(ATLAS_DATA_PATH "atlas/atlas_world.urdf");
-	SkeletonDynamics *atlas = mWorld->getSkeleton("atlas");
-
-	AtlasKinematics AK;
-	AK.init(atlas);
+	AtlasKinematics *AK = prepareAtlasKinematics();
 }
 /* ********************************************************************************************* */
 TEST(KINEMATICS, FORWARD) {
-	DartLoader dart_loader;
-	World *mWorld = dart_loader.parseWorld(ATLAS_DATA_PATH "atlas/atlas_world.urdf");
-	SkeletonDynamics *atlas = mWorld->getSkeleton("atlas");
-
-	AtlasKinematics AK;
-	AK.init(atlas);
-
-	Matrix4d Tfoot = AK.legFK(0,0,0,0,0,0);
-
-	cout << Tfoot << endl;
+	AtlasKinematics *AK = prepareAtlasKinematics();
+	Vector6d u = Vector6d::Zero();
+	Matrix4d Tfoot = AK->legFK(u, true);
 }
 /* ********************************************************************************************* */
-TEST(KINEMATICS, INVERSE) {
-	AtlasKinematics AK;
-	AK.init(0);
-	const double TOLERANCE_EXACT = 1.0e-10;
+TEST(KINEMATICS, COMPARE_DART_FORWARD) {
+	AtlasKinematics *AK = prepareAtlasKinematics();
 
-	const int NUM_SLICE = 3;
-	double a[NUM_SLICE];
-	for(int i=0; i < NUM_SLICE; ++i) {
-		a[i] = -M_PI + 1 + double(i)/NUM_SLICE*(2*M_PI - 1);
+	int l[6], r[6];
+	l[0] = 7;  //= l_leg_uhz
+	l[1] = 10; //= l_leg_mhx
+	l[2] = 13; //= l_leg_lhy
+	l[3] = 18; //= l_leg_kny
+	l[4] = 23; //= l_leg_uay
+	l[5] = 27; //= l_leg_lax
+
+	r[0] = 8;  //= r_leg_uhz
+	r[1] = 11; //= r_leg_mhx
+	r[2] = 14; //= r_leg_lhy
+	r[3] = 19; //= r_leg_kny
+	r[4] = 24; //= r_leg_uay
+	r[5] = 28; //= r_leg_lax
+
+	Vector6d u;
+	u << -0.32, 0.495, -1.75, 2.45, -0.698, 0.436;
+
+	VectorXd dofs = _atlas->getPose();
+	for(int i=0; i < 6; ++i) {
+		dofs(l[i]) = u(i);
+		dofs(r[i]) = u(i);
 	}
+	_atlas->setPose(dofs, true);
+
+	cout << "FK left=\n" << AK->legFK(u, true) << endl;
+	cout << "FK right=\n" << AK->legFK(u, false) << endl;
+	cout << "DART left=\n" << _atlas->getNode("l_foot")->getWorldTransform() << endl;
+	cout << "DART right=\n" << _atlas->getNode("r_foot")->getWorldTransform() << endl;
+}
+/* ********************************************************************************************* */
+TEST(KINEMATICS, INVERSE_SELECTION) {
+	AtlasKinematics *AK = prepareAtlasKinematics();
+
+	Vector6d u = Vector6d::Zero();
+	Matrix4d Tf = AK->legFK(u, true);
+	MatrixXd V;
+	AK->legIK(Tf, true, V);
+
+	cout << "V=\n" << V << endl;
+}
+/* ********************************************************************************************* */
+TEST(KINEMATICS, INVERSE_SINGULARITY) {
+}
+/* ********************************************************************************************* */
+TEST(KINEMATICS, COMPARE_INVERSE_FORWARD) {
+	AtlasKinematics *AK = prepareAtlasKinematics();
+
+	const double TOLERANCE_EXACT = 1.0e-10;
 	VectorXd u(6);
-	Matrix4d Tfoot;
+	Matrix4d Tfoot, Tsol;
+	MatrixXd U;
+
+	// joint limits
+	double u_lim[6][2];
+	u_lim[0][0] = -0.32;
+	u_lim[0][1] = 1.14;
+	u_lim[1][0] = -0.47;
+	u_lim[1][1] = 0.495;
+	u_lim[2][0] = -1.75;
+	u_lim[2][1] = 0.524;
+	u_lim[3][0] = 0;
+	u_lim[3][1] = 2.45;
+	u_lim[4][0] = -0.698;
+	u_lim[4][1] = 0.698;
+	u_lim[5][0] = -0.436;
+	u_lim[5][1] = 0.436;
+
+	// generate angles
+	const int NUM_SLICE = 5;
+	double a[6][NUM_SLICE];
+	for(int i=0; i < 6; ++i)
+	for(int j=0; j < NUM_SLICE; ++j) {
+		double incr = (u_lim[i][1] - u_lim[i][0])/(NUM_SLICE-1);
+		a[i][j] = u_lim[i][0] + j*incr;
+	}
+
+	// test
 	for(int i1=0; i1 < NUM_SLICE; ++i1)
 	for(int i2=0; i2 < NUM_SLICE; ++i2)
 	for(int i3=0; i3 < NUM_SLICE; ++i3)
 	for(int i4=0; i4 < NUM_SLICE; ++i4)
 	for(int i5=0; i5 < NUM_SLICE; ++i5)
 	for(int i6=0; i6 < NUM_SLICE; ++i6) {
-		Tfoot = AK.legFK(a[i1], a[i2], a[i3], a[i4], a[i5], a[i6]);
-		u(0) = a[i1]; u(1) = a[i2]; u(2) = a[i3]; u(3) = a[i4]; u(4) = a[i5]; u(5) = a[i6];
+		u(0) = a[0][i1];
+		u(1) = a[1][i2];
+		u(2) = a[2][i3];
+		u(3) = a[3][i4];
+		u(4) = a[4][i5];
+		u(5) = a[5][i6];
+		Tfoot = AK->legFK(u, true);
 
-		MatrixXd v = AK.legIK(Tfoot);
+//		cout << "u=\n" << u << endl;
+//		cout << "Tfoot=\n" << Tfoot << endl;
 
-		cout << "u=\n" << u << endl;
-		cout << "v=\n" << v << endl;
+		ASSERT_TRUE(AK->legIK(Tfoot, true, U));
 
-		bool match = false;
-		for(int i=0; i < 8; ++i) {
-			VectorXd err = (v.block(0,i,6,1) - u);
-			if(err.norm() < TOLERANCE_EXACT) {
-				match = true;
-			}
+		for(int i=0; i < U.cols(); ++i) {
+			// compare IK FK
+			Tsol = AK->legFK(U.block(0,i,6,1), true);
+			for(int r=0; r < 4; ++r)
+				for(int c=0; c < 4; ++c)
+					EXPECT_NEAR(Tsol(r,c), Tfoot(r,c), TOLERANCE_EXACT);
 		}
-		if(!match)
-			ASSERT_EQ(0, 1);
 	}
 }
 /* ********************************************************************************************* */
 TEST(KINEMATICS, INVERSE_NEAREST) {
-	DartLoader dart_loader;
-	World *mWorld = dart_loader.parseWorld(ATLAS_DATA_PATH "atlas/atlas_world.urdf");
-	SkeletonDynamics *atlas = mWorld->getSkeleton("atlas");
+	AtlasKinematics *AK = prepareAtlasKinematics();
 
-	AtlasKinematics AK;
-	AK.init(atlas);
+	Vector6d u = Vector6d::Zero();
+	Matrix4d Tfoot = AK->legFK(u, true);
+	Tfoot(2,3) += 0.01;
+	//cout << "Tfoot=\n" << Tfoot << endl;
 
-	Vector6d u, a;
-	u << 0, 0, 0, 0, 0, 0;
+	MatrixXd U;
+	AK->legIK(Tfoot, true, U);
+	//cout << "U=\n" << U << endl;
 
-	Matrix4d Tfoot = AK.legFK(u);
-	cout << Tfoot << endl;
+	Vector6d a;
+	AK->legIK(Tfoot, true, u, a);
+	//cout << "ans=\n" << a << endl;
 
-	Tfoot(3,3) += 0.01;
+	//cout << "FK= \n" << AK->legFK(a, true) << endl;
+}
+/* ********************************************************************************************* */
+TEST(KINEMATICS, STANCE_IK) {
+	AtlasKinematics *AK = prepareAtlasKinematics();
 
-	MatrixXd U = AK.legIK(Tfoot);
+	VectorXd u(12), v(12);
+	u.setZero();
 
-	a = AK.legIK(Tfoot, u);
-	cout << "u=\n" << a << endl;
+	Matrix4d Twb = Matrix4d::Identity();
+	Matrix4d Twl = AK->legFK(u.topRows(6), true);
+	Matrix4d Twr = AK->legFK(u.bottomRows(6), false);
 
-	cout << "ans= \n" << AK.legFK(a) << endl;
+	//cout << "Twb=\n" << Twb << endl;
+	//cout << "Twl=\n" << Twl << endl;
+	//cout << "Twr=\n" << Twr << endl;
 
+	AK->stanceIK(Twb, Twl, Twr, u, v);
 
+	//cout << "v=\n" << v << endl;
+	//cout << "FK l=\n" << AK->legFK(v.topRows(6), true) << endl;
+	//cout << "FK r=\n" << AK->legFK(v.bottomRows(6), false) << endl;
+
+}
+/* ********************************************************************************************* */
+TEST(KINEMATICS, COM_IK) {
+	AtlasKinematics *AK = prepareAtlasKinematics();
+
+	cout << "com=\n" << _atlas->getWorldCOM() << endl;
+	for(int i=0; i < _atlas->getNumDofs(); ++i) {
+		//cout << "[] = " << i << "; \\\\= " << _atlas->getDof(i)->getName() << endl;
+	}
+
+	Matrix4d Twb = _atlas->getNode("pelvis")->getWorldTransform();
+	cout << "Twb=\n" << Twb << endl;
+	Matrix4d Twl = AK->legFK(Vector6d::Zero(), true);
+	Matrix4d Twr = AK->legFK(Vector6d::Zero(), false);
+
+	Matrix4d Tm[NUM_MANIPULATORS];
+	Tm[MANIP_L_FOOT] = Twl;
+	Tm[MANIP_R_FOOT] = Twr;
+
+	IK_Mode mode[NUM_MANIPULATORS];
+	mode[MANIP_L_FOOT] = IK_MODE_SUPPORT;
+	mode[MANIP_R_FOOT] = IK_MODE_WORLD;
+	mode[MANIP_L_HAND] = IK_MODE_FIXED;
+	mode[MANIP_R_HAND] = IK_MODE_FIXED;
+
+	VectorXd dofs = _atlas->getPose();
+
+	Vector3d com;
+	com << 0, 0, 0; // origin in world frame
+
+	AK->comIK(_atlas, com, Twb, mode, Tm, dofs);
+
+	cout << "new com=\n" << _atlas->getWorldCOM();
 }
 /* ********************************************************************************************* */
 int main(int argc, char* argv[]) {

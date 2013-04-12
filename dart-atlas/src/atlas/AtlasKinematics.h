@@ -15,6 +15,14 @@ enum ManipIndex {
 	NUM_MANIPULATORS,
 };
 
+enum IK_Mode {
+	IK_MODE_FREE,    // you can do whatever you want to these joint angles
+	IK_MODE_FIXED,   // joint angles already specified, do not mess with them
+	IK_MODE_BODY,    // manipulator specified relative to body
+	IK_MODE_WORLD,   // manipulator specified relative to world
+	IK_MODE_SUPPORT, // manipulator specfied relative to world, and holding up robot
+};
+
 class AtlasKinematics {
 public:
 	AtlasKinematics();
@@ -23,21 +31,35 @@ public:
 	void init(kinematics::Skeleton *_atlas);
 
 	Eigen::Matrix4d legT(int _frame, double _u);
-	Eigen::Matrix4d legFK(const Eigen::Vector6d& _u);
-	Eigen::Matrix4d legFK(double _u1, double _u2, double _u3, double _u4, double _u5, double _u6);
+	Eigen::Matrix4d legFK(const Eigen::Vector6d& _u, bool _left);
 
-	// FIXME: Finish this
-	/* @function: bool comIK(const Eigen::Vector3d& _com,
-	 * 						 Eigen::VectorXd& _dofs,
-	 * 						 Eigen::Matrix4d _Tb,
-	 * 						 const Eigen::Matrix4d& _Tm[NUM_MANIPULATORS])
-	 *
+	/* @function: bool comIK(kinematics::Skeleton *_atlas,
+	 * 						 const Eigen::Vector3d& _dcom,
+	 * 						 Eigen::Matrix4d& _Twb,
+	 * 						 IK_Mode _mode[NUM_MANIPULATORS],
+	 * 						 const Eigen::Matrix4d _Twm[NUM_MANIPULATORS],
+	 * 						 Eigen::VectorXd& _dofs)
+	 * @brief: solves IK to put com at _dcom
+	 * @parameters:
+	 *	   _atlas:
+	 *		_dcom: desired com in world frame
+	 *		 _Twb: xform of body frame in world frame
+	 *		_mode:
+	 *		 _Twm: xform of manipulator frames in world frame
+	 * 		_dofs: ouput joint angles & descent initial conditions
+	 * @return:
+	 * 		 bool: true if success
+	 * @preconditions:
+	 * 		- manipulator frames are oriented in my DH convention
+	 * 		  (call legFK(0, true) to see axis conventions)
+	 * 		- dofs are represented in DART-ordering
 	 */
-	bool comIK(const Eigen::Vector3d& _com, Eigen::VectorXd& _dofs, Eigen::Matrix4d& _Tb, const Eigen::Matrix4d _Tm[NUM_MANIPULATORS]);
-
-	//TODO: Matt, use the pelvis node as body frame center.
-	//		Implement the functions below (shake dem atlas hips!)
-	// 		Aslo, when you're done, you can probably do arm IK (ask me about that later)
+	bool comIK(kinematics::Skeleton *_atlas,
+			   const Eigen::Vector3d& _dcom,
+			   Eigen::Matrix4d& _Twb,
+			   IK_Mode _mode[NUM_MANIPULATORS],
+			   const Eigen::Matrix4d _Twm[NUM_MANIPULATORS],
+			   Eigen::VectorXd& _dofs);
 
 	/* @function: stanceIK(const Eigen::Matrix4d& _Twb,
 	 * 					   const Eigen::Matrix4d& _Twl,
@@ -51,41 +73,44 @@ public:
 	 * 		   _p: joint angles for nearest-based selection
 	 * @return:
 	 *			u: 12x1 joint angle solution nearest to _p
-	*/
-	Eigen::VectorXd stanceIK(const Eigen::Matrix4d& _Twb, const Eigen::Matrix4d& _Twl, const Eigen::Matrix4d& _Twr, const Eigen::VectorXd& _p);
+	 * @pre:
+	 * @post:
+	 */
+	bool stanceIK(const Eigen::Matrix4d& _Twb,
+				  const Eigen::Matrix4d& _Twl,
+				  const Eigen::Matrix4d& _Twr,
+				  const Eigen::VectorXd& _p,
+				  Eigen::VectorXd& _u);
 
-	/* @function: legIK(const Eigen::Matrix4d& _Tbf,
-	 * 					const Eigen::Vector6d& _p,
-	 * 					bool _left)
+	/* @function: bool legIK(const Eigen::Matrix4d& _Tbf,
+	 * 						 bool _left,
+	 * 						 const Eigen::Vector6d& _p,
+	 * 						 Eigen::MatrixXd& _u)
 	 * @brief: solves for joint angles given the foot transform
-	 * @parameters:
-	 * 		 _Tbf: transfrom from body (frame b) to foot (frame f/6)
-	 * 		   _p: joint angles for nearest-based selection
-	 * 	   	_left: true for left foot
+	 * @input:
+	 * 		_Tbf: transfrom from body (frame b) to foot (frame f/6)
+	 * 	   _left: true if left foot
+	 * 		  _p: joint angles for nearest-based selection
+	 * @output:
+	 * 		 &_u: the valid solution nearest _p or _p
 	 * @return:
-	 *			u: joint angle solution closest to _p
-	*/
-	Eigen::Vector6d legIK(const Eigen::Matrix4d& _Tbf, const Eigen::Vector6d& _p, bool _left);
+	 * 		bool: false if no valid solutions exists
+	 */
+	bool legIK(const Eigen::Matrix4d& _Tbf, bool _left, const Eigen::Vector6d& _p, Eigen::Vector6d& _u);
 
-	/* @function: legIK(const Eigen::Matrix4d& _T0f,
-	 * 					const Eigen::Vector6d& _p)
+	/* @function: legIK(const Eigen::Matrix4d& _Tbf
+	 * 					bool _left,
+	 * 					Eigen::MatrixXd& _u)
 	 * @brief: solves for joint angles given the foot transform
-	 * @parameters:
-	 * 		_Tf: transfrom from hip (frame 0) to foot (frame f/6)
-	 * 		 _p: joint angles for nearest-based selection
+	 * @input:
+	 * 		_Tbf: transfrom from body (frame b) to foot (frame f/6)
+	 * 	   _left: true if left foot
+	 * @output:
+	 * 	      _u: 6x? matrix of valid joint angle solutions
 	 * @return:
-	 * 		  u: joint angle solution closest to _p
-	*/
-	Eigen::Vector6d legIK(const Eigen::Matrix4d& _T0f, const Eigen::Vector6d& _p);
-
-	/* @function: legIK(const Eigen::Matrix4d& _T0f)
-	 * @brief: solves for joint angles given the foot transform
-	 * @parameters:
-	 * 		_Tf: transfrom from hip (frame 0) to foot (frame f/6)
-	 * @return:
-	 *		  u: 6x8 matrix of 8 joint angle solutions
-	*/
-	Eigen::MatrixXd legIK(const Eigen::Matrix4d& _T0f);
+	 *		bool: false if no solutions exist
+	 */
+	bool legIK(const Eigen::Matrix4d& _Tbf, bool _left, Eigen::MatrixXd& _u);
 
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 private:
@@ -100,8 +125,21 @@ private:
 	double lr[7], la[7], lt[7], ld[7];  // leg dh parameters
 
 	Eigen::Matrix4d _legT(int _frame, double _u);
-	Eigen::Matrix4d _legFK(double _u1, double _u2, double _u3, double _u4, double _u5, double _u6);
-	Eigen::MatrixXd _legIK(const Eigen::Matrix4d& _Tf);
+	Eigen::Matrix4d _legFK(const Eigen::Vector6d& _u, bool _left);
+
+	/* @function: _legIK(Eigen::Matrix4d _Tf,
+	 * 					 bool _left,
+	 * 					 const Eigen::Vector6d& _p,
+	 * 					 bool _nearest,
+	 * 					 Eigen::Vector6d& _u,
+	 * 					 Eigen::MatrixXd& _U)
+	 */
+	bool _legIK(Eigen::Matrix4d _Tf,
+				bool _left,
+			    const Eigen::Vector6d& _p,
+			    bool _nearest,
+				Eigen::Vector6d& _u,
+				Eigen::MatrixXd& _U);
 };
 
 }
