@@ -45,7 +45,7 @@ void AtlasKinematics::init(Skeleton *_atlas) {
 
 		// BodyNode *P = _atlas->getNode("pelvis");
 
-		// ? world origin is at Atlas's pelvis
+		// "body origin" is at Atlas's pelvis
 		Matrix4d Tw1 = LHY->getWorldTransform();
 		Matrix4d Tw3 = LHP->getWorldTransform();
 		Matrix4d Tw4 = LKP->getWorldTransform();
@@ -177,24 +177,25 @@ bool AtlasKinematics::comIK(Skeleton *_atlas,
 	//	[] = 21; //= hokuyo_joint
 
 	// gradient descent on com err
+	bool debug = true;
 	int COM_ITER = 10000; // max iterations
-	double COM_PTOL = 1e-4; // err tolerance
+	double COM_PTOL = 1e-3; // err tolerance
 	double alpha = 0.5; // descent scaling factor
-	bool ok = true;
+	bool ik_valid = true;
+	bool ik_found = false;
 	Vector4d com = Vector4d::Ones();
 	Vector3d com_err;
 	VectorXd u(24); // vector of manipulator joint angles
 	for(int i=0; i < NUM_MANIPULATORS; ++i) {
 		for(int j=0; j < 6; ++j) {
 			int ind = dof_ind[i][j];
-			u(i*6 + j) = _dofs(ind);
+			u(i*6 + j) = _dofs(ind); // init joint angles
 		}
 	}
-	for(int i=0; i < COM_ITER; ++i) {
-		cout << "COM_IK: iteration " << i << endl;
-
+	int i;
+	for(i=0; i < COM_ITER; ++i) {
 		// solve for leg angles
-		stanceIK(_Twb, _Twm[MANIP_L_FOOT], _Twm[MANIP_R_FOOT], u, u);
+		ik_valid = stanceIK(_Twb, _Twm[MANIP_L_FOOT], _Twm[MANIP_R_FOOT], u, u);
 
 		// copy angles to skeleton
 		for(int i=0; i < NUM_MANIPULATORS; ++i) {
@@ -202,7 +203,6 @@ bool AtlasKinematics::comIK(Skeleton *_atlas,
 				int ind = dof_ind[i][j];
 				_dofs(ind) = u(i*6 + j);
 			}
-			cout << "manip " << i << "= " << u.block(i*6,0,6,1).transpose() << endl;
 		}
 		_atlas->setPose(_dofs, true, false);
 
@@ -210,24 +210,33 @@ bool AtlasKinematics::comIK(Skeleton *_atlas,
 		com.block<3,1>(0,0) = _atlas->getWorldCOM();
 		// translate to world frame
 		com = _Twb * com;
-
+		// error
 		com_err = _dcom - com.block<3,1>(0,0);
 
-		cout << "dcom=\n" << _dcom << endl;
-		cout << "com=\n" << com << endl;
-
 		if(com_err.norm() < COM_PTOL) {
-			cout << "\nBreaking at iteration " << i << "\n"
-				 << "err= " << com_err.norm() << "\n\n";
+			ik_found = true;
 			break;
 		}
 
+		// descent
 		_Twb.block(0,3,3,1) += alpha * com_err;
 
-		cout << endl;
+		if(debug) {
+			cout << "COM_IK: iteration " << i << endl;
+			for(int i=0; i < NUM_MANIPULATORS; ++i) {
+				cout << "manip " << i << "= " << u.block(i*6,0,6,1).transpose() << "\n";
+			}
+			cout << "dcom=\n" << _dcom << endl;
+			cout << "com=\n" << com << endl;
+			cout << endl;
+		}
+	}
+	if(debug) {
+		cout << "\nconverged at iteration " << i << "\n"
+			 << "err= " << com_err.norm() << "\n\n";
 	}
 
-	return true;
+	return ik_found && ik_valid;
 }
 
 bool AtlasKinematics::stanceIK(const Matrix4d& _Twb,

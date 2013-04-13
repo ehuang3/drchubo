@@ -15,6 +15,7 @@ enum ManipIndex {
 	NUM_MANIPULATORS,
 };
 
+//TODO: Support these modes
 enum IK_Mode {
 	IK_MODE_FREE,    // you can do whatever you want to these joint angles
 	IK_MODE_FIXED,   // joint angles already specified, do not mess with them
@@ -41,14 +42,14 @@ public:
 	 * 						 Eigen::VectorXd& _dofs)
 	 * @brief: solves IK to put com at _dcom
 	 * @parameters:
-	 *	   _atlas:
+	 *	   _atlas: for com calculations
 	 *		_dcom: desired com in world frame
 	 *		 _Twb: xform of body frame in world frame
-	 *		_mode:
+	 *		_mode: (temporarily unused)
 	 *		 _Twm: xform of manipulator frames in world frame
 	 * 		_dofs: ouput joint angles & descent initial conditions
 	 * @return:
-	 * 		 bool: true if success
+	 * 		 bool: true on success
 	 * @preconditions:
 	 * 		- manipulator frames are oriented in my DH convention
 	 * 		  (call legFK(0, true) to see axis conventions)
@@ -73,8 +74,8 @@ public:
 	 * 		   _p: joint angles for nearest-based selection
 	 * @return:
 	 *			u: 12x1 joint angle solution nearest to _p
-	 * @pre:
-	 * @post:
+	 * @postcondition:
+	 * 			- u top 6 is left leg, bottom 6 is right leg
 	 */
 	bool stanceIK(const Eigen::Matrix4d& _Twb,
 				  const Eigen::Matrix4d& _Twl,
@@ -114,7 +115,7 @@ public:
 
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 private:
-	kinematics::Skeleton *atlas;  //warning: shared and modified across classes
+	kinematics::Skeleton *atlas;  //
 	double l0;  // pelvis to hip
 	double l1;  // hip yaw to hip pitch z
 	double l2;  // hip yaw to hip pitch x
