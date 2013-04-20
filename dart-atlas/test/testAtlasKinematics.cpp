@@ -187,16 +187,47 @@ TEST(KINEMATICS, STANCE_IK) {
 	Matrix4d Twl = AK->legFK(u.topRows(6), true);
 	Matrix4d Twr = AK->legFK(u.bottomRows(6), false);
 
-	//cout << "Twb=\n" << Twb << endl;
-	//cout << "Twl=\n" << Twl << endl;
-	//cout << "Twr=\n" << Twr << endl;
+	cout << "Twl=\n" << Twl << endl;
+	cout << "Twr=\n" << Twr << endl;
 
 	AK->stanceIK(Twb, Twl, Twr, u, v);
 
-	//cout << "v=\n" << v << endl;
-	//cout << "FK l=\n" << AK->legFK(v.topRows(6), true) << endl;
-	//cout << "FK r=\n" << AK->legFK(v.bottomRows(6), false) << endl;
+	// generate sin waves make sure atlas lifts his foot
+	const double TOLERANCE_EXACT = 1.0e-10;
+	double base_loc = Twl(2,3);
+	double up = 0.2;
+	double forward = 0.2;
+	const int NUM_POINTS = 1000;
+	double wave[NUM_POINTS];
+	for(int i=0; i < NUM_POINTS; i++) {
+		wave[i] = sin(M_PI * i / NUM_POINTS);
+	}
+	for(int i=0; i < NUM_POINTS; i++) {
+		// z
+		Twl(2,3) = base_loc + up * wave[i];
+		Twr(2,3) = base_loc + up * wave[i];
+		// x
+		Twl(0,3) = forward * wave[i];
+		Twr(0,3) = forward * wave[i];
 
+
+		AK->stanceIK(Twb, Twl, Twr, u, u);
+
+		Matrix4d Fwl = AK->legFK(u.topRows(6), true);
+		Matrix4d Fwr = AK->legFK(u.bottomRows(6), false);
+
+		//		cout << "Twl=\n" << Twl << endl;
+		//		cout << "Fwl=\n" << Fwl << endl;
+		//
+		//		cout << "Twr=\n" << Twr << endl;
+		//		cout << "Fwr=\n" << Fwr << endl;
+
+		for(int i=0; i < 4; i++)
+			for(int j=0; j < 4; j++) {
+				ASSERT_NEAR(Fwl(i,j), Twl(i,j), TOLERANCE_EXACT);
+				ASSERT_NEAR(Fwr(i,j), Twr(i,j), TOLERANCE_EXACT);
+			}
+	}
 }
 /* ********************************************************************************************* */
 TEST(KINEMATICS, COM_IK) {
@@ -208,7 +239,7 @@ TEST(KINEMATICS, COM_IK) {
 	}
 
 	Matrix4d Twb = _atlas->getNode("pelvis")->getWorldTransform();
-	cout << "Twb=\n" << Twb << endl;
+	//cout << "Twb=\n" << Twb << endl;
 	Matrix4d Twl = AK->legFK(Vector6d::Zero(), true);
 	Matrix4d Twr = AK->legFK(Vector6d::Zero(), false);
 
@@ -229,7 +260,7 @@ TEST(KINEMATICS, COM_IK) {
 
 	AK->comIK(_atlas, com, Twb, mode, Tm, dofs);
 
-	cout << "new com=\n" << _atlas->getWorldCOM();
+	//cout << "new com=\n" << _atlas->getWorldCOM();
 }
 /* ********************************************************************************************* */
 int main(int argc, char* argv[]) {

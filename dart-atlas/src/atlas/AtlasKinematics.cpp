@@ -176,8 +176,11 @@ bool AtlasKinematics::comIK(Skeleton *_atlas,
 	//	[] = 16; //= neck_ay
 	//	[] = 21; //= hokuyo_joint
 
+	// hack
+	_dofs.block(0,0,3,1) = Vector3d::Zero();
+
 	// gradient descent on com err
-	bool debug = true;
+	bool debug = false;
 	int COM_ITER = 10000; // max iterations
 	double COM_PTOL = 1e-3; // err tolerance
 	double alpha = 0.5; // descent scaling factor
@@ -235,6 +238,9 @@ bool AtlasKinematics::comIK(Skeleton *_atlas,
 		cout << "\nconverged at iteration " << i << "\n"
 			 << "err= " << com_err.norm() << "\n\n";
 	}
+
+	// so we can visualize correctly later :)
+	_dofs.block(0,0,3,1) = _Twb.block(0,3,3,1);
 
 	return ik_found && ik_valid;
 }
