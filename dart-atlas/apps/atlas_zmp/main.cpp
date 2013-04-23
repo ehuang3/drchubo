@@ -60,32 +60,42 @@ int main(int argc, char* argv[]) {
 	Vector3d com;
 	//com << 0, 0, 0; // origin in world frame
 	com = atlas->getWorldCOM();
-	com(2) = 0;
+	com(2) = -.20;
 	AK.comIK(atlas, com, Twb, mode, Tm, dofs);
 
 	// move it down and up!
 	double com_base_z = com(2);
 	double com_base_y = com(1);
-	double down = -0.1;
-	double shake = 0.1;
+	double com_base_x = com(0);
+	double down = -0.20;
+	double shake = 0.40;
+	double front = -0.40;
 
 	// sin wave
-	const int NUM_POINTS = 1000;
+	const int NUM_POINTS = 2000;
 	double wave[NUM_POINTS];
+	double coswave[NUM_POINTS];
 	for(int i=0; i < NUM_POINTS; ++i) {
 		wave[i] = sin(2 * M_PI * i / NUM_POINTS);
+		coswave[i] = cos(2 * M_PI * i / NUM_POINTS);
 	}
 
 	// move it !!! & bake
 	std::vector<Eigen::VectorXd> allDofs = window.dofs();
 	for(int i=0; i < NUM_POINTS; ++i) {
-		//com(2) = com_base_z + down * wave[i];
+		com(2) = com_base_z + down * coswave[i];
 		com(1) = com_base_y + shake * wave[i];
-		AK.comIK(atlas, com, Twb, mode, Tm, dofs);
+		com(0) = com_base_x + front * wave[i];
+		bool ok = AK.comIK(atlas, com, Twb, mode, Tm, dofs);
 
 		allDofs[1] = dofs;
 
 		window.bake(allDofs);
+
+		if(!ok) {
+			cout << "dz= " << down * wave[i] << endl;
+			//break;
+		}
 	}
 
 	glutInit(&argc, argv);

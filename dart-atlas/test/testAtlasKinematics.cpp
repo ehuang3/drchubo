@@ -100,7 +100,7 @@ TEST(KINEMATICS, COMPARE_INVERSE_FORWARD) {
 	AtlasKinematics *AK = prepareAtlasKinematics();
 
 	const double TOLERANCE_EXACT = 1.0e-10;
-	VectorXd u(6);
+	Vector6d u(6);
 	Matrix4d Tfoot, Tsol;
 	MatrixXd U;
 
@@ -120,7 +120,7 @@ TEST(KINEMATICS, COMPARE_INVERSE_FORWARD) {
 	u_lim[5][1] = 0.436;
 
 	// generate angles
-	const int NUM_SLICE = 5;
+	const int NUM_SLICE = 7;
 	double a[6][NUM_SLICE];
 	for(int i=0; i < 6; ++i)
 	for(int j=0; j < NUM_SLICE; ++j) {
@@ -146,11 +146,11 @@ TEST(KINEMATICS, COMPARE_INVERSE_FORWARD) {
 //		cout << "u=\n" << u << endl;
 //		cout << "Tfoot=\n" << Tfoot << endl;
 
-		ASSERT_TRUE(AK->legIK(Tfoot, true, U));
+		AK->legIK(Tfoot, true, u, u);
 
-		for(int i=0; i < U.cols(); ++i) {
+		for(int i=0; i < u.cols(); ++i) {
 			// compare IK FK
-			Tsol = AK->legFK(U.block(0,i,6,1), true);
+			Tsol = AK->legFK(u.block(0,i,6,1), true);
 			for(int r=0; r < 4; ++r)
 				for(int c=0; c < 4; ++c)
 					EXPECT_NEAR(Tsol(r,c), Tfoot(r,c), TOLERANCE_EXACT);

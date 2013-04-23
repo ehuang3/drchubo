@@ -7,6 +7,7 @@
 #include <kinematics/Joint.h>
 
 #include <iostream>
+#include <complex>
 
 using namespace Eigen;
 using namespace kinematics;
@@ -254,8 +255,8 @@ bool AtlasKinematics::stanceIK(const Matrix4d& _Twb,
 	Matrix4d Tbr = _Twb.inverse() * _Twr;
 
 	Vector6d ul, ur;
-	bool valid = legIK(Tbl, true, _p.block<6,1>(0,0), ul) &&
-				 legIK(Tbr, false, _p.block<6,1>(6,0), ur);
+	bool valid = legIK(Tbl, true, _p.block<6,1>(0,0), ul);
+	valid &= legIK(Tbr, false, _p.block<6,1>(6,0), ur);
 	_u.block<6,1>(0,0) = ul;
 	_u.block<6,1>(6,0) = ur;
 
@@ -296,15 +297,15 @@ bool AtlasKinematics::_legIK(Matrix4d _Tf,
 							 bool _nearest,
 							 Vector6d& _u,
 							 MatrixXd& _U) {
-	// undo body to hip translation
-	_Tf(1,3) += _left ? -l0 : l0;
+	Matrix4d T0f = _Tf;
+	T0f(1,3) += _left ? -l0 : l0;
 
 	// % C++ implementation of script/AtlasLegIK.m
 	// for convenience
 	double x0,x1,x2,y0,y1,y2,z0,z1,z2,t0,t1,t2;
-	x0 = _Tf(0,0); y0 = _Tf(0,1); z0 = _Tf(0,2); t0 = _Tf(0,3);
-	x1 = _Tf(1,0); y1 = _Tf(1,1); z1 = _Tf(1,2); t1 = _Tf(1,3);
-	x2 = _Tf(2,0); y2 = _Tf(2,1); z2 = _Tf(2,2); t2 = _Tf(2,3);
+	x0 = T0f(0,0); y0 = T0f(0,1); z0 = T0f(0,2); t0 = T0f(0,3);
+	x1 = T0f(1,0); y1 = T0f(1,1); z1 = T0f(1,2); t1 = T0f(1,3);
+	x2 = T0f(2,0); y2 = T0f(2,1); z2 = T0f(2,2); t2 = T0f(2,3);
 
 	// solve u6, u2, u1
 	// % For solution method, see script/AtlasLegSymbolicKinematics.m
@@ -360,23 +361,34 @@ bool AtlasKinematics::_legIK(Matrix4d _Tf,
 	Matrix4d T01, T12, T2f;
 	Vector4d p2f;
 	double x, y, phi, beta, psi;
+	double c4, cpsi;
+	complex<double> radical;
 	for(int i=0; i < 8; i++) {
 		int i1 = m1[i];
 		int i2 = m2[i];
 
 		T01 = _legT(1, u1[i1]);
 		T12 = _legT(2, u2[i2]);
-		T2f = T12.inverse() * T01.inverse() * _Tf;
+		T2f = T12.inverse() * T01.inverse() * T0f;
 		p2f = T2f.block(0,3,4,1);
 
 		x = p2f(0) - l1;
 		y = -p2f(2);
 
-		u4[i] = s4[i] * acos( (x*x + y*y - l3*l3 - l4*l4) / (2*l3*l4) );
+		c4 = (x*x + y*y - l3*l3 - l4*l4) / (2*l3*l4);
+		radical = 1 - c4*c4;
+		u4[i] = atan2( s4[i]*real(sqrt(radical)), c4 );
+
+		//u4[i] = s4[i] * acos( c4 );
 
 		phi = atan2( T2f(0,2), T2f(2,2) );
 		beta = atan2(y,x);
-		psi = acos( (x*x + y*y + l3*l3 - l4*l4) / (2*l3*sqrt(x*x + y*y)) );
+
+		cpsi = (x*x + y*y + l3*l3 - l4*l4) / (2*l3*sqrt(x*x + y*y));
+		radical = 1 - cpsi*cpsi;
+		psi = atan2( real(sqrt(radical)), cpsi );
+
+		//psi = acos( cpsi );
 
 		psi = clamp2pi(psi);
 		if(psi < 0)
@@ -393,80 +405,101 @@ bool AtlasKinematics::_legIK(Matrix4d _Tf,
 		u5[i] = clamp2pi(u5[i]);
 	}
 
-	// fill solutions
+	// select solution
 	MatrixXd U(6,8);
-	bool valid[8] = {1,1,1,1,1,1,1,1};
-	int valid_count = 0;
-	const double JOINT_TOL = 1e-10;
+	bool within_lim[8] = {1,1,1,1,1,1,1,1};
+	bool any_within = false;
+	bool nearest_pos[8] = {0,0,0,0,0,0,0,0};
+	double pos_delta[8];
+	int within_count = 0;
+	const double POS_TOL = 1e-10;
+	const double JOINT_TOL = 1e-2;
+	Matrix4d T06;
+	// offset to joint zeros
 	for(int i=0; i < 8; i++) {
 		int i1 = m1[i];
 		int i2 = m2[i];
 		int i6 = m6[i];
-		// offset to joint zeros
 		U(0,i) = u1[i1] - u_off[0];
 		U(1,i) = u2[i2] - u_off[1];
 		U(2,i) = u3[i] - u_off[2];
 		U(3,i) = u4[i] - u_off[3];
 		U(4,i) = u5[i] - u_off[4];
 		U(5,i) = u6[i6] - u_off[5];
-		for(int j=0; j < 6; ++j) {
-			// clamp small values around joint limits to joint limits
-			// (epsilon errors affect joint limit selection)
-			for(int k=0; k < 2; ++k) {
-				if(abs(U(j,i) - u_lim[j][k]) < JOINT_TOL) {
-					U(j,i) = u_lim[j][k];
-				}
-			}
-			// check joint limits
-			if( !(u_lim[j][0] <= U(j,i) &&
-				       U(j,i) <= u_lim[j][1])) {
-				valid[i] = false;
-			}
-			// check nan solutions
-			//TODO: handle nans by clamping bad input to atan/acos above
-			if( std::isnan(U(j,i))) {
-				valid[i] = false;
-			}
-		}
-		if(valid[i])
-			valid_count++;
 	}
-	// no solution found
-	if(valid_count == 0) {
-		cerr << "AtlasKinematics: IK Error - No solution found!\n"
-		     << "T0f=\n" << _Tf << "\n"
+	// clamp epsilon errors around joint limits
+	// (for foot positions in workspace, but at joint limits)
+	for(int i=0; i < 8; i++)
+		for(int j=0; j < 6; j++)
+			for(int k=0; k < 2; ++k)
+				if(fabs(U(j,i) - u_lim[j][k]) < JOINT_TOL)
+					U(j,i) = u_lim[j][k];
+	// check joint limits
+	for(int i=0; i < 8; i++) {
+		for(int j=0; j < 6; j++)
+			if(!(u_lim[j][0] <= U(j,i) && U(j,i) <= u_lim[j][1]))
+				within_lim[i] = false;
+		if(within_lim[i]) {
+			any_within = true;
+		}
+	}
+	// clamp to joint limits
+	for(int i=0; i < 8; i++)
+		for(int j=0; j < 6; j++) {
+			if(U(j,i) < u_lim[j][0])
+				U(j,i) = u_lim[j][0];
+			if(u_lim[j][1] < U(j,i))
+				U(j,i) = u_lim[j][1];
+		}
+	// complain if out of workspace
+	if(!any_within) {
+		cerr << "AtlasKinematics: IK Warning - Out of workspace\n"
+			 << "left= " << _left << "\n"
+		     << "T0f=\n" << T0f << "\n"
+		     << "p=\n" << _p << "\n"
 			 << "u=\n" << U << "\n"
 			 << "\n";
-		//FIXME: return solution closest to Tf instead
-		_u = _p; // return original angles (on _nearest)
-		return false;
 	}
-
-	if(_nearest) {
-		// return nearest solution to _p
-		double min_dist;
-		bool min_init = false;
-		for(int i=0; i < 8; ++i) {
-			if(valid[i]) {
-				double dist = (U.block(0,i,6,1) - _p).norm();
-				if(!min_init || dist < min_dist) {
-					min_init = true;
-					min_dist = dist;
-					_u = U.block(0,i,6,1);
-				}
-			}
+	if(!_nearest) {
+		_U = U; // return clamped U
+		return any_within; // complain if out of workspace
+	}
+	if(!any_within) {
+		// no solutions within limits
+		// find nearest(s) in position
+		double min_delta = -1.0;
+		for(int i=0; i < 8; i++) {
+			T06 = _legFK(U.block<6,1>(0,i), _left);
+			pos_delta[i] = (T06-_Tf).block<3,1>(0,3).norm();
+			if(min_delta == -1.0 || pos_delta[i] < min_delta)
+				min_delta = pos_delta[i];
 		}
-	} else {
-		// return all valid solutions
-		_U.resize(6, valid_count);
-		int v = 0;
-		for(int i=0; i < 8; ++i) {
-			if(valid[i]) {
-				_U.block(0,v++,6,1) = U.block(0,i,6,1);
-			}
+		for(int i=0; i < 8; i++) {
+			if(fabs(min_delta - pos_delta[i]) < POS_TOL)
+				nearest_pos[i] = true;
 		}
 	}
-	return true;
+	// select closest to previous joint angles
+	int sol = -1;
+	double min_delta;
+	for(int i=0; i < 8; i++) {
+		if(within_lim[i] || nearest_pos[i]) {
+			double delta = (U.block<6,1>(0,i) - _p).norm();
+			if(sol == -1 || delta < min_delta) {
+				sol = i;
+				min_delta = delta;
+			}
+		}
+	}
+	_u = U.block<6,1>(0,sol);
+	// complain about discontinuity
+	if(min_delta >= JOINT_TOL) {
+		cerr << "AtlasKinematics: IK Warning - Solution discontinuity\n"
+			 << "T0f=\n" << T0f << "\n"
+			 << "u delta=" << min_delta << "\n"
+			 << "\n";
+	}
+	return any_within;
 }
 
 }

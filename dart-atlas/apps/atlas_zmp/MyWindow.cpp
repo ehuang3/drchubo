@@ -173,7 +173,7 @@ void MyWindow::displayTimer(int _val)
 void MyWindow::draw()
 {
     //glDisable(GL_LIGHTING);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glDisable(GL_CULL_FACE);
     glEnable(GL_NORMALIZE);
 
