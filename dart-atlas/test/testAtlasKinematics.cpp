@@ -6,6 +6,7 @@
 #include <atlas/AtlasUtils.h>
 #include <utils/AtlasPaths.h>
 
+#include <math.h>
 
 #include <robotics/parser/dart_parser/DartLoader.h>
 #include <robotics/World.h>
@@ -21,7 +22,6 @@ using namespace atlas;
 using namespace kinematics;
 using namespace dynamics;
 using namespace robotics;
-
 
 atlas::AtlasKinematics *_ak;
 kinematics::Skeleton *_atlas;
@@ -100,7 +100,7 @@ TEST(KINEMATICS, COMPARE_INVERSE_FORWARD) {
 	AtlasKinematics *AK = prepareAtlasKinematics();
 
 	const double TOLERANCE_EXACT = 1.0e-10;
-	VectorXd u(6);
+	Vector6d u(6);
 	Matrix4d Tfoot, Tsol;
 	MatrixXd U;
 
@@ -120,7 +120,7 @@ TEST(KINEMATICS, COMPARE_INVERSE_FORWARD) {
 	u_lim[5][1] = 0.436;
 
 	// generate angles
-	const int NUM_SLICE = 5;
+	const int NUM_SLICE = 7;
 	double a[6][NUM_SLICE];
 	for(int i=0; i < 6; ++i)
 	for(int j=0; j < NUM_SLICE; ++j) {
@@ -146,11 +146,11 @@ TEST(KINEMATICS, COMPARE_INVERSE_FORWARD) {
 //		cout << "u=\n" << u << endl;
 //		cout << "Tfoot=\n" << Tfoot << endl;
 
-		ASSERT_TRUE(AK->legIK(Tfoot, true, U));
+		AK->legIK(Tfoot, true, u, u);
 
-		for(int i=0; i < U.cols(); ++i) {
+		for(int i=0; i < u.cols(); ++i) {
 			// compare IK FK
-			Tsol = AK->legFK(U.block(0,i,6,1), true);
+			Tsol = AK->legFK(u.block(0,i,6,1), true);
 			for(int r=0; r < 4; ++r)
 				for(int c=0; c < 4; ++c)
 					EXPECT_NEAR(Tsol(r,c), Tfoot(r,c), TOLERANCE_EXACT);
@@ -187,16 +187,47 @@ TEST(KINEMATICS, STANCE_IK) {
 	Matrix4d Twl = AK->legFK(u.topRows(6), true);
 	Matrix4d Twr = AK->legFK(u.bottomRows(6), false);
 
-	//cout << "Twb=\n" << Twb << endl;
-	//cout << "Twl=\n" << Twl << endl;
-	//cout << "Twr=\n" << Twr << endl;
+	cout << "Twl=\n" << Twl << endl;
+	cout << "Twr=\n" << Twr << endl;
 
 	AK->stanceIK(Twb, Twl, Twr, u, v);
 
-	//cout << "v=\n" << v << endl;
-	//cout << "FK l=\n" << AK->legFK(v.topRows(6), true) << endl;
-	//cout << "FK r=\n" << AK->legFK(v.bottomRows(6), false) << endl;
+	// generate sin waves make sure atlas lifts his foot
+	const double TOLERANCE_EXACT = 1.0e-10;
+	double base_loc = Twl(2,3);
+	double up = 0.2;
+	double forward = 0.2;
+	const int NUM_POINTS = 1000;
+	double wave[NUM_POINTS];
+	for(int i=0; i < NUM_POINTS; i++) {
+		wave[i] = sin(M_PI * i / NUM_POINTS);
+	}
+	for(int i=0; i < NUM_POINTS; i++) {
+		// z
+		Twl(2,3) = base_loc + up * wave[i];
+		Twr(2,3) = base_loc + up * wave[i];
+		// x
+		Twl(0,3) = forward * wave[i];
+		Twr(0,3) = forward * wave[i];
 
+
+		AK->stanceIK(Twb, Twl, Twr, u, u);
+
+		Matrix4d Fwl = AK->legFK(u.topRows(6), true);
+		Matrix4d Fwr = AK->legFK(u.bottomRows(6), false);
+
+		//		cout << "Twl=\n" << Twl << endl;
+		//		cout << "Fwl=\n" << Fwl << endl;
+		//
+		//		cout << "Twr=\n" << Twr << endl;
+		//		cout << "Fwr=\n" << Fwr << endl;
+
+		for(int i=0; i < 4; i++)
+			for(int j=0; j < 4; j++) {
+				ASSERT_NEAR(Fwl(i,j), Twl(i,j), TOLERANCE_EXACT);
+				ASSERT_NEAR(Fwr(i,j), Twr(i,j), TOLERANCE_EXACT);
+			}
+	}
 }
 /* ********************************************************************************************* */
 TEST(KINEMATICS, COM_IK) {
@@ -208,7 +239,7 @@ TEST(KINEMATICS, COM_IK) {
 	}
 
 	Matrix4d Twb = _atlas->getNode("pelvis")->getWorldTransform();
-	cout << "Twb=\n" << Twb << endl;
+	//cout << "Twb=\n" << Twb << endl;
 	Matrix4d Twl = AK->legFK(Vector6d::Zero(), true);
 	Matrix4d Twr = AK->legFK(Vector6d::Zero(), false);
 
@@ -229,8 +260,207 @@ TEST(KINEMATICS, COM_IK) {
 
 	AK->comIK(_atlas, com, Twb, mode, Tm, dofs);
 
-	cout << "new com=\n" << _atlas->getWorldCOM();
+	//cout << "new com=\n" << _atlas->getWorldCOM();
 }
+
+/***************************************************************************************** */
+TEST(KINEMATICS, UTILS_LIMB) {
+
+	AtlasKinematics *AK = prepareAtlasKinematics();
+
+	// World start from Atlas' pelvis
+	Matrix4d Twb;
+	Twb.setIdentity();
+
+	Vector6d angles_old;
+	Vector6d angles_predicted;
+	Vector6d angles_new;
+	VectorXd dofs_old, dofs_new;
+	Vector3d delta; 
+	delta << 0, 0, 0.1;
+
+	// start left foot transform and angles
+	angles_old = AK->getLimbAngle(_atlas, MANIP_L_FOOT);
+	dofs_old = _atlas->getPose();
+	cout << "Start angle: \n" << angles_old.transpose() << endl;
+	cout << "Left foot: \n" << AK->getLimbTransB(_atlas, MANIP_L_FOOT) << endl;
+
+	// predicted left foot transform and angles
+	angles_predicted = AK->newLimbPosRelativeB(_atlas, _atlas->getPose(), MANIP_L_FOOT, delta);
+	cout << "Predicted angle: \n" << angles_predicted.transpose() << endl;
+	cout << "Predicted Left foot: \n" << AK->legFK(angles_predicted, true) << endl;
+
+	// actual end left foot transform and angles
+	AK->setLimbAngle(_atlas, angles_predicted, MANIP_L_FOOT);
+	angles_new = AK->getLimbAngle(_atlas, MANIP_L_FOOT);
+	dofs_new = _atlas->getPose();
+	cout << "End angle: \n" << angles_new.transpose() << endl;
+	cout << "End Left foot: \n" << AK->getLimbTransB(_atlas, MANIP_L_FOOT) << endl;
+
+}
+
+/* ********************************************************************************************* */
+TEST(KINEMATICS, UTILS_InitPos) {
+
+	AtlasKinematics *AK = prepareAtlasKinematics();
+
+	/**************************************
+	 * Init, World start from Atlas' pelvis
+	 **************************************/
+	Matrix4d Twb;
+	Twb.setIdentity();
+	assert( (_atlas->getNode("pelvis")->getWorldTransform() - Twb).norm() < 1e-7);
+
+	Matrix4d Twm[NUM_MANIPULATORS];
+	Twm[MANIP_L_FOOT] = AK->getLimbTransB(_atlas, MANIP_L_FOOT);
+	Twm[MANIP_R_FOOT] = AK->getLimbTransB(_atlas, MANIP_R_FOOT);
+
+	/************************
+	 * Trajectory file
+	 ************************/
+	ofstream file;
+	file.open("what.yaml");
+	file << "MovCOM:\n";
+
+
+	/******************************
+	 * Some vars
+	 ******************************/
+	IK_Mode mode[NUM_MANIPULATORS];
+	Vector3d dcom;
+	double delta; 
+	int N = 6000;
+
+	int nDofsNum = _atlas->getNumDofs();
+	VectorXd dofs(nDofsNum);
+	dofs.setZero();
+
+	/*************************
+	 * Move upper body
+	 *************************/
+
+	dofs(6) = 0;
+	dofs(9) = 0.0017;
+	dofs(12) = 0; 
+	dofs(16) = 0.781;
+
+	dofs(15) = 0.2978;
+	dofs(20) = -1.3140;
+	dofs(25) = 2.0021;
+	dofs(29) = 0.4955;
+	dofs(31) = 0; 
+	dofs(33) = -0.01;
+
+	dofs(17) = 0.2978;
+	dofs(22) = 1.3140;
+	dofs(26) = 2.0021;
+	dofs(30) = -0.4955; 
+	dofs(32) = 0;
+	dofs(34) = 0.01;
+
+	_atlas->setPose(dofs, true);
+
+	AK->writeTrajectory(file, VectorXd::Zero(nDofsNum), dofs, 5000);
+
+
+	/*************************
+	 * Move COM down
+	 *************************/
+	N = 12000;
+	double theta = M_PI / (N-1);	 
+
+	Vector3d comStart = AK->getCOMW(_atlas, Twb);
+	dcom = comStart;
+
+	Vector3d comDelta;
+	comDelta << 0, 0, -0.07;
+
+//	delta = -0.07 / (N-1);		// move 15cm down
+	dofs = _atlas->getPose();
+
+
+	cout << "dcom start: " << dcom.transpose() << endl;
+	cout << "left foot start:\n" << Twm[MANIP_L_FOOT] << endl; 
+
+	comDelta /= 2;
+	cout << "comDelta: " << comDelta.transpose() << endl;
+
+	for (int i = 0; i < N; i++) {
+
+		dcom = comStart + comDelta * (1 - cos(theta * i));
+//		cout << "dcom: " << dcom.transpose() << endl;
+		Twm[MANIP_L_FOOT] = AK->getLimbTransW(_atlas, Twb, MANIP_L_FOOT);
+		Twm[MANIP_R_FOOT] = AK->getLimbTransW(_atlas, Twb, MANIP_R_FOOT);
+
+		assert(AK->comIK(_atlas, dcom, Twb, mode, Twm, dofs) == true);
+		dofs = _atlas->getPose();
+
+		file << "  - [\"";
+		file << dofs(6) << ' ';
+		file << dofs(9) << ' ';
+		file << dofs(12) << ' ';
+		file << dofs(16) << ' ';
+
+		for (int j = 0; j < NUM_MANIPULATORS; j++) {
+			for (int k = 0; k < 6; k++) {
+				file << dofs(AK->dof_ind[j][k]) << ' ';
+			}
+		}
+
+		file << "\"]\n";
+//		dcom(2) += delta;
+
+
+	}
+
+	cout << "dcom end: " << dcom.transpose() << endl;
+	cout << "left foot end:\n" << Twm[MANIP_L_FOOT] << endl; 
+
+//	/*******************************
+//	 * Move COM to right root
+//	 *******************************/
+//	N = 6000;
+//	dcom = AK->getCOMW(_atlas, Twb);
+//	delta = ( Twm[MANIP_R_FOOT](1,3) - dcom(1) ) / (N-1);
+//	cout << "R FOOT: \n" << Twm[MANIP_R_FOOT] << endl;
+//	cout << "com start: " << dcom.transpose() << endl;
+//	cout << "delta: " << delta << endl;
+
+//	dofs = _atlas->getPose();
+
+//	for (int i = 0; i < N; i++) {
+
+//		Twm[MANIP_L_FOOT] = AK->getLimbTransW(_atlas, Twb, MANIP_L_FOOT);
+//		Twm[MANIP_R_FOOT] = AK->getLimbTransW(_atlas, Twb, MANIP_R_FOOT);
+
+//		assert(AK->comIK(_atlas, dcom, Twb, mode, Twm, dofs) == true);
+//		dofs = _atlas->getPose();
+
+//		file << "  - [\"";
+//		file << dofs(6) << ' ';
+//		file << dofs(9) << ' ';
+//		file << dofs(12) << ' ';
+//		file << dofs(16) << ' ';
+
+//		for (int j = 0; j < NUM_MANIPULATORS; j++) {
+//			for (int k = 0; k < 6; k++) {
+//				file << dofs(AK->dof_ind[j][k]) << ' ';
+//			}
+//		}
+
+//		file << "\"]\n";
+//		dcom(1) += delta;
+
+
+//	}
+
+	// close file
+	file.close();
+
+
+}
+
+
 /* ********************************************************************************************* */
 int main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);

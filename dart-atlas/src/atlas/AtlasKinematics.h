@@ -1,5 +1,6 @@
 #pragma once
 #include <utils/EigenHelper.h>
+#include <fstream>
 
 namespace Eigen { typedef Matrix<double, 6, 1> Vector6d; }
 namespace kinematics { class Skeleton; }
@@ -25,6 +26,7 @@ enum IK_Mode {
 };
 
 class AtlasKinematics {
+
 public:
 	AtlasKinematics();
 	virtual ~AtlasKinematics();
@@ -113,7 +115,32 @@ public:
 	 */
 	bool legIK(const Eigen::Matrix4d& _Tbf, bool _left, Eigen::MatrixXd& _u);
 
+	bool comIKRelativeW(kinematics::Skeleton *_atlas, 
+							const Eigen::Vector3d& _dcom, 
+							const Eigen::Matrix4d _Twm[NUM_MANIPULATORS],
+							Eigen::Matrix4d& _Twb);
+
+	Eigen::Matrix4d getLimbTransW(kinematics::Skeleton *_atlas, const Eigen::Matrix4d &_Twb, ManipIndex _limb);
+	Eigen::Matrix4d getLimbTransB(kinematics::Skeleton *_atlas, ManipIndex _limb);
+	Eigen::Vector6d newLimbPosRelativeB(kinematics::Skeleton *_atlas,
+								 const Eigen::VectorXd &dofs,
+								ManipIndex _limb,
+								 const Eigen::Vector3d	&delta);
+	Eigen::Vector6d getLimbAngle(kinematics::Skeleton *_atlas,
+										ManipIndex _limb);
+	void setLimbAngle(kinematics::Skeleton *_atlas,
+								const Eigen::Vector6d &_dangles,
+								ManipIndex _limb);
+	void writeTrajectory(std::ostream &file, const Eigen::VectorXd &_old, const Eigen::VectorXd &_new, int _N);
+	Eigen::Vector3d getCOMW(kinematics::Skeleton *_atlas, const Eigen::Matrix4d &_Twb);
+
+	// maybe this should be private or const
+	int dof_ind[NUM_MANIPULATORS][6]; // index of joint angles in DART
+
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+
+
 private:
 	kinematics::Skeleton *atlas;  //
 	double l0;  // pelvis to hip
@@ -124,6 +151,7 @@ private:
 	double u_off[6];  // offsets to joint zeros in context of DART/urdf
 	double u_lim[6][2];  // joint limits min max
 	double lr[7], la[7], lt[7], ld[7];  // leg dh parameters
+
 
 	Eigen::Matrix4d _legT(int _frame, double _u);
 	Eigen::Matrix4d _legFK(const Eigen::Vector6d& _u, bool _left);

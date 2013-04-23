@@ -7,6 +7,7 @@
 #include <kinematics/Joint.h>
 
 #include <iostream>
+#include <fstream>
 
 using namespace Eigen;
 using namespace kinematics;
@@ -72,8 +73,8 @@ void AtlasKinematics::init(Skeleton *_atlas) {
 		for(int i=0; i < 6; i++) {
 			u_lim[i][0] = node[i]->getParentJoint()->getDof(0)->getMin();
 			u_lim[i][1] = node[i]->getParentJoint()->getDof(0)->getMax();
-			// cout << "u_lim["<<i<<"][0] = " << u_lim[i][0] << ";" << endl;
-			// cout << "u_lim["<<i<<"][1] = " << u_lim[i][1] << ";" << endl;
+//			cout << "u_lim["<<i<<"][0] = " << u_lim[i][0] << ";" << endl;
+//			cout << "u_lim["<<i<<"][1] = " << u_lim[i][1] << ";" << endl;
 		}
 	}
 
@@ -113,29 +114,8 @@ void AtlasKinematics::init(Skeleton *_atlas) {
 	ld[6] = 0;
 	lr[6] = 0;
 	la[6] = 0;
-}
 
-Matrix4d AtlasKinematics::legT(int _frame, double _u) {
-	return _legT(_frame, _u + u_off[_frame-1]);
-}
-
-Matrix4d AtlasKinematics::legFK(const Vector6d& _u, bool _left) {
-	return _legFK(_u, _left);
-}
-
-bool AtlasKinematics::comIK(Skeleton *_atlas,
-							const Vector3d& _dcom,
-							Matrix4d& _Twb,
-							IK_Mode _mode[NUM_MANIPULATORS],
-							const Matrix4d _Twm[NUM_MANIPULATORS],
-							VectorXd& _dofs) {
-	// joint indexes in dofs
-	vector<int> dof_ind[NUM_MANIPULATORS];
-	for(int i=0; i < NUM_MANIPULATORS; i++) {
-		for(int j=0; j < 6; j++) {
-			dof_ind[i].push_back(0); // allocate space
-		}
-	}
+	// index of joint angles in DART
 	dof_ind[MANIP_L_FOOT][0] = 7;  //= l_leg_uhz
 	dof_ind[MANIP_L_FOOT][1] = 10; //= l_leg_mhx
 	dof_ind[MANIP_L_FOOT][2] = 13; //= l_leg_lhy
@@ -176,8 +156,188 @@ bool AtlasKinematics::comIK(Skeleton *_atlas,
 	//	[] = 16; //= neck_ay
 	//	[] = 21; //= hokuyo_joint
 
+}
+
+bool AtlasKinematics::comIKRelativeW(Skeleton *_atlas,
+							const Vector3d& _dcom,
+						    const Eigen::Matrix4d _Twm[NUM_MANIPULATORS],
+							Matrix4d& _Twb) {
+
+	// dofs
+	int nDofsNum = _atlas->getNumDofs();
+	VectorXd dofs(nDofsNum);
+	dofs = _atlas->getPose();
+
+	// mode
+	IK_Mode mode[NUM_MANIPULATORS];
+
+	// com
+	Vector3d com;
+	Matrix<double, 4, 1> comb, comw;
+	comb.head(3) = _atlas->getWorldCOM();
+	comb(3) = 1;
+	comw = _Twb * comb;
+	comw.head(3) += _dcom;
+
+	return comIK(_atlas, comw.head(3), _Twb, mode, _Twm, dofs);
+
+}
+
+
+Vector6d AtlasKinematics::getLimbAngle(Skeleton *_atlas,
+										ManipIndex _limb) {
+	// dofs
+	int nDofsNum = _atlas->getNumDofs();
+	VectorXd dofs(nDofsNum);
+	dofs = _atlas->getPose();
+
+	// limb joint angles
+	Vector6d angles;
+
+	for (int i = 0; i < 6; i++)
+		angles(i) = dofs(dof_ind[_limb][i]);
+
+	return angles;
+}
+
+void AtlasKinematics::setLimbAngle(Skeleton *_atlas,
+								const Vector6d &_dangles,
+								ManipIndex _limb) {
+	// dofs
+	int nDofsNum = _atlas->getNumDofs();
+	VectorXd dofs(nDofsNum);
+	dofs = _atlas->getPose();
+
+	// new dofs
+	Vector6d angles;
+	for (int i = 0; i < 6; i++)
+		dofs(dof_ind[_limb][i]) = _dangles(i);
+
+	// set pose
+	_atlas->setPose(dofs, true);
+
+}
+
+Matrix4d AtlasKinematics::getLimbTransB(Skeleton *_atlas,
+									ManipIndex _limb) {
+	// limb joint angles
+	Vector6d angles;
+	angles = getLimbAngle(_atlas, _limb);
+
+	// limb FK
+	switch (_limb){
+		case MANIP_L_FOOT:
+			return legFK(angles, true);
+			break;
+		case MANIP_R_FOOT:
+			return legFK(angles, false);
+			break;
+		default:
+			cout << "ERROR: No supported or invalid limb: " << _limb << endl;
+			exit(1);
+			break;
+	}
+}
+
+
+Matrix4d AtlasKinematics::getLimbTransW(Skeleton *_atlas,
+									const Matrix4d &_Twb, 
+									ManipIndex _limb) {
+	return _Twb * getLimbTransB(_atlas, _limb);
+
+}
+
+Vector6d AtlasKinematics::newLimbPosRelativeB(Skeleton *_atlas,
+											 const VectorXd &dofs,
+												ManipIndex _limb,
+												 const Vector3d	&delta) {
+
+	Matrix4d curr;
+	curr = getLimbTransB(_atlas, _limb);
+	curr.block<3,1>(0,3) += delta;
+	Vector6d angles;
+
+	for (int i = 0; i < 6; i++)
+		angles(i) = dofs(dof_ind[_limb][i]);
+
+	// IK
+	switch (_limb){
+		case MANIP_L_FOOT:
+			if ( legIK(curr, true, angles, angles) == false) {
+				cout << "IK failed" << endl;
+				exit(1);
+			}
+			break;
+		case MANIP_R_FOOT:
+			if ( legIK(curr, false, angles, angles) == false) {
+				cout << "IK failed" << endl;
+				exit(1);
+			}
+			break;
+		default:
+			cout << "ERROR: No supported or invalid limb: " << _limb << endl;
+			exit(1);
+			break;
+	}
+
+	return angles;
+}
+
+Vector3d AtlasKinematics::getCOMW(Skeleton *_atlas, const Matrix4d &_Twb)
+{
+	Vector4d v4d;
+	v4d.head(3) = _atlas->getWorldCOM();
+	v4d(3) = 1;
+	return (_Twb * v4d).head(3);
+}
+
+void AtlasKinematics::writeTrajectory(ostream &file, const VectorXd &_old, const VectorXd &_new, int _N)
+{
+	VectorXd tmp = _old;
+	VectorXd delta = (_new - _old) / _N;
+
+	for ( int i = 0; i < _N; i++) {
+
+		file << "  - [\"";
+		file << tmp(6) << ' ';
+		file << tmp(9) << ' ';
+		file << tmp(12) << ' ';
+		file << tmp(16) << ' ';
+
+		for (int j = 0; j < NUM_MANIPULATORS; j++) {
+			for (int k = 0; k < 6; k++) {
+				file << tmp(dof_ind[j][k]) << ' ';
+			}
+		}
+
+		tmp += delta;
+		file << "\"]\n";
+
+	}
+}
+
+
+Matrix4d AtlasKinematics::legT(int _frame, double _u) {
+	return _legT(_frame, _u + u_off[_frame-1]);
+}
+
+Matrix4d AtlasKinematics::legFK(const Vector6d& _u, bool _left) {
+	return _legFK(_u, _left);
+}
+
+bool AtlasKinematics::comIK(Skeleton *_atlas,
+							const Vector3d& _dcom,
+							Matrix4d& _Twb,
+							IK_Mode _mode[NUM_MANIPULATORS],
+							const Matrix4d _Twm[NUM_MANIPULATORS],
+							VectorXd& _dofs) {
+
+
+	// hack
+	_dofs.block(0,0,3,1) = Vector3d::Zero();
+
 	// gradient descent on com err
-	bool debug = true;
+	bool debug = false;
 	int COM_ITER = 10000; // max iterations
 	double COM_PTOL = 1e-3; // err tolerance
 	double alpha = 0.5; // descent scaling factor
@@ -236,6 +396,9 @@ bool AtlasKinematics::comIK(Skeleton *_atlas,
 			 << "err= " << com_err.norm() << "\n\n";
 	}
 
+	// so we can visualize correctly later :)
+	_dofs.block(0,0,3,1) = _Twb.block(0,3,3,1);
+
 	return ik_found && ik_valid;
 }
 
@@ -248,8 +411,8 @@ bool AtlasKinematics::stanceIK(const Matrix4d& _Twb,
 	Matrix4d Tbr = _Twb.inverse() * _Twr;
 
 	Vector6d ul, ur;
-	bool valid = legIK(Tbl, true, _p.block<6,1>(0,0), ul) &&
-				 legIK(Tbr, false, _p.block<6,1>(6,0), ur);
+	bool valid = legIK(Tbl, true, _p.block<6,1>(0,0), ul);
+	valid &= legIK(Tbr, false, _p.block<6,1>(6,0), ur);
 	_u.block<6,1>(0,0) = ul;
 	_u.block<6,1>(6,0) = ur;
 
@@ -290,15 +453,15 @@ bool AtlasKinematics::_legIK(Matrix4d _Tf,
 							 bool _nearest,
 							 Vector6d& _u,
 							 MatrixXd& _U) {
-	// undo body to hip translation
-	_Tf(1,3) += _left ? -l0 : l0;
+	Matrix4d T0f = _Tf;
+	T0f(1,3) += _left ? -l0 : l0;
 
 	// % C++ implementation of script/AtlasLegIK.m
 	// for convenience
 	double x0,x1,x2,y0,y1,y2,z0,z1,z2,t0,t1,t2;
-	x0 = _Tf(0,0); y0 = _Tf(0,1); z0 = _Tf(0,2); t0 = _Tf(0,3);
-	x1 = _Tf(1,0); y1 = _Tf(1,1); z1 = _Tf(1,2); t1 = _Tf(1,3);
-	x2 = _Tf(2,0); y2 = _Tf(2,1); z2 = _Tf(2,2); t2 = _Tf(2,3);
+	x0 = T0f(0,0); y0 = T0f(0,1); z0 = T0f(0,2); t0 = T0f(0,3);
+	x1 = T0f(1,0); y1 = T0f(1,1); z1 = T0f(1,2); t1 = T0f(1,3);
+	x2 = T0f(2,0); y2 = T0f(2,1); z2 = T0f(2,2); t2 = T0f(2,3);
 
 	// solve u6, u2, u1
 	// % For solution method, see script/AtlasLegSymbolicKinematics.m
@@ -354,23 +517,34 @@ bool AtlasKinematics::_legIK(Matrix4d _Tf,
 	Matrix4d T01, T12, T2f;
 	Vector4d p2f;
 	double x, y, phi, beta, psi;
+	double c4, cpsi;
+	complex<double> radical;
 	for(int i=0; i < 8; i++) {
 		int i1 = m1[i];
 		int i2 = m2[i];
 
 		T01 = _legT(1, u1[i1]);
 		T12 = _legT(2, u2[i2]);
-		T2f = T12.inverse() * T01.inverse() * _Tf;
+		T2f = T12.inverse() * T01.inverse() * T0f;
 		p2f = T2f.block(0,3,4,1);
 
 		x = p2f(0) - l1;
 		y = -p2f(2);
 
-		u4[i] = s4[i] * acos( (x*x + y*y - l3*l3 - l4*l4) / (2*l3*l4) );
+		c4 = (x*x + y*y - l3*l3 - l4*l4) / (2*l3*l4);
+		radical = 1 - c4*c4;
+		u4[i] = atan2( s4[i]*real(sqrt(radical)), c4 );
+
+		//u4[i] = s4[i] * acos( c4 );
 
 		phi = atan2( T2f(0,2), T2f(2,2) );
 		beta = atan2(y,x);
-		psi = acos( (x*x + y*y + l3*l3 - l4*l4) / (2*l3*sqrt(x*x + y*y)) );
+
+		cpsi = (x*x + y*y + l3*l3 - l4*l4) / (2*l3*sqrt(x*x + y*y));
+		radical = 1 - cpsi*cpsi;
+		psi = atan2( real(sqrt(radical)), cpsi );
+
+		//psi = acos( cpsi );
 
 		psi = clamp2pi(psi);
 		if(psi < 0)
@@ -387,80 +561,101 @@ bool AtlasKinematics::_legIK(Matrix4d _Tf,
 		u5[i] = clamp2pi(u5[i]);
 	}
 
-	// fill solutions
+	// select solution
 	MatrixXd U(6,8);
-	bool valid[8] = {1,1,1,1,1,1,1,1};
-	int valid_count = 0;
-	const double JOINT_TOL = 1e-10;
+	bool within_lim[8] = {1,1,1,1,1,1,1,1};
+	bool any_within = false;
+	bool nearest_pos[8] = {0,0,0,0,0,0,0,0};
+	double pos_delta[8];
+	int within_count = 0;
+	const double POS_TOL = 1e-10;
+	const double JOINT_TOL = 1e-2;
+	Matrix4d T06;
+	// offset to joint zeros
 	for(int i=0; i < 8; i++) {
 		int i1 = m1[i];
 		int i2 = m2[i];
 		int i6 = m6[i];
-		// offset to joint zeros
 		U(0,i) = u1[i1] - u_off[0];
 		U(1,i) = u2[i2] - u_off[1];
 		U(2,i) = u3[i] - u_off[2];
 		U(3,i) = u4[i] - u_off[3];
 		U(4,i) = u5[i] - u_off[4];
 		U(5,i) = u6[i6] - u_off[5];
-		for(int j=0; j < 6; ++j) {
-			// clamp small values around joint limits to joint limits
-			// (epsilon errors affect joint limit selection)
-			for(int k=0; k < 2; ++k) {
-				if(abs(U(j,i) - u_lim[j][k]) < JOINT_TOL) {
-					U(j,i) = u_lim[j][k];
-				}
-			}
-			// check joint limits
-			if( !(u_lim[j][0] <= U(j,i) &&
-				       U(j,i) <= u_lim[j][1])) {
-				valid[i] = false;
-			}
-			// check nan solutions
-			//TODO: handle nans by clamping bad input to atan/acos above
-			if( std::isnan(U(j,i))) {
-				valid[i] = false;
-			}
-		}
-		if(valid[i])
-			valid_count++;
 	}
-	// no solution found
-	if(valid_count == 0) {
-		cerr << "AtlasKinematics: IK Error - No solution found!\n"
-		     << "T0f=\n" << _Tf << "\n"
+	// clamp epsilon errors around joint limits
+	// (for foot positions in workspace, but at joint limits)
+	for(int i=0; i < 8; i++)
+		for(int j=0; j < 6; j++)
+			for(int k=0; k < 2; ++k)
+				if(fabs(U(j,i) - u_lim[j][k]) < JOINT_TOL)
+					U(j,i) = u_lim[j][k];
+	// check joint limits
+	for(int i=0; i < 8; i++) {
+		for(int j=0; j < 6; j++)
+			if(!(u_lim[j][0] <= U(j,i) && U(j,i) <= u_lim[j][1]))
+				within_lim[i] = false;
+		if(within_lim[i]) {
+			any_within = true;
+		}
+	}
+	// clamp to joint limits
+	for(int i=0; i < 8; i++)
+		for(int j=0; j < 6; j++) {
+			if(U(j,i) < u_lim[j][0])
+				U(j,i) = u_lim[j][0];
+			if(u_lim[j][1] < U(j,i))
+				U(j,i) = u_lim[j][1];
+		}
+	// complain if out of workspace
+	if(!any_within) {
+		cerr << "AtlasKinematics: IK Warning - Out of workspace\n"
+			 << "left= " << _left << "\n"
+		     << "T0f=\n" << T0f << "\n"
+		     << "p=\n" << _p << "\n"
 			 << "u=\n" << U << "\n"
 			 << "\n";
-		//FIXME: return solution closest to Tf instead
-		_u = _p; // return original angles (on _nearest)
-		return false;
 	}
-
-	if(_nearest) {
-		// return nearest solution to _p
-		double min_dist;
-		bool min_init = false;
-		for(int i=0; i < 8; ++i) {
-			if(valid[i]) {
-				double dist = (U.block(0,i,6,1) - _p).norm();
-				if(!min_init || dist < min_dist) {
-					min_init = true;
-					min_dist = dist;
-					_u = U.block(0,i,6,1);
-				}
-			}
+	if(!_nearest) {
+		_U = U; // return clamped U
+		return any_within; // complain if out of workspace
+	}
+	if(!any_within) {
+		// no solutions within limits
+		// find nearest(s) in position
+		double min_delta = -1.0;
+		for(int i=0; i < 8; i++) {
+			T06 = _legFK(U.block<6,1>(0,i), _left);
+			pos_delta[i] = (T06-_Tf).block<3,1>(0,3).norm();
+			if(min_delta == -1.0 || pos_delta[i] < min_delta)
+				min_delta = pos_delta[i];
 		}
-	} else {
-		// return all valid solutions
-		_U.resize(6, valid_count);
-		int v = 0;
-		for(int i=0; i < 8; ++i) {
-			if(valid[i]) {
-				_U.block(0,v++,6,1) = U.block(0,i,6,1);
-			}
+		for(int i=0; i < 8; i++) {
+			if(fabs(min_delta - pos_delta[i]) < POS_TOL)
+				nearest_pos[i] = true;
 		}
 	}
-	return true;
+	// select closest to previous joint angles
+	int sol = -1;
+	double min_delta;
+	for(int i=0; i < 8; i++) {
+		if(within_lim[i] || nearest_pos[i]) {
+			double delta = (U.block<6,1>(0,i) - _p).norm();
+			if(sol == -1 || delta < min_delta) {
+				sol = i;
+				min_delta = delta;
+			}
+		}
+	}
+	_u = U.block<6,1>(0,sol);
+	// complain about discontinuity
+	if(min_delta >= JOINT_TOL) {
+		cerr << "AtlasKinematics: IK Warning - Solution discontinuity\n"
+			 << "T0f=\n" << T0f << "\n"
+			 << "u delta=" << min_delta << "\n"
+			 << "\n";
+	}
+	return any_within;
 }
 
 }

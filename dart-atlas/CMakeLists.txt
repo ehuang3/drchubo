@@ -6,6 +6,9 @@ message(STATUS "Creating Makefile for dart-atlas")
 message(STATUS "CMAKE_SOURCE_DIR = ${CMAKE_SOURCE_DIR}")
 message(STATUS "CMAKE_BINARY_DIR = ${CMAKE_BINARY_DIR}")
 
+#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
+#set(CMAKE_BUILD_TYPE Debug)
+
 ###############
 # Build type
 IF(NOT CMAKE_BUILD_TYPE)
