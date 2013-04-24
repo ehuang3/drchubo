@@ -1,6 +1,7 @@
 #pragma once
 #include <utils/EigenHelper.h>
 #include <fstream>
+#include <math.h>
 
 namespace Eigen { typedef Matrix<double, 6, 1> Vector6d; }
 namespace kinematics { class Skeleton; }
@@ -131,11 +132,13 @@ public:
 	void setLimbAngle(kinematics::Skeleton *_atlas,
 								const Eigen::Vector6d &_dangles,
 								ManipIndex _limb);
-	void writeTrajectory(std::ostream &file, const Eigen::VectorXd &_old, const Eigen::VectorXd &_new, int _N);
+	void writeTrajectory(std::ostream &file, const Eigen::VectorXd &_old, const Eigen::VectorXd &_new, int _N, bool iscos);
+	void printGazeboAngles(kinematics::Skeleton *_atlas, const Eigen::VectorXd &dofs);
 	Eigen::Vector3d getCOMW(kinematics::Skeleton *_atlas, const Eigen::Matrix4d &_Twb);
 
 	// maybe this should be private or const
 	int dof_ind[NUM_MANIPULATORS][6]; // index of joint angles in DART
+	int dof_misc[4];					// index of other joint angles in DART
 
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

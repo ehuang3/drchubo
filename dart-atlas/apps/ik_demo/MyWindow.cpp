@@ -30,7 +30,7 @@ MyWindow::MyWindow(vector<SkeletonDynamics *> _skels) : Win3D() {
     mPlay = false;
     mSimFrame = 0;
     mPlayFrame = 0;
-    mShowMarkers = true;
+    mShowMarkers = false;
 
     mPersp = 45.f;
     mTrans[1] = 300.f;
@@ -83,8 +83,9 @@ void MyWindow::initDyn()
     kinematics::Shape *feet = LAR->getCollisionShape();
     z += feet->getDim()(2)/2 - feet->getTransform().matrix()(2,3);
     z += -LAR->getWorldTransform()(2,3);
+    // just a little bit up
+    mDofs[0][2] = -z - 0.0001;
 
-    mDofs[0][2] = -z;
     mSkels[0]->setPose(mDofs[0], true, false);
 }
 
@@ -139,6 +140,10 @@ void MyWindow::setState(const VectorXd &newState) {
     }
 }
 
+void MyWindow::shakeHips() {
+
+}
+
 void MyWindow::displayTimer(int _val)
 {
     int numIter = mDisplayTimeout / (mTimeStep * 1000);
@@ -154,6 +159,7 @@ void MyWindow::displayTimer(int _val)
             mIntegrator.integrate(this, mTimeStep);
             //            tSim.stopTimer();
             //            tSim.printScreen();
+            shakeHips();
             bake();
             mSimFrame++;
         }
@@ -167,7 +173,7 @@ void MyWindow::displayTimer(int _val)
 void MyWindow::draw()
 {
     //glDisable(GL_LIGHTING);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glDisable(GL_CULL_FACE);
     glEnable(GL_NORMALIZE);
 
@@ -221,8 +227,8 @@ void MyWindow::draw()
         mSkels[i]->draw(mRI);
     }
 
-    glClear(GL_DEPTH_BUFFER_BIT);
     atlas::AtlasGraphics AG;
+    glClear(GL_DEPTH_BUFFER_BIT);
     AG.renderJoints(mSkels[1], mRI);
     glClear(GL_DEPTH_BUFFER_BIT);
     AG.renderCOM(mSkels[1], mRI);
@@ -243,7 +249,7 @@ void MyWindow::keyboard(unsigned char key, int x, int y)
 {
     switch(key){
     case ' ': // use space key to play or stop the motion
-        mSim = !mSim;
+        // mSim = !mSim; // not needed for this demo
         if (mSim) {
             mPlay = false;
             glutTimerFunc( mDisplayTimeout, refreshTimer, 0);
@@ -276,7 +282,7 @@ void MyWindow::keyboard(unsigned char key, int x, int y)
         if (!mSim) {
             mPlayFrame++;
             if(mPlayFrame >= mBakedStates.size())
-                mPlayFrame = 0;
+                mPlayFrame--;
             glutPostRedisplay();
         }
         break;
@@ -299,6 +305,15 @@ void MyWindow::bake()
         int begin = mIndices.back() + i * 6;
         state.segment(begin, 3) = mCollisionHandle->getCollisionChecker()->getContact(i).point;
         state.segment(begin + 3, 3) = mCollisionHandle->getCollisionChecker()->getContact(i).force;
+    }
+    mBakedStates.push_back(state);
+}
+
+void MyWindow::bake(const std::vector<Eigen::VectorXd>& _Dofs)
+{
+    VectorXd state(mIndices.back());
+    for(unsigned int i = 0; i < mSkels.size(); i++) {
+        state.segment(mIndices[i], _Dofs[i].size()) = _Dofs[i];
     }
     mBakedStates.push_back(state);
 }

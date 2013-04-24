@@ -6,6 +6,7 @@
 #include <kinematics/Dof.h>
 #include <kinematics/Joint.h>
 
+
 #include <iostream>
 #include <fstream>
 
@@ -143,6 +144,11 @@ void AtlasKinematics::init(Skeleton *_atlas) {
 	dof_ind[MANIP_R_HAND][3] = 30; //= r_arm_elx
 	dof_ind[MANIP_R_HAND][4] = 32; //= r_arm_uwy
 	dof_ind[MANIP_R_HAND][5] = 34; //= r_arm_mwx
+
+	dof_misc[0] = 6;
+	dof_misc[1] = 9;
+	dof_misc[2] = 12;
+	dof_misc[3] = 16;
 
 	//	[] = 0; //= floatingX
 	//	[] = 1; //= floatingY
@@ -291,12 +297,18 @@ Vector3d AtlasKinematics::getCOMW(Skeleton *_atlas, const Matrix4d &_Twb)
 	return (_Twb * v4d).head(3);
 }
 
-void AtlasKinematics::writeTrajectory(ostream &file, const VectorXd &_old, const VectorXd &_new, int _N)
+void AtlasKinematics::writeTrajectory(ostream &file, const VectorXd &_old, const VectorXd &_new, int _N, bool iscos)
 {
 	VectorXd tmp = _old;
-	VectorXd delta = (_new - _old) / _N;
+	VectorXd delta = (_new - _old);
+	VectorXd sdelta = delta / (_N-1);
+	double theta = M_PI / (_N-1);	 
 
+	delta /= 2;
 	for ( int i = 0; i < _N; i++) {
+
+		if (iscos)
+			tmp = _old + delta * (1 - cos(theta * i));
 
 		file << "  - [\"";
 		file << tmp(6) << ' ';
@@ -310,10 +322,31 @@ void AtlasKinematics::writeTrajectory(ostream &file, const VectorXd &_old, const
 			}
 		}
 
-		tmp += delta;
+		if (!iscos)
+			tmp += sdelta;
+
 		file << "\"]\n";
 
 	}
+}
+
+void AtlasKinematics::printGazeboAngles(Skeleton *_atlas, const VectorXd &dofs) {
+
+
+	for (int i = 0; i < 4; i++) {
+		cout << "[] = " << dof_misc[i] << "; \\\\= " << 
+		_atlas->getDof(dof_misc[i])->getName() << ": " << dofs(dof_misc[i]) << endl;
+	}
+
+	cout << endl;
+	for (int j = 0; j < NUM_MANIPULATORS; j++) {
+		for (int k = 0; k < 6; k++) {
+			cout << "[] = " << dof_ind[j][k] << "; \\\\= " << 
+			_atlas->getDof(dof_ind[j][k])->getName() << ": " << dofs(dof_ind[j][k])<< endl;
+		}
+		cout << endl;
+	}
+
 }
 
 
