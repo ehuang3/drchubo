@@ -16,23 +16,38 @@ using namespace kinematics;
 using namespace dynamics;
 using namespace robotics;
 using namespace Eigen;
+using namespace atlas;
+
+atlas::AtlasKinematics *_ak;
+kinematics::Skeleton *_atlas;
+
+/* ********************************************************************************************* */
+atlas::AtlasKinematics *prepareAtlasKinematics() {
+	if(!_ak) {
+		DartLoader dart_loader;
+		World *mWorld = dart_loader.parseWorld(ATLAS_DATA_PATH "atlas/atlas_world.urdf");
+		_atlas = mWorld->getSkeleton("atlas");
+		_ak = new AtlasKinematics();
+		_ak->init(_atlas);
+	}
+	_atlas->setPose(_atlas->getPose().setZero(), true);
+	return _ak;
+}
 
 int main(int argc, char* argv[]) {
+
 	DartLoader dart_loader;
 	World *mWorld = dart_loader.parseWorld(ATLAS_DATA_PATH"atlas/atlas_world.urdf");
 	SkeletonDynamics *atlas = mWorld->getSkeleton("atlas");
-
 
 	FileInfoSkel<SkeletonDynamics> model;
 	model.loadFile(ATLAS_DATA_PATH"/skel/ground1.skel", SKEL);
 	SkeletonDynamics *ground = dynamic_cast<SkeletonDynamics *>(model.getSkel());
 	ground->setName("ground");
 
-
 	vector<SkeletonDynamics *> skels;
 	skels.push_back(ground);
 	skels.push_back(atlas);
-
 
 	MyWindow window(skels);
 

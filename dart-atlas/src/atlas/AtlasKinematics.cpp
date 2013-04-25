@@ -6,8 +6,10 @@
 #include <kinematics/Dof.h>
 #include <kinematics/Joint.h>
 
+
 #include <iostream>
 #include <complex>
+#include <fstream>
 
 using namespace Eigen;
 using namespace kinematics;
@@ -73,8 +75,8 @@ void AtlasKinematics::init(Skeleton *_atlas) {
 		for(int i=0; i < 6; i++) {
 			u_lim[i][0] = node[i]->getParentJoint()->getDof(0)->getMin();
 			u_lim[i][1] = node[i]->getParentJoint()->getDof(0)->getMax();
-			// cout << "u_lim["<<i<<"][0] = " << u_lim[i][0] << ";" << endl;
-			// cout << "u_lim["<<i<<"][1] = " << u_lim[i][1] << ";" << endl;
+//			cout << "u_lim["<<i<<"][0] = " << u_lim[i][0] << ";" << endl;
+//			cout << "u_lim["<<i<<"][1] = " << u_lim[i][1] << ";" << endl;
 		}
 	}
 
@@ -114,29 +116,8 @@ void AtlasKinematics::init(Skeleton *_atlas) {
 	ld[6] = 0;
 	lr[6] = 0;
 	la[6] = 0;
-}
 
-Matrix4d AtlasKinematics::legT(int _frame, double _u) {
-	return _legT(_frame, _u + u_off[_frame-1]);
-}
-
-Matrix4d AtlasKinematics::legFK(const Vector6d& _u, bool _left) {
-	return _legFK(_u, _left);
-}
-
-bool AtlasKinematics::comIK(Skeleton *_atlas,
-							const Vector3d& _dcom,
-							Matrix4d& _Twb,
-							IK_Mode _mode[NUM_MANIPULATORS],
-							const Matrix4d _Twm[NUM_MANIPULATORS],
-							VectorXd& _dofs) {
-	// joint indexes in dofs
-	vector<int> dof_ind[NUM_MANIPULATORS];
-	for(int i=0; i < NUM_MANIPULATORS; i++) {
-		for(int j=0; j < 6; j++) {
-			dof_ind[i].push_back(0); // allocate space
-		}
-	}
+	// index of joint angles in DART
 	dof_ind[MANIP_L_FOOT][0] = 7;  //= l_leg_uhz
 	dof_ind[MANIP_L_FOOT][1] = 10; //= l_leg_mhx
 	dof_ind[MANIP_L_FOOT][2] = 13; //= l_leg_lhy
@@ -165,6 +146,11 @@ bool AtlasKinematics::comIK(Skeleton *_atlas,
 	dof_ind[MANIP_R_HAND][4] = 32; //= r_arm_uwy
 	dof_ind[MANIP_R_HAND][5] = 34; //= r_arm_mwx
 
+	dof_misc[0] = 6;
+	dof_misc[1] = 9;
+	dof_misc[2] = 12;
+	dof_misc[3] = 16;
+
 	//	[] = 0; //= floatingX
 	//	[] = 1; //= floatingY
 	//	[] = 2; //= floatingZ
@@ -176,7 +162,208 @@ bool AtlasKinematics::comIK(Skeleton *_atlas,
 	//	[] = 12; //= back_ubx
 	//	[] = 16; //= neck_ay
 	//	[] = 21; //= hokuyo_joint
+}
 
+bool AtlasKinematics::comIKRelativeW(Skeleton *_atlas,
+							const Vector3d& _dcom,
+						    const Eigen::Matrix4d _Twm[NUM_MANIPULATORS],
+							Matrix4d& _Twb) {
+
+	// dofs
+	int nDofsNum = _atlas->getNumDofs();
+	VectorXd dofs(nDofsNum);
+	dofs = _atlas->getPose();
+
+	// mode
+	IK_Mode mode[NUM_MANIPULATORS];
+
+	// com
+	Vector3d com;
+	Matrix<double, 4, 1> comb, comw;
+	comb.head(3) = _atlas->getWorldCOM();
+	comb(3) = 1;
+	comw = _Twb * comb;
+	comw.head(3) += _dcom;
+
+	return comIK(_atlas, comw.head(3), _Twb, mode, _Twm, dofs);
+
+}
+
+
+Vector6d AtlasKinematics::getLimbAngle(Skeleton *_atlas,
+										ManipIndex _limb) {
+	// dofs
+	int nDofsNum = _atlas->getNumDofs();
+	VectorXd dofs(nDofsNum);
+	dofs = _atlas->getPose();
+
+	// limb joint angles
+	Vector6d angles;
+
+	for (int i = 0; i < 6; i++)
+		angles(i) = dofs(dof_ind[_limb][i]);
+
+	return angles;
+}
+
+void AtlasKinematics::setLimbAngle(Skeleton *_atlas,
+								const Vector6d &_dangles,
+								ManipIndex _limb) {
+	// dofs
+	int nDofsNum = _atlas->getNumDofs();
+	VectorXd dofs(nDofsNum);
+	dofs = _atlas->getPose();
+
+	// new dofs
+	Vector6d angles;
+	for (int i = 0; i < 6; i++)
+		dofs(dof_ind[_limb][i]) = _dangles(i);
+
+	// set pose
+	_atlas->setPose(dofs, true);
+
+}
+
+Matrix4d AtlasKinematics::getLimbTransB(Skeleton *_atlas,
+									ManipIndex _limb) {
+	// limb joint angles
+	Vector6d angles;
+	angles = getLimbAngle(_atlas, _limb);
+
+	// limb FK
+	switch (_limb){
+		case MANIP_L_FOOT:
+			return legFK(angles, true);
+			break;
+		case MANIP_R_FOOT:
+			return legFK(angles, false);
+			break;
+		default:
+			cout << "ERROR: No supported or invalid limb: " << _limb << endl;
+			exit(1);
+			break;
+	}
+}
+
+
+Matrix4d AtlasKinematics::getLimbTransW(Skeleton *_atlas,
+									const Matrix4d &_Twb, 
+									ManipIndex _limb) {
+	return _Twb * getLimbTransB(_atlas, _limb);
+
+}
+
+Vector6d AtlasKinematics::newLimbPosRelativeB(Skeleton *_atlas,
+											 const VectorXd &dofs,
+												ManipIndex _limb,
+												 const Vector3d	&delta) {
+
+	Matrix4d curr;
+	curr = getLimbTransB(_atlas, _limb);
+	curr.block<3,1>(0,3) += delta;
+	Vector6d angles;
+
+	for (int i = 0; i < 6; i++)
+		angles(i) = dofs(dof_ind[_limb][i]);
+
+	// IK
+	switch (_limb){
+		case MANIP_L_FOOT:
+			if ( legIK(curr, true, angles, angles) == false) {
+				cout << "IK failed" << endl;
+				exit(1);
+			}
+			break;
+		case MANIP_R_FOOT:
+			if ( legIK(curr, false, angles, angles) == false) {
+				cout << "IK failed" << endl;
+				exit(1);
+			}
+			break;
+		default:
+			cout << "ERROR: No supported or invalid limb: " << _limb << endl;
+			exit(1);
+			break;
+	}
+
+	return angles;
+}
+
+Vector3d AtlasKinematics::getCOMW(Skeleton *_atlas, const Matrix4d &_Twb)
+{
+	Vector4d v4d;
+	v4d.head(3) = _atlas->getWorldCOM();
+	v4d(3) = 1;
+	return (_Twb * v4d).head(3);
+}
+
+void AtlasKinematics::writeTrajectory(ostream &file, const VectorXd &_old, const VectorXd &_new, int _N, bool iscos)
+{
+	VectorXd tmp = _old;
+	VectorXd delta = (_new - _old);
+	VectorXd sdelta = delta / (_N-1);
+	double theta = M_PI / (_N-1);	 
+
+	delta /= 2;
+	for ( int i = 0; i < _N; i++) {
+
+		if (iscos)
+			tmp = _old + delta * (1 - cos(theta * i));
+
+		file << "  - [\"";
+		file << tmp(6) << ' ';
+		file << tmp(9) << ' ';
+		file << tmp(12) << ' ';
+		file << tmp(16) << ' ';
+
+		for (int j = 0; j < NUM_MANIPULATORS; j++) {
+			for (int k = 0; k < 6; k++) {
+				file << tmp(dof_ind[j][k]) << ' ';
+			}
+		}
+
+		if (!iscos)
+			tmp += sdelta;
+
+		file << "\"]\n";
+
+	}
+}
+
+void AtlasKinematics::printGazeboAngles(Skeleton *_atlas, const VectorXd &dofs) {
+
+
+	for (int i = 0; i < 4; i++) {
+		cout << "[] = " << dof_misc[i] << "; \\\\= " << 
+		_atlas->getDof(dof_misc[i])->getName() << ": " << dofs(dof_misc[i]) << endl;
+	}
+
+	cout << endl;
+	for (int j = 0; j < NUM_MANIPULATORS; j++) {
+		for (int k = 0; k < 6; k++) {
+			cout << "[] = " << dof_ind[j][k] << "; \\\\= " << 
+			_atlas->getDof(dof_ind[j][k])->getName() << ": " << dofs(dof_ind[j][k])<< endl;
+		}
+		cout << endl;
+	}
+
+}
+
+
+Matrix4d AtlasKinematics::legT(int _frame, double _u) {
+	return _legT(_frame, _u + u_off[_frame-1]);
+}
+
+Matrix4d AtlasKinematics::legFK(const Vector6d& _u, bool _left) {
+	return _legFK(_u, _left);
+}
+
+bool AtlasKinematics::comIK(Skeleton *_atlas,
+							const Vector3d& _dcom,
+							Matrix4d& _Twb,
+							IK_Mode _mode[NUM_MANIPULATORS],
+							const Matrix4d _Twm[NUM_MANIPULATORS],
+							VectorXd& _dofs) {
 	// hack
 	_dofs.block(0,0,3,1) = Vector3d::Zero();
 
