@@ -75,9 +75,11 @@ int main(int argc, char* argv[]) {
 	const int NUM_POINTS = 2000;
 	double wave[NUM_POINTS];
 	double coswave[NUM_POINTS];
+	double twowave[NUM_POINTS];
 	for(int i=0; i < NUM_POINTS; ++i) {
 		wave[i] = sin(2 * M_PI * i / NUM_POINTS);
 		coswave[i] = cos(2 * M_PI * i / NUM_POINTS);
+		twowave[i] = cos(4 * M_PI * i / NUM_POINTS);
 	}
 
 	// move it !!! & bake
@@ -85,7 +87,7 @@ int main(int argc, char* argv[]) {
 	for(int i=0; i < NUM_POINTS; ++i) {
 		com(2) = com_base_z + down * coswave[i];
 		com(1) = com_base_y + shake * wave[i];
-		com(0) = com_base_x + front * wave[i];
+		com(0) = com_base_x + front * twowave[i];
 		bool ok = AK.comIK(atlas, com, Twb, mode, Tm, dofs);
 
 		allDofs[1] = dofs;
