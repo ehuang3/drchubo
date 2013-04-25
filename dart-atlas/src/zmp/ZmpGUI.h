@@ -1,5 +1,4 @@
-#ifndef _MYWINDOW_
-#define _MYWINDOW_
+#pragma once
 
 #include <stdarg.h>
 #include "yui/Win3D.h"
@@ -15,9 +14,9 @@ namespace dynamics{
     class ContactDynamics;
 }
 
-class MyWindow : public yui::Win3D, public integration::IntegrableSystem {
+class ZmpGUI : public yui::Win3D, public integration::IntegrableSystem {
 public:
-	MyWindow(std::vector<dynamics::SkeletonDynamics *> _skels);
+	ZmpGUI(std::vector<dynamics::SkeletonDynamics *> _skels);
 
     virtual void draw();
     virtual void keyboard(unsigned char key, int x, int y);
@@ -65,5 +64,3 @@ protected:
     Eigen::VectorXd lastDofs;
     Eigen::Vector3d com;
 };
-
-#endif

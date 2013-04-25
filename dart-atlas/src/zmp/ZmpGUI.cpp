@@ -1,4 +1,4 @@
-#include "MyWindow.h"
+#include "ZmpGUI.h"
 #include "dynamics/BodyNodeDynamics.h"
 #include "dynamics/ContactDynamics.h"
 #include "kinematics/Dof.h"
@@ -20,7 +20,7 @@ using namespace dynamics;
 using namespace utils;
 using namespace std;
 
-MyWindow::MyWindow(vector<SkeletonDynamics *> _skels) : Win3D() {
+ZmpGUI::ZmpGUI(vector<SkeletonDynamics *> _skels) : Win3D() {
     mBackground[0] = 1.0;
     mBackground[1] = 1.0;
     mBackground[2] = 1.0;
@@ -51,7 +51,7 @@ MyWindow::MyWindow(vector<SkeletonDynamics *> _skels) : Win3D() {
     initDyn();
 }
 
-void MyWindow::initDyn()
+void ZmpGUI::initDyn()
 {
     mDofs.resize(mSkels.size());
     mDofVels.resize(mSkels.size());
@@ -89,8 +89,8 @@ void MyWindow::initDyn()
     mSkels[0]->setPose(mDofs[0], true, false);
 }
 
-VectorXd MyWindow::getState() {
-    VectorXd state(mIndices.back() * 2);    
+VectorXd ZmpGUI::getState() {
+    VectorXd state(mIndices.back() * 2);
     for (unsigned int i = 0; i < mSkels.size(); i++) {
         int start = mIndices[i] * 2;
         int size = mDofs[i].size();
@@ -100,7 +100,7 @@ VectorXd MyWindow::getState() {
     return state;
 }
 
-VectorXd MyWindow::evalDeriv() {
+VectorXd ZmpGUI::evalDeriv() {
     // compute dynamic equations
     for (unsigned int i = 0; i < mSkels.size(); i++) {
         if (mSkels[i]->getImmobileState()) {
@@ -116,7 +116,7 @@ VectorXd MyWindow::evalDeriv() {
     mCollisionHandle->applyContactForces();
 
     // compute derivatives for integration
-    VectorXd deriv = VectorXd::Zero(mIndices.back() * 2);    
+    VectorXd deriv = VectorXd::Zero(mIndices.back() * 2);
     for (unsigned int i = 0; i < mSkels.size(); i++) {
         // skip immobile objects in forward simulation
         if (mSkels[i]->getImmobileState())
@@ -131,7 +131,7 @@ VectorXd MyWindow::evalDeriv() {
     return deriv;
 }
 
-void MyWindow::setState(const VectorXd &newState) {
+void ZmpGUI::setState(const VectorXd &newState) {
     for (unsigned int i = 0; i < mSkels.size(); i++) {
         int start = mIndices[i] * 2;
         int size = mDofs[i].size();
@@ -140,11 +140,11 @@ void MyWindow::setState(const VectorXd &newState) {
     }
 }
 
-void MyWindow::shakeHips() {
+void ZmpGUI::shakeHips() {
 
 }
 
-void MyWindow::displayTimer(int _val)
+void ZmpGUI::displayTimer(int _val)
 {
     int numIter = mDisplayTimeout / (mTimeStep * 1000);
     if (mPlay) {
@@ -170,7 +170,7 @@ void MyWindow::displayTimer(int _val)
     glutTimerFunc(mDisplayTimeout, refreshTimer, _val);
 }
 
-void MyWindow::draw()
+void ZmpGUI::draw()
 {
     //glDisable(GL_LIGHTING);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -185,7 +185,7 @@ void MyWindow::draw()
                 mSkels[i]->setPose(mBakedStates[mPlayFrame].segment(start, size), true, false);
             }
             if (mShowMarkers) {
-                int sumDofs = mIndices[mSkels.size()]; 
+                int sumDofs = mIndices[mSkels.size()];
                 int nContact = (mBakedStates[mPlayFrame].size() - sumDofs) / 6;
                 for (int i = 0; i < nContact; i++) {
                     Vector3d v = mBakedStates[mPlayFrame].segment(sumDofs + i * 6, 3);
@@ -221,7 +221,7 @@ void MyWindow::draw()
     }
 
     renderer::OpenGLRenderInterface *mGLRI = dynamic_cast<renderer::OpenGLRenderInterface *>(mRI);
-    
+
     for (unsigned int i = 0; i < mSkels.size(); i++) {
         //mGLRI->draw(mSkels[i], false, true); //FIXME: dart sucks at openGL settings
         mSkels[i]->draw(mRI);
@@ -235,7 +235,7 @@ void MyWindow::draw()
 
     // display the frame count in 2D text
     char buff[64];
-    if (!mSim) 
+    if (!mSim)
         sprintf(buff, "%d", mPlayFrame);
     else
         sprintf(buff, "%d", mSimFrame);
@@ -245,7 +245,7 @@ void MyWindow::draw()
     glEnable(GL_LIGHTING);
 }
 
-void MyWindow::keyboard(unsigned char key, int x, int y)
+void ZmpGUI::keyboard(unsigned char key, int x, int y)
 {
     switch(key){
     case ' ': // use space key to play or stop the motion
@@ -295,7 +295,7 @@ void MyWindow::keyboard(unsigned char key, int x, int y)
     glutPostRedisplay();
 }
 
-void MyWindow::bake()
+void ZmpGUI::bake()
 {
     int nContact = mCollisionHandle->getCollisionChecker()->getNumContact();
     VectorXd state(mIndices.back() + 6 * nContact);
@@ -309,7 +309,7 @@ void MyWindow::bake()
     mBakedStates.push_back(state);
 }
 
-void MyWindow::bake(const std::vector<Eigen::VectorXd>& _Dofs)
+void ZmpGUI::bake(const std::vector<Eigen::VectorXd>& _Dofs)
 {
     VectorXd state(mIndices.back());
     for(unsigned int i = 0; i < mSkels.size(); i++) {

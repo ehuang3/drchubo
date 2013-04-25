@@ -1,5 +1,3 @@
-#include "MyWindow.h"
-
 #include <dynamics/SkeletonDynamics.h>
 #include <kinematics/FileInfoSkel.hpp>
 
@@ -8,6 +6,7 @@
 
 #include <utils/AtlasPaths.h>
 #include <atlas/AtlasKinematics.h>
+#include <zmp/ZmpGUI.h>
 
 #include <iostream>
 
@@ -34,7 +33,7 @@ int main(int argc, char* argv[]) {
 	skels.push_back(atlas);
 
 
-	MyWindow window(skels);
+	ZmpGUI window(skels);
 
 	// move com around
 	atlas::AtlasKinematics AK;
