@@ -28,7 +28,8 @@ public:
     virtual void setState(const Eigen::VectorXd &state);
 
     // baking interface
-    void bake(const std::vector<Eigen::VectorXd>& _Dofs);
+    void bake(const std::vector<Eigen::VectorXd>& _Dofs); //< bake many
+    void bake(const Eigen::VectorXd& _dofs); //< bake once
     std::vector<Eigen::VectorXd> dofs() { return mDofs; }
 
 protected:

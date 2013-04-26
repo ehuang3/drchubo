@@ -5,7 +5,7 @@
 #include "collision/CollisionSkeleton.h"
 #include "utils/UtilsMath.h"
 #include "utils/Timer.h"
-#include "yui/GLFuncs.h"
+#include <yui/GLFuncs.h>
 #include <stdio.h>
 #include <iostream>
 
@@ -16,11 +16,19 @@
 #include <kinematics/Shape.h>
 #include <kinematics/ShapeBox.h>
 
+#include <robotics/parser/dart_parser/DartLoader.h>
+#include <robotics/World.h>
+#include <utils/AtlasPaths.h>
+#include <dynamics/SkeletonDynamics.h>
+#include <kinematics/FileInfoSkel.hpp>
+
+
 using namespace dynamics;
 using namespace utils;
 using namespace std;
 
 ZmpGUI::ZmpGUI(vector<SkeletonDynamics *> _skels) : Win3D() {
+
     mBackground[0] = 1.0;
     mBackground[1] = 1.0;
     mBackground[2] = 1.0;
@@ -309,11 +317,17 @@ void ZmpGUI::bake()
     mBakedStates.push_back(state);
 }
 
+void ZmpGUI::bake(const VectorXd &_dofs) {
+	VectorXd state(mIndices.back());
+	state.setZero();
+	state.segment(mIndices[0], mDofs[0].size()) = mDofs[0];
+	state.segment(mIndices[1], _dofs.size()) = _dofs;
+	mBakedStates.push_back(state);
+}
+
 void ZmpGUI::bake(const std::vector<Eigen::VectorXd>& _Dofs)
 {
-    VectorXd state(mIndices.back());
-    for(unsigned int i = 0; i < mSkels.size(); i++) {
-        state.segment(mIndices[i], _Dofs[i].size()) = _Dofs[i];
-    }
-    mBakedStates.push_back(state);
+	for(int i=0; i < _Dofs.size(); ++i) {
+		bake(_Dofs[i]);
+	}
 }

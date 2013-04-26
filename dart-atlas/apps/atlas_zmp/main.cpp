@@ -80,16 +80,13 @@ int main(int argc, char* argv[]) {
 	}
 
 	// move it !!! & bake
-	std::vector<Eigen::VectorXd> allDofs = window.dofs();
 	for(int i=0; i < NUM_POINTS; ++i) {
 		com(2) = com_base_z + down * coswave[i];
 		com(1) = com_base_y + shake * wave[i];
 		com(0) = com_base_x + front * wave[i];
 		bool ok = AK.comIK(atlas, com, Twb, mode, Tm, dofs);
 
-		allDofs[1] = dofs;
-
-		window.bake(allDofs);
+		window.bake(dofs);
 
 		if(!ok) {
 			cout << "dz= " << down * wave[i] << endl;
