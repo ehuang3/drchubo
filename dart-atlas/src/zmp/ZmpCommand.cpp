@@ -306,12 +306,14 @@ void ZmpDriver::driver_usage(ostream& ostr) {
 	ostr << "usage: >> [CMD] [PARAMS]\n"
 			"CMD:\n"
 			"  print [cmd|gains] [:file]            print X to terminal or file\n"
-			"  fill  [cmd|gains] [:file]            fill X with file\n"
+			"  fill  [cmd|gains] [file]            fill X with file\n"
 			"  run                                  run cmd\n"
 			"  help  [:cmd|:gains]                  display this text\n"
 			"\n"
+			"EXTRA:"
 			"  Autocompletes cmds, e.g. p c --> print cmd\n"
-			"  Does not autocomplete files\n";
+			"  (does not work on files)\n"
+			"\n";
 }
 
 istream& ZmpDriver::get_code(vector<string> &code) {
@@ -354,13 +356,13 @@ void ZmpDriver::do_print(vector<string> code) {
 		if(code.size() == 2) {
 			zcmd.print_command(cout);
 		} else {
-			DEBUG_STREAM << "print to " << code[2] << endl;
+			DEBUG_STREAM << "Printing to " << code[2] << endl;
 			ofstream ofs(code[2].c_str());
 			zcmd.print_command(ofs);
 			ofs.close();
 		}
 		break;
-	case 1: /* TODO: gains */ break;
+	case 1: ERROR_PRINT("Gains not implemented\n"); break;
 	default: driver_usage(std::cerr); break;
 	}
 }
@@ -380,7 +382,7 @@ void ZmpDriver::do_fill(vector<string> code) {
 	char args[][CMD_LEN] = { "cmd", "gains" };
 	switch (best_match(code[1], args, 2)) {
 	case 0: zcmd.fill(code[2].c_str()); break;
-	case 1: /* TODO: implemtn */ break;
+	case 1: ERROR_PRINT("Gains not implemented\n"); break;
 	default: driver_usage(std::cerr); break;
 	}
 }
@@ -408,7 +410,6 @@ int ZmpDriver::best_match(std::string word, char cmds[][CMD_LEN], int cmd_size) 
 			max = m;
 		}
 	}
-	//cout << "best match of " << word << " is " << cmds[best] << endl;
 	return best;
 }
 
