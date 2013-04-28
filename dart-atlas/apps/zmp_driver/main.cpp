@@ -1,4 +1,4 @@
-#include <zmp/ZmpCommand.h>
+#include <zmp/ZmpDriver.h>
 
 int main() {
 	zmp::ZmpDriver driver;
