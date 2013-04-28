@@ -1,45 +1,55 @@
 #pragma once
 #include <iostream>
+#include <vector>
+#include <string>
 
 namespace zmp {
 
+const int CMD_LEN = 256;
+
 enum walktype {
+	walk_invalid,
 	walk_canned,
 	walk_line,
 	walk_circle
 };
 
 enum ik_error_sensitivity {
+	ik_invalid,
 	ik_strict,
 	ik_sloppy,
 	ik_swing_permissive
 };
 
 struct ZmpCommand {
-	bool show_gui = false;
-	bool use_ros = false;
-	walktype walk_type = walk_canned;
-	double walk_circle_radius = 5.0;
-	double walk_dist = 20;
-	double footsep_y = 0.085; // half of horizontal separation distance between feet
-	double foot_liftoff_z = 0.05; // foot liftoff height
-	double step_length = 0.05;
-	bool walk_sideways = false;
-	double com_height = 0.48; // height of COM above ANKLE
-	double com_ik_ascl = 0;
-	double zmpoff_y = 0; // lateral displacement between zmp and ankle
-	double zmpoff_x = 0;
-	double lookahead_time = 2.5;
-	double startup_time = 1.0;
-	double shutdown_time = 1.0;
-	double double_support_time = 0.05;
-	double single_support_time = 0.70;
-	size_t max_step_count = 4;
-	double zmp_jerk_penalty = 1e-8; // jerk penalty on ZMP controller
-	ik_error_sensitivity ik_sense = ik_strict;
+	bool show_gui;
+	bool use_ros;
+	walktype walk_type;
+	double walk_circle_radius;
+	double walk_dist;
+	double footsep_y; // half of horizontal separation distance between feet
+	double foot_liftoff_z; // foot liftoff height
+	double step_length;
+	bool walk_sideways;
+	double com_height; // height of COM above ANKLE
+	double com_ik_ascl;
+	double zmpoff_y; // lateral displacement between zmp and ankle
+	double zmpoff_x;
+	double lookahead_time;
+	double startup_time;
+	double shutdown_time;
+	double double_support_time;
+	double single_support_time;
+	size_t max_step_count;
+	double zmp_jerk_penalty; // jerk penalty on ZMP controller
+	ik_error_sensitivity ik_sense;
 
-	void fill(char *fpath);
-	void fill(int argc, char** argv);
+	ZmpCommand();
+
+	void fill(const char *fpath);
+	void fill(std::vector<std::string>::iterator words);
+	void fill(std::string param, std::string val);
+	void fill(int argc, char * const argv[]);
 	void usage(std::ostream& ostr);
 	friend std::ostream& operator<<(std::ostream& out, ZmpCommand& Z);
 	void print_command(std::ostream& out);
@@ -47,6 +57,8 @@ struct ZmpCommand {
 
 class ZmpDriver {
 public:
+	ZmpDriver();
+
 	void loop();
 	ZmpCommand next_command();
 
@@ -54,15 +66,18 @@ public:
 private:
 	ZmpCommand zcmd;
 
-	void driver_usage();
+	void driver_usage(std::ostream& out);
 
-	void do_cmd(char **code, int len);
-	void do_print(char **code, int len);
-	void do_run(char **code, int len);
-	void do_fill(char **code, int len);
+	std::istream& get_code(std::vector<std::string> &code);
 
-	int best_match(char *word, char **cmds, int cmd_size);
-	int match(char *word, char *cmd);
+	void do_cmd(std::vector<std::string> code);
+	void do_print(std::vector<std::string> code);
+	void do_run(std::vector<std::string > code);
+	void do_fill(std::vector<std::string> code);
+	void do_help(std::vector<std::string> code);
+
+	int best_match(std::string word, char cmds[][CMD_LEN], int cmd_size);
+	int match(std::string word, char *cmd);
 };
 
 }

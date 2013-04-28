@@ -3,6 +3,6 @@ set_property(DIRECTORY PROPERTY FOLDER Apps)
 set_property(DIRECTORY PROPERTY EXCLUDE_FROM_DEFAULT_BUILD ON)
 
 # List of all the subdirectories to include
-foreach(APPDIR atlas ik_demo atlas_zmp)
+foreach(APPDIR atlas ik_demo atlas_zmp zmp_driver)
     add_subdirectory(${APPDIR})
 endforeach(APPDIR)
