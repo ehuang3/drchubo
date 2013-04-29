@@ -147,10 +147,10 @@ void ZmpCommand::fill(const char *fpath) {
 void ZmpCommand::fill(string param, string val) {
 	DEBUG_PRINT("Writing into ZMP-CMD: %21s %s\n", param.c_str(), val.c_str());
 	if(param[0] != '-') {
-		param = "-" + param;
 		if(param.size() > 1) {
 			param = "-" + param;
 		}
+		param = "-" + param;
 	}
 	// fake argc, argv
 	char * const argv[3] = { "zmp", (char*)param.c_str(), (char*)val.c_str() };
