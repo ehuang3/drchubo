@@ -50,9 +50,9 @@ struct ZmpCommand {
 	void fill(std::vector<std::string>::iterator words);
 	void fill(std::string param, std::string val);
 	void fill(int argc, char * const argv[]);
-	void usage(std::ostream& ostr);
-	friend std::ostream& operator<<(std::ostream& out, ZmpCommand& Z);
-	void print_command(std::ostream& out);
+	void usage(std::ostream& ostr) const;
+	friend std::ostream& operator<<(std::ostream& out, const ZmpCommand& Z);
+	void print_command(std::ostream& out) const;
 };
 
 }

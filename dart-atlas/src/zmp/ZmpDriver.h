@@ -1,5 +1,6 @@
 #pragma once
 #include "ZmpCommand.h"
+#include "ZmpGains.h"
 
 namespace zmp {
 
@@ -10,21 +11,23 @@ public:
 	void loop();
 	ZmpCommand next_command();
 
-	void (*zmp_walker)(const ZmpCommand& zcmd);
+	void (*zmp_walker)(const ZmpCommand& _cmd, const gain_list_t& _gains);
+	void (*zmp_reset)();
+
 private:
 	ZmpCommand zcmd;
+	gain_list_t zgains;
 
-	void driver_usage(std::ostream& out);
+	void driver_usage(std::ostream& _out);
 
-	std::istream& get_code(std::vector<std::string> &code);
+	std::istream& get_code(std::vector<std::string> &code, std::string &line);
 
-	void do_cmd(std::vector<std::string> code);
-	void do_print(std::vector<std::string> code);
-	void do_run(std::vector<std::string > code);
-	void do_fill(std::vector<std::string> code);
-	void do_help(std::vector<std::string> code);
+	void exec_driver(std::vector<std::string> &code, std::string &line);
+	void do_cmd(std::vector<std::string> &code, std::string &line);
+	void do_gains(std::vector<std::string> &code, std::string &line);
+	void do_help(std::vector<std::string> &code, std::string &line);
 
-	int best_match(std::string word, char cmds[][CMD_LEN], int cmd_size);
+	int best_match(std::string word, char cmds[][CMD_LEN], int cmdlen);
 	int match(std::string word, char *cmd);
 };
 

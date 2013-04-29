@@ -8,40 +8,35 @@
 #include <iterator>
 #include <algorithm>
 #define DEBUG
-#define MODULE_NAME "ZMP"
+#define MODULE_NAME "ZMP-CMD"
 #include "ZmpDebug.h"
 
 using namespace std;
 namespace zmp {
 
 static void _usage(std::ostream& ostr) {
-	ostr <<
-			"usage: zmp [OPTIONS]\n"
-			"\n"
-			"OPTIONS:\n"
-			"\n"
-			"  -g, --show-gui                    Show a GUI after computing trajectories.\n"
-			"  -R, --use-ros                     Send trajectory via ROS after computing.\n"
-			"  -I, --ik-errors                   IK error handling: strict/sloppy\n"
-			"  -w, --walk-type                   Set type: canned/line/circle\n"
-			"  -D, --walk-distance               Set maximum distance to walk\n"
-			"  -r, --walk-circle-radius          Set radius for circle walking\n"
-			"  -c, --max-step-count=NUMBER       Set maximum number of steps\n"
-			"  -y, --foot-separation-y=NUMBER    Half-distance between feet\n"
-			"  -z, --foot-liftoff-z=NUMBER       Vertical liftoff distance of swing foot\n"
-			"  -l, --step-length=NUMBER          Max length of footstep\n"
-			"  -S, --walk-sideways               Should we walk sideways? (canned gait only)\n"
-			"  -h, --com-height=NUMBER           Height of the center of mass\n"
-			"  -a, --comik-angle-weight=NUMBER   Angle weight for COM IK\n"
-			"  -Y, --zmp-offset-y=NUMBER         Lateral distance from ankle to ZMP\n"
-			"  -X, --zmp-offset-x=NUMBER         Forward distance from ankle to ZMP\n"
-			"  -T, --lookahead-time=NUMBER       Lookahead window for ZMP preview controller\n"
-			"  -p, --startup-time=NUMBER         Initial time spent with ZMP stationary\n"
-			"  -n, --shutdown-time=NUMBER        Final time spent with ZMP stationary\n"
-			"  -d, --double-support-time=NUMBER  Double support time\n"
-			"  -s, --single-support-time=NUMBER  Single support time\n"
-			"  -P, --zmp-jerk-penalty=NUMBER     P-value for ZMP preview controller\n"
-			"  -H, --help                        See this message\n";
+	ostr << "ZMP-CMD OPTIONS:\n"
+			"  g, show-gui                    Show a GUI after computing trajectories.\n"
+			"  R, use-ros                     Send trajectory via ROS after computing.\n"
+			"  I, ik-errors                   IK error handling: strict/sloppy\n"
+			"  w, walk-type                   Set type: canned/line/circle\n"
+			"  D, walk-distance               Set maximum distance to walk\n"
+			"  r, walk-circle-radius          Set radius for circle walking\n"
+			"  c, max-step-count=NUMBER       Set maximum number of steps\n"
+			"  y, foot-separation-y=NUMBER    Half-distance between feet\n"
+			"  z, foot-liftoff-z=NUMBER       Vertical liftoff distance of swing foot\n"
+			"  l, step-length=NUMBER          Max length of footstep\n"
+			"  S, walk-sideways               Should we walk sideways? (canned gait only)\n"
+			"  h, com-height=NUMBER           Height of the center of mass\n"
+			"  a, comik-angle-weight=NUMBER   Angle weight for COM IK\n"
+			"  Y, zmp-offset-y=NUMBER         Lateral distance from ankle to ZMP\n"
+			"  X, zmp-offset-x=NUMBER         Forward distance from ankle to ZMP\n"
+			"  T, lookahead-time=NUMBER       Lookahead window for ZMP preview controller\n"
+			"  p, startup-time=NUMBER         Initial time spent with ZMP stationary\n"
+			"  n, shutdown-time=NUMBER        Final time spent with ZMP stationary\n"
+			"  d, double-support-time=NUMBER  Double support time\n"
+			"  s, single-support-time=NUMBER  Single support time\n"
+			"  P, zmp-jerk-penalty=NUMBER     P-value for ZMP preview controller\n";
 }
 
 static double getdouble(const char* str) {
@@ -150,10 +145,12 @@ void ZmpCommand::fill(const char *fpath) {
 }
 
 void ZmpCommand::fill(string param, string val) {
-	DEBUG_PRINT("Input (p,v): %21s %s\n", param.c_str(), val.c_str());
+	DEBUG_PRINT("Writing into ZMP-CMD: %21s %s\n", param.c_str(), val.c_str());
 	if(param[0] != '-') {
-		//DEBUG_PRINT("Appending leading -- to %s\n", param.c_str());
-		param = "--" + param;
+		param = "-" + param;
+		if(param.size() > 1) {
+			param = "-" + param;
+		}
 	}
 	// fake argc, argv
 	char * const argv[3] = { "zmp", (char*)param.c_str(), (char*)val.c_str() };
@@ -226,7 +223,7 @@ void ZmpCommand::fill(int argc, char * const argv[]) {
 	}
 }
 
-void ZmpCommand::usage(std::ostream& ostr) {
+void ZmpCommand::usage(std::ostream& ostr) const {
 	_usage(ostr);
 }
 
@@ -246,7 +243,7 @@ static string ik2str(ik_error_sensitivity ik_err) {
 	return str;
 }
 
-std::ostream& operator<<(std::ostream& out, ZmpCommand& Z) {
+std::ostream& operator<<(std::ostream& out, const ZmpCommand& Z) {
 	return
 	out << "show-gui                    " << Z.show_gui << "\n"
 		<< "use-ros                     " << Z.use_ros << "\n"
@@ -272,7 +269,7 @@ std::ostream& operator<<(std::ostream& out, ZmpCommand& Z) {
 		<< "\n";
 }
 
-void ZmpCommand::print_command(std::ostream& out) {
+void ZmpCommand::print_command(std::ostream& out) const {
 	out << *this;
 }
 
