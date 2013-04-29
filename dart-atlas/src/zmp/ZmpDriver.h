@@ -9,7 +9,7 @@ public:
 	ZmpDriver();
 
 	void loop();
-	ZmpCommand next_command();
+	void next_command(ZmpCommand& _cmd, gain_list_t& _gains);
 
 	void (*zmp_walker)(const ZmpCommand& _cmd, const gain_list_t& _gains);
 	void (*zmp_reset)();

@@ -36,7 +36,7 @@ void ZmpDriver::driver_usage(ostream& ostr) {
 			"    run                          Runs user ZMP-WALKER function\n"
 			"    reset                        Runs user ZMP-RESET function\n"
 			"    debug                        Toggle debug output\n"
-			"    help  [:cmd|gains]           Show help\n"
+			"    help  [:cmd]                 Show help\n"
 			"\n"
 			"  TIPS\n"
 			"    - Longest match on commands, e.g. h c -> help cmd\n"
@@ -50,6 +50,20 @@ void ZmpDriver::loop() {
 	while(get_code(code, line)) {
 		exec_driver(code, line);
 	}
+}
+
+void ZmpDriver::next_command(ZmpCommand& _cmd, gain_list_t& _gains) {
+	vector<string> code;
+	string line;
+	while(get_code(code, line)) {
+		if(code.size() > 0 && code[0][0] == 'r') {
+			break;
+		}
+		exec_driver(code, line);
+	}
+	_cmd = zcmd;
+	_gains = zgains;
+	return;
 }
 
 istream& ZmpDriver::get_code(vector<string> &code, string &line) {

@@ -46,7 +46,9 @@ public:
 	// <regex> [=|*|/|+|-] <double>
 	void eval_expr(std::string _expr, bool _add);
 
+	// returns gains that match regex
 	Eigen::VectorXd match(std::string regex) const;
+	// returns all gains in a vector
 	Eigen::VectorXd to_vector() const;
 
 private:
