@@ -1,6 +1,6 @@
 #pragma once
 
-#include <utils/LoadOpengl.h>
+#include <renderer/LoadOpengl.h>
 
 namespace kinematics {
 	class Skeleton;

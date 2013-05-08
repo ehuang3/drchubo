@@ -1,5 +1,5 @@
 #include "AtlasRenderer.h"
-#include <utils/LoadOpengl.h>
+#include <renderer/LoadOpengl.h>
 #include <Eigen/Dense>
 #include <renderer/RenderInterface.h>
 #include <dynamics/SkeletonDynamics.h>
