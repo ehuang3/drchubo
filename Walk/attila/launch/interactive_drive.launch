@@ -1,0 +1,26 @@
+<launch>
+	<!-- Set the actionlib stuff to use BDI to command Attila -->
+	<node pkg="atlas_msgs" type="actionlib_server" name="walking_actionlib_server" />
+
+	<param name="Forward" type="int" value="1"/>
+	<param name="Lateral" type="int" value="0"/>
+	<param name="Turn" type="int" value="0"/>
+
+	<param name="Walk_Sequence_Length" type="int" value="1"/>
+
+	<param name="Forward_Stride_Length" type="double" value="0.15"/>
+	<param name="Lateral_Stride_Length" type="double" value="0.15"/>
+
+	<param name="Turn_Radius" type="double" value="2"/>
+	<param name="In_Place_Turn_Size" type="double" value="3.1416"/>
+	<param name="Stride_Duration" type="double" value="0.63"/>
+
+	<param name="Stride_Width" type="double" value="0.2"/>
+	<param name="Step_Height" type="double" value="0"/>
+	<param name="Swing_Height" type="double" value="0.3"/>	
+
+
+	<!-- Use our customized teleop -->
+
+	<node pkg="attila" type="interactive_drive.py" name="interactive_actionlib_client" output="screen" />	
+</launch>
