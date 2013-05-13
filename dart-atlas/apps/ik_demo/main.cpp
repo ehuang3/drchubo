@@ -4,7 +4,7 @@
 #include <kinematics/FileInfoSkel.hpp>
 
 #include <robotics/parser/dart_parser/DartLoader.h>
-#include <robotics/World.h>
+#include <simulation/World.h>
 
 #include <utils/AtlasPaths.h>
 #include <atlas/AtlasKinematics.h>
@@ -14,7 +14,7 @@
 using namespace std;
 using namespace kinematics;
 using namespace dynamics;
-using namespace robotics;
+using namespace simulation;
 using namespace Eigen;
 using namespace atlas;
 

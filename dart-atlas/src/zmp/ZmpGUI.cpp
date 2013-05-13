@@ -17,7 +17,7 @@
 #include <kinematics/ShapeBox.h>
 
 #include <robotics/parser/dart_parser/DartLoader.h>
-#include <robotics/World.h>
+#include <simulation/World.h>
 #include <utils/AtlasPaths.h>
 #include <dynamics/SkeletonDynamics.h>
 #include <kinematics/FileInfoSkel.hpp>

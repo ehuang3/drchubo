@@ -9,7 +9,7 @@
 #include <math.h>
 
 #include <robotics/parser/dart_parser/DartLoader.h>
-#include <robotics/World.h>
+#include <simulation/World.h>
 #include <kinematics/Skeleton.h>
 #include <kinematics/Dof.h>
 #include <kinematics/BodyNode.h>
@@ -21,7 +21,7 @@ using namespace atlas;
 
 using namespace kinematics;
 using namespace dynamics;
-using namespace robotics;
+using namespace simulation;
 
 atlas::AtlasKinematics *_ak;
 kinematics::Skeleton *_atlas;

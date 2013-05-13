@@ -4,7 +4,7 @@
 #include <kinematics/FileInfoSkel.hpp>
 
 #include <robotics/parser/dart_parser/DartLoader.h>
-#include <robotics/World.h>
+#include <simulation/World.h>
 
 #include <utils/AtlasPaths.h>
 
@@ -13,15 +13,13 @@
 using namespace std;
 using namespace kinematics;
 using namespace dynamics;
-using namespace robotics;
+using namespace simulation;
 
 int main(int argc, char* argv[]) {
 	DartLoader dart_loader;
 	World *mWorld = dart_loader.parseWorld(ATLAS_DATA_PATH"atlas/atlas_world.urdf");
 
 	SkeletonDynamics *atlas = mWorld->getSkeleton("atlas");
-
-	mWorld->printInfo();
 
 	FileInfoSkel<SkeletonDynamics> model;
 	model.loadFile(ATLAS_DATA_PATH"/skel/ground1.skel", SKEL);
