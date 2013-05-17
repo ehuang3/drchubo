@@ -14,7 +14,7 @@ public:
 	void renderCOM(kinematics::Skeleton *_robot, renderer::RenderInterface *_ri);
 	void renderJoints(kinematics::Skeleton *_robot, renderer::RenderInterface *_ri);
 	void renderCOM(kinematics::BodyNode *_node, renderer::RenderInterface *_ri);
-	void renderJoints(kinematics::BodyNode *_node, renderer::RenderInterface *_ri);
+	void renderJoints(kinematics::BodyNode *_node, renderer::RenderInterface *_ri, int _depth);
 };
 
 }

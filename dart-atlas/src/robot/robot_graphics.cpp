@@ -30,7 +30,7 @@ void robot_graphics_t::renderCOM(Skeleton *_atlas, RenderInterface *_ri) {
 
 void robot_graphics_t::renderJoints(Skeleton *_atlas, RenderInterface *_ri) {
 	glDisable(GL_CULL_FACE);
-	renderJoints(_atlas->getRoot(), _ri);
+	renderJoints(_atlas->getRoot(), _ri, 0);
 }
 
 void robot_graphics_t::renderCOM(BodyNode *_node, RenderInterface *_ri) {
@@ -63,14 +63,33 @@ void robot_graphics_t::renderCOM(BodyNode *_node, RenderInterface *_ri) {
 	_ri->popMatrix();
 }
 
-void robot_graphics_t::renderJoints(BodyNode *_node, RenderInterface *_ri) {
+void robot_graphics_t::renderJoints(BodyNode *_node, RenderInterface *_ri, int _depth) {
 	if(!_node)
 		return;
 
-	_ri->pushMatrix();
 	// render self geometry
-	Joint *_jointParent = _node->getParentJoint();
-	int nt = _jointParent->getNumTransforms();
+    Joint *_jointParent = _node->getParentJoint();
+    int nt = _jointParent->getNumTransforms();
+
+    if(_depth > 0) {
+        // lines?
+        glColor3d(1,1,1);
+        glLineWidth(2.0);
+        glDisable(GL_LIGHTING);
+        glBegin(GL_LINES);
+
+        glVertex3d(0, 0, 0);
+
+        Matrix4d locTrans = _jointParent->getLocalTransform();
+
+        // Lines?
+        glVertex3d(locTrans(0,3), locTrans(1,3), locTrans(2,3));
+        glEnd();
+
+        glEnable(GL_LIGHTING);
+    }
+
+	_ri->pushMatrix();
 	for(int i=0; i < _jointParent->getNumTransforms(); ++i) {
 		_jointParent->getTransform(i)->applyGLTransform(_ri);
 
@@ -107,10 +126,10 @@ void robot_graphics_t::renderJoints(BodyNode *_node, RenderInterface *_ri) {
 		glTranslated(0.0,0.0,-height/2);
 		glColor3d(0.0, 0.3, 1.0);
 		QUAD_OBJ_INIT;
-		gluCylinder(quadObj, radius, radius, height, 16, 16);
-		gluDisk(quadObj, 0, radius, 16, 16);
+		gluCylinder(quadObj, radius, radius, height, 8, 8);
+		gluDisk(quadObj, 0, radius, 8, 8);
 		glTranslated(0.0,0.0,height);
-		gluDisk(quadObj, 0, radius, 16, 16);
+		gluDisk(quadObj, 0, radius, 8, 8);
 		_ri->popMatrix();
 
 	//glColor3d(0.0, 1.0, 0.0);
@@ -121,7 +140,7 @@ void robot_graphics_t::renderJoints(BodyNode *_node, RenderInterface *_ri) {
 	// render subtree
 	for(int i=0; i < _node->getNumChildJoints(); ++i) {
 		BodyNode *child = _node->getChildJoint(i)->getChildNode();
-		renderJoints(child, _ri);
+		renderJoints(child, _ri, _depth+1);
 	}
 	_ri->popMatrix();
 }
