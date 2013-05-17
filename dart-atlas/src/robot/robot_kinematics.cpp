@@ -29,24 +29,29 @@ Matrix4d robot_kinematics_t::legFK(const Vector6d& _u, bool _left) {
 	return _legFK(_u, _left);
 }
 
-bool robot_kinematics_t::comIK(Skeleton *_atlas,
+bool robot_kinematics_t::comIK(Skeleton *_robot,
 							const Vector3d& _dcom,
 							Matrix4d& _Twb,
 							IK_Mode _mode[NUM_MANIPULATORS],
 							const Matrix4d _Twm[NUM_MANIPULATORS],
 							VectorXd& _dofs) {
-	// hack
-	_dofs.block(0,0,3,1) = Vector3d::Zero();
 
-	// gradient descent on com err
+	//TODO: Use COM Jacobians to turn the pelvis.
+	// Or, pass in a rotated Twb and stanceIK to that.
+
+	// Position robot in world frame
+	_dofs.block<3,1>(0,0) = _Twb.block<3,1>(0,3);
+
+	// Do gradient descent on COM error
 	bool debug = false;
 	int COM_ITER = 10000; // max iterations
 	double COM_PTOL = 1e-3; // err tolerance
 	double alpha = 0.5; // descent scaling factor
 	bool ik_valid = true;
 	bool ik_found = false;
-	Vector4d com = Vector4d::Ones();
+	Vector3d com = Vector3d::Ones();
 	Vector3d com_err;
+	//TODO: Replace dof conversions with a dof class
 	VectorXd u(24); // vector of manipulator joint angles
 	for(int i=0; i < NUM_MANIPULATORS; ++i) {
 		for(int j=0; j < 6; ++j) {
@@ -56,24 +61,25 @@ bool robot_kinematics_t::comIK(Skeleton *_atlas,
 	}
 	int i;
 	for(i=0; i < COM_ITER; ++i) {
-		// solve for leg angles
+		// Solve for leg angles
 		ik_valid = stanceIK(_Twb, _Twm[MANIP_L_FOOT], _Twm[MANIP_R_FOOT], u, u);
 
-		// copy angles to skeleton
+		// Position robot in world frame
 		for(int i=0; i < NUM_MANIPULATORS; ++i) {
 			for(int j=0; j < 6; ++j) {
 				int ind = dart_dof_ind[i][j];
 				_dofs(ind) = u(i*6 + j);
 			}
 		}
-		_atlas->setPose(_dofs, true, false);
+		_dofs.block<3,1>(0,0) = _Twb.block<3,1>(0,3);
+		// Copy angles to skeleton
+		_robot->setPose(_dofs, true, false);
 
-		// com in body frame
-		com.block<3,1>(0,0) = _atlas->getWorldCOM();
-		// translate to world frame
-		com = _Twb * com;
-		// error
-		com_err = _dcom - com.block<3,1>(0,0);
+		// COM in world frame
+		com = _robot->getWorldCOM();
+
+		// COM error
+		com_err = _dcom - com;
 
 		if(com_err.norm() < COM_PTOL) {
 			ik_found = true;
@@ -97,9 +103,6 @@ bool robot_kinematics_t::comIK(Skeleton *_atlas,
 		cout << "\nconverged at iteration " << i << "\n"
 			 << "err= " << com_err.norm() << "\n\n";
 	}
-
-	// so we can visualize correctly later :)
-	_dofs.block(0,0,3,1) = _Twb.block(0,3,3,1);
 
 	return ik_found && ik_valid;
 }
