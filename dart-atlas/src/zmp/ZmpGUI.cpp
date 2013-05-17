@@ -10,7 +10,7 @@
 #include <iostream>
 
 #include <renderer/OpenGLRenderInterface.h>
-#include <atlas/AtlasGraphics.h>
+#include <robot/robot_graphics.h>
 
 #include <kinematics/BodyNode.h>
 #include <kinematics/Shape.h>
@@ -18,7 +18,7 @@
 
 #include <robotics/parser/dart_parser/DartLoader.h>
 #include <simulation/World.h>
-#include <utils/AtlasPaths.h>
+#include <utils/data_paths.h>
 #include <dynamics/SkeletonDynamics.h>
 #include <kinematics/FileInfoSkel.hpp>
 
@@ -235,11 +235,11 @@ void ZmpGUI::draw()
         mSkels[i]->draw(mRI);
     }
 
-    atlas::AtlasGraphics AG;
+    robot::robot_graphics_t rg;
     glClear(GL_DEPTH_BUFFER_BIT);
-    AG.renderJoints(mSkels[1], mRI);
+    rg.renderJoints(mSkels[1], mRI);
     glClear(GL_DEPTH_BUFFER_BIT);
-    AG.renderCOM(mSkels[1], mRI);
+    rg.renderCOM(mSkels[1], mRI);
 
     // display the frame count in 2D text
     char buff[64];

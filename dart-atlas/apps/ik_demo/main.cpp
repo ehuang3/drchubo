@@ -18,16 +18,16 @@ using namespace simulation;
 using namespace Eigen;
 using namespace atlas;
 
-atlas::AtlasKinematics *_ak;
+atlas::atlas_kinematics_t *_ak;
 kinematics::Skeleton *_atlas;
 
 /* ********************************************************************************************* */
-atlas::AtlasKinematics *prepareAtlasKinematics() {
+atlas::atlas_kinematics_t *prepareAtlasKinematics() {
 	if(!_ak) {
 		DartLoader dart_loader;
 		World *mWorld = dart_loader.parseWorld(ATLAS_DATA_PATH "atlas/atlas_world.urdf");
 		_atlas = mWorld->getSkeleton("atlas");
-		_ak = new AtlasKinematics();
+		_ak = new atlas_kinematics_t();
 		_ak->init(_atlas);
 	}
 	_atlas->setPose(_atlas->getPose().setZero(), true);
@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
 	MyWindow window(skels);
 
 	// move com around
-	atlas::AtlasKinematics AK;
+	atlas::atlas_kinematics_t AK;
 	AK.init(atlas);
 
 	Matrix4d Twb = atlas->getNode("pelvis")->getWorldTransform();

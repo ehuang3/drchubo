@@ -42,7 +42,7 @@ ros::Publisher pub_joint_commands_;
 osrf_msgs::JointCommands jointcommands;
 
 Vector6d angles;
-AtlasKinematics AK;
+atlas_kinematics_t AK;
 
 void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js)
 {

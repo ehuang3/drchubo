@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
 	ZmpGUI window(skels);
 
 	// move com around
-	atlas::AtlasKinematics AK;
+	atlas::atlas_kinematics_t AK;
 	AK.init(atlas);
 
 	Matrix4d Twb = atlas->getNode("pelvis")->getWorldTransform();

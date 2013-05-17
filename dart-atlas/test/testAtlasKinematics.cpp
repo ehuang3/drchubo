@@ -2,9 +2,9 @@
 #include <Eigen/Dense>
 #include <gtest/gtest.h>
 
-#include <atlas/AtlasKinematics.h>
-#include <atlas/AtlasUtils.h>
-#include <utils/AtlasPaths.h>
+#include <atlas/atlas_kinematics.h>
+#include <utils/math_utils.h>
+#include <utils/data_paths.h>
 
 #include <math.h>
 
@@ -18,20 +18,21 @@
 using namespace std;
 using namespace Eigen;
 using namespace atlas;
+using namespace robot;
 
 using namespace kinematics;
 using namespace dynamics;
 using namespace simulation;
 
-atlas::AtlasKinematics *_ak;
+atlas::atlas_kinematics_t *_ak;
 kinematics::Skeleton *_atlas;
 /* ********************************************************************************************* */
-atlas::AtlasKinematics *prepareAtlasKinematics() {
+atlas::atlas_kinematics_t *prepareAtlasKinematics() {
 	if(!_ak) {
 		DartLoader dart_loader;
-		World *mWorld = dart_loader.parseWorld(ATLAS_DATA_PATH "atlas/atlas_world.urdf");
+		World *mWorld = dart_loader.parseWorld(VRC_DATA_PATH "atlas/atlas_world.urdf");
 		_atlas = mWorld->getSkeleton("atlas");
-		_ak = new AtlasKinematics();
+		_ak = new atlas_kinematics_t();
 		_ak->init(_atlas);
 	}
 	_atlas->setPose(_atlas->getPose().setZero(), true);
@@ -39,17 +40,17 @@ atlas::AtlasKinematics *prepareAtlasKinematics() {
 }
 /* ********************************************************************************************* */
 TEST(KINEMATICS, INIT) {
-	AtlasKinematics *AK = prepareAtlasKinematics();
+	atlas_kinematics_t *AK = prepareAtlasKinematics();
 }
 /* ********************************************************************************************* */
 TEST(KINEMATICS, FORWARD) {
-	AtlasKinematics *AK = prepareAtlasKinematics();
+	atlas_kinematics_t *AK = prepareAtlasKinematics();
 	Vector6d u = Vector6d::Zero();
 	Matrix4d Tfoot = AK->legFK(u, true);
 }
 /* ********************************************************************************************* */
 TEST(KINEMATICS, COMPARE_DART_FORWARD) {
-	AtlasKinematics *AK = prepareAtlasKinematics();
+	atlas_kinematics_t *AK = prepareAtlasKinematics();
 
 	int l[6], r[6];
 	l[0] = 7;  //= l_leg_uhz
@@ -67,7 +68,8 @@ TEST(KINEMATICS, COMPARE_DART_FORWARD) {
 	r[5] = 28; //= r_leg_lax
 
 	Vector6d u;
-	u << -0.32, 0.495, -1.75, 2.45, -0.698, 0.436;
+	//u << -0.32, 0.495, -1.75, 2.45, -0.698, 0.436;
+	u << 0,0,0,0,0,0;
 
 	VectorXd dofs = _atlas->getPose();
 	for(int i=0; i < 6; ++i) {
@@ -82,22 +84,11 @@ TEST(KINEMATICS, COMPARE_DART_FORWARD) {
 	cout << "DART right=\n" << _atlas->getNode("r_foot")->getWorldTransform() << endl;
 }
 /* ********************************************************************************************* */
-TEST(KINEMATICS, INVERSE_SELECTION) {
-	AtlasKinematics *AK = prepareAtlasKinematics();
-
-	Vector6d u = Vector6d::Zero();
-	Matrix4d Tf = AK->legFK(u, true);
-	MatrixXd V;
-	AK->legIK(Tf, true, V);
-
-	cout << "V=\n" << V << endl;
-}
-/* ********************************************************************************************* */
 TEST(KINEMATICS, INVERSE_SINGULARITY) {
 }
 /* ********************************************************************************************* */
 TEST(KINEMATICS, COMPARE_INVERSE_FORWARD) {
-	AtlasKinematics *AK = prepareAtlasKinematics();
+	atlas_kinematics_t *AK = prepareAtlasKinematics();
 
 	const double TOLERANCE_EXACT = 1.0e-10;
 	Vector6d u(6);
@@ -153,13 +144,13 @@ TEST(KINEMATICS, COMPARE_INVERSE_FORWARD) {
 			Tsol = AK->legFK(u.block(0,i,6,1), true);
 			for(int r=0; r < 4; ++r)
 				for(int c=0; c < 4; ++c)
-					EXPECT_NEAR(Tsol(r,c), Tfoot(r,c), TOLERANCE_EXACT);
+					ASSERT_NEAR(Tsol(r,c), Tfoot(r,c), TOLERANCE_EXACT);
 		}
 	}
 }
 /* ********************************************************************************************* */
 TEST(KINEMATICS, INVERSE_NEAREST) {
-	AtlasKinematics *AK = prepareAtlasKinematics();
+	atlas_kinematics_t *AK = prepareAtlasKinematics();
 
 	Vector6d u = Vector6d::Zero();
 	Matrix4d Tfoot = AK->legFK(u, true);
@@ -167,7 +158,7 @@ TEST(KINEMATICS, INVERSE_NEAREST) {
 	//cout << "Tfoot=\n" << Tfoot << endl;
 
 	MatrixXd U;
-	AK->legIK(Tfoot, true, U);
+	//AK->legIK(Tfoot, true, U);
 	//cout << "U=\n" << U << endl;
 
 	Vector6d a;
@@ -178,7 +169,7 @@ TEST(KINEMATICS, INVERSE_NEAREST) {
 }
 /* ********************************************************************************************* */
 TEST(KINEMATICS, STANCE_IK) {
-	AtlasKinematics *AK = prepareAtlasKinematics();
+	atlas_kinematics_t *AK = prepareAtlasKinematics();
 
 	VectorXd u(12), v(12);
 	u.setZero();
@@ -231,7 +222,7 @@ TEST(KINEMATICS, STANCE_IK) {
 }
 /* ********************************************************************************************* */
 TEST(KINEMATICS, COM_IK) {
-	AtlasKinematics *AK = prepareAtlasKinematics();
+	atlas_kinematics_t *AK = prepareAtlasKinematics();
 
 	cout << "com=\n" << _atlas->getWorldCOM() << endl;
 	for(int i=0; i < _atlas->getNumDofs(); ++i) {
@@ -243,15 +234,15 @@ TEST(KINEMATICS, COM_IK) {
 	Matrix4d Twl = AK->legFK(Vector6d::Zero(), true);
 	Matrix4d Twr = AK->legFK(Vector6d::Zero(), false);
 
-	Matrix4d Tm[NUM_MANIPULATORS];
-	Tm[MANIP_L_FOOT] = Twl;
-	Tm[MANIP_R_FOOT] = Twr;
+	Matrix4d Tm[robot_kinematics_t::NUM_MANIPULATORS];
+	Tm[robot_kinematics_t::MANIP_L_FOOT] = Twl;
+	Tm[robot_kinematics_t::MANIP_R_FOOT] = Twr;
 
-	IK_Mode mode[NUM_MANIPULATORS];
-	mode[MANIP_L_FOOT] = IK_MODE_SUPPORT;
-	mode[MANIP_R_FOOT] = IK_MODE_WORLD;
-	mode[MANIP_L_HAND] = IK_MODE_FIXED;
-	mode[MANIP_R_HAND] = IK_MODE_FIXED;
+	robot_kinematics_t::IK_Mode mode[robot_kinematics_t::NUM_MANIPULATORS];
+	mode[robot_kinematics_t::MANIP_L_FOOT] = robot_kinematics_t::IK_MODE_SUPPORT;
+	mode[robot_kinematics_t::MANIP_R_FOOT] = robot_kinematics_t::IK_MODE_WORLD;
+	mode[robot_kinematics_t::MANIP_L_HAND] = robot_kinematics_t::IK_MODE_FIXED;
+	mode[robot_kinematics_t::MANIP_R_HAND] = robot_kinematics_t::IK_MODE_FIXED;
 
 	VectorXd dofs = _atlas->getPose();
 
@@ -262,245 +253,6 @@ TEST(KINEMATICS, COM_IK) {
 
 	//cout << "new com=\n" << _atlas->getWorldCOM();
 }
-
-
-/* ********************************************************************************************* */
-TEST(KINEMATICS, UTILS_InitPos) {
-
-	AtlasKinematics *AK = prepareAtlasKinematics();
-
-	/**************************************
-	 * Init, World start from Atlas' pelvis
-	 **************************************/
-	Matrix4d Twb;
-	Twb.setIdentity();
-	assert( (_atlas->getNode("pelvis")->getWorldTransform() - Twb).norm() < 1e-7);
-
-	Matrix4d Twm[NUM_MANIPULATORS];
-	Twm[MANIP_L_FOOT] = AK->getLimbTransB(_atlas, MANIP_L_FOOT);
-	Twm[MANIP_R_FOOT] = AK->getLimbTransB(_atlas, MANIP_R_FOOT);
-
-
-	/************************
-	 * Trajectory file
-	 ************************/
-	ofstream file;
-	file.open("what.yaml");
-	file << "MovCOM:\n";
-
-
-	/******************************
-	 * Some vars
-	 ******************************/
-	IK_Mode mode[NUM_MANIPULATORS];
-	mode[MANIP_L_FOOT] = IK_MODE_SUPPORT;
-	mode[MANIP_R_FOOT] = IK_MODE_WORLD;
-	mode[MANIP_L_HAND] = IK_MODE_FIXED;
-	mode[MANIP_R_HAND] = IK_MODE_FIXED;
-
-	Vector3d dcom;
-	double delta; 
-	int N;
-
-	int nDofsNum = _atlas->getNumDofs();
-	VectorXd dofs(nDofsNum);
-	dofs.setZero();
-
-
-	/*************************
-	 * Move whole body
-	 *************************/
-
-	dofs(6) = -3.852963655681663e-06;
-	dofs(9) = 0.0009848090520510056;
-	dofs(12) = 0.00010776096065789886; 
-	dofs(16) = 0.7806726847358707;
-
-	dofs(7) = -0.0012852229728474995;
-	dofs(10) = 0.061783845913243596;
-	dofs(13) = -0.2856717835152658;
-	dofs(18) = 0.5266262672930972; 
-	dofs(23) = -0.21864856475431704; 
-	dofs(27) = -0.062394234133471116;
-
-	dofs(8) = 0.0013642411907399676;
-	dofs(11) = -0.06195623610921519; 
-	dofs(14) = -0.2865128374461472; 
-	dofs(19) = 0.5268958272322948;
-	dofs(24) = -0.21621680953724365;
-	dofs(28) = 0.06138342176132294;
-
-	dofs(15) = 0.2988754829726865;
-	dofs(20) = -1.3138418263023999;
-	dofs(25) = 2.00219166466513;
-	dofs(29) = 0.4950932275951452;
-	dofs(31) = -8.449255747589035e-05; 
-	dofs(33) = -0.010542899622185686;
-
-	dofs(17) = 0.298867201336498138;
-	dofs(22) = 1.313736629564075;
-	dofs(26) = 2.0021752327042464;
-	dofs(30) = -0.49508063541354375; 
-	dofs(32) = -8.39712346438759e-05;
-	dofs(34) = 0.01056157776909128;
-
-	_atlas->setPose(dofs, true);
-
-	AK->writeTrajectory(file, VectorXd::Zero(nDofsNum), dofs, 3000, false);
-
-
-	/*************************
-	 * Move COM down
-	 *************************/
-	N = 3000;
-	double theta = M_PI / (N-1);	 
-
-	Vector3d comStart = AK->getCOMW(_atlas, Twb);
-	dcom = comStart;
-
-	Vector3d comDelta;
-	comDelta << 0, 0, -0.07;
-
-//	delta = -0.07 / (N-1);		// move 15cm down
-	dofs = _atlas->getPose();
-
-
-	cout << "dcom start: " << dcom.transpose() << endl;
-	cout << "left foot start:\n" << Twm[MANIP_L_FOOT] << endl; 
-
-	comDelta /= 2;
-	cout << "comDelta: " << comDelta.transpose() << endl;
-
-	for (int i = 0; i < N; i++) {
-
-		dcom = comStart + comDelta * (1 - cos(theta * i));
-//		cout << "dcom: " << dcom.transpose() << endl;
-		Twm[MANIP_L_FOOT] = AK->getLimbTransW(_atlas, Twb, MANIP_L_FOOT);
-		Twm[MANIP_R_FOOT] = AK->getLimbTransW(_atlas, Twb, MANIP_R_FOOT);
-
-		assert(AK->comIK(_atlas, dcom, Twb, mode, Twm, dofs) == true);
-		dofs = _atlas->getPose();
-
-		file << "  - [\"";
-		file << dofs(6) << ' ';
-		file << dofs(9) << ' ';
-		file << dofs(12) << ' ';
-		file << dofs(16) << ' ';
-
-		for (int j = 0; j < NUM_MANIPULATORS; j++) {
-			for (int k = 0; k < 6; k++) {
-				file << dofs(AK->dof_ind[j][k]) << ' ';
-			}
-		}
-
-		file << "\"]\n";
-//		dcom(2) += delta;
-
-
-	}
-
-	cout << "dcom end: " << dcom.transpose() << endl;
-	cout << "left foot end:\n" << Twm[MANIP_L_FOOT] << endl; 
-
-//	AK->printGazeboAngles(_atlas, _atlas->getPose());
-
-
-	/*******************************
-	 * Move COM to right root
-	 *******************************/
-	N = 3000;
-	theta = M_PI / (N-1);	 
-	double offset = 0;
-
-	comStart = AK->getCOMW(_atlas, Twb);
-	dcom = comStart;
-	comDelta << 0, ( Twm[MANIP_R_FOOT](1,3) - dcom(1) + offset ), 0;
-
-	cout << "R FOOT: \n" << Twm[MANIP_R_FOOT] << endl;
-	cout << "com start: " << dcom.transpose() << endl;
-
-	comDelta /= 2;
-	cout << "com delta: " << comDelta.transpose() << endl;
-	dofs = _atlas->getPose();
-
-	for (int i = 0; i < N; i++) {
-		dcom = comStart + comDelta * (1 - cos(theta * i));
-
-		Twm[MANIP_L_FOOT] = AK->getLimbTransW(_atlas, Twb, MANIP_L_FOOT);
-		Twm[MANIP_R_FOOT] = AK->getLimbTransW(_atlas, Twb, MANIP_R_FOOT);
-
-		assert(AK->comIK(_atlas, dcom, Twb, mode, Twm, dofs) == true);
-		dofs = _atlas->getPose();
-
-		file << "  - [\"";
-		file << dofs(6) << ' ';
-		file << dofs(9) << ' ';
-		file << dofs(12) << ' ';
-		file << dofs(16) << ' ';
-
-		for (int j = 0; j < NUM_MANIPULATORS; j++) {
-			for (int k = 0; k < 6; k++) {
-				file << dofs(AK->dof_ind[j][k]) << ' ';
-			}
-		}
-
-		file << "\"]\n";
-
-	}
-
-
-	/******************************
-	 * Lift up left foot
-	 ********************************/
-	N = 3000;
-	theta = M_PI / (N-1);	 
-
-	Matrix4d mDelta = Matrix4d::Zero();
-	Matrix4d dm = mDelta;
-	mDelta(2,3) = 0.05; 				// lift up
-	Matrix4d mStart = Twm[MANIP_L_FOOT];
-
-
-	mDelta /= 2;
-	cout << "left foot start: \n" << mStart << endl;
-	cout << "left foot delta: \n" << mDelta << endl;
-
-	dofs = _atlas->getPose();
-
-	for (int i = 0; i < N; i++) {
-
-		Twm[MANIP_L_FOOT] = mStart + mDelta * (1 - cos(theta * i));
-		Twm[MANIP_R_FOOT] = AK->getLimbTransW(_atlas, Twb, MANIP_R_FOOT);
-
-		assert(AK->comIK(_atlas, dcom, Twb, mode, Twm, dofs) == true);
-		dofs = _atlas->getPose();
-
-		file << "  - [\"";
-		file << dofs(6) << ' ';
-		file << dofs(9) << ' ';
-		file << dofs(12) << ' ';
-		file << dofs(16) << ' ';
-
-		for (int j = 0; j < NUM_MANIPULATORS; j++) {
-			for (int k = 0; k < 6; k++) {
-				file << dofs(AK->dof_ind[j][k]) << ' ';
-			}
-		}
-
-		file << "\"]\n";
-
-	}
-
-
-
-	/*********************************
-	 * Print foot transform
-	 *********************************/
-	// close file
-	file.close();
-}
-
-
 /* ********************************************************************************************* */
 int main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);

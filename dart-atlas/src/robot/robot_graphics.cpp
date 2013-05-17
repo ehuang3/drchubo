@@ -1,4 +1,4 @@
-#include "AtlasGraphics.h"
+#include "robot_graphics.h"
 #include <Eigen/Dense>
 #include <kinematics/Skeleton.h>
 #include <kinematics/BodyNode.h>
@@ -21,19 +21,19 @@ static void initQuadObj(void)
 		cerr << "OpenGL: Fatal Error in ATLAS: out of memory." << endl;
 }
 
-namespace atlas {
+namespace robot {
 
-void AtlasGraphics::renderCOM(Skeleton *_atlas, RenderInterface *_ri) {
+void robot_graphics_t::renderCOM(Skeleton *_atlas, RenderInterface *_ri) {
 	glDisable(GL_CULL_FACE);
 	renderCOM(_atlas->getRoot(), _ri);
 }
 
-void AtlasGraphics::renderJoints(Skeleton *_atlas, RenderInterface *_ri) {
+void robot_graphics_t::renderJoints(Skeleton *_atlas, RenderInterface *_ri) {
 	glDisable(GL_CULL_FACE);
 	renderJoints(_atlas->getRoot(), _ri);
 }
 
-void AtlasGraphics::renderCOM(BodyNode *_node, RenderInterface *_ri) {
+void robot_graphics_t::renderCOM(BodyNode *_node, RenderInterface *_ri) {
 	if(!_node)
 		return;
 
@@ -63,7 +63,7 @@ void AtlasGraphics::renderCOM(BodyNode *_node, RenderInterface *_ri) {
 	_ri->popMatrix();
 }
 
-void AtlasGraphics::renderJoints(BodyNode *_node, RenderInterface *_ri) {
+void robot_graphics_t::renderJoints(BodyNode *_node, RenderInterface *_ri) {
 	if(!_node)
 		return;
 

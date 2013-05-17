@@ -1,8 +1,6 @@
-#include "AtlasUtils.h"
+#include "math_utils.h"
 
 using namespace Eigen;
-
-namespace atlas {
 
 double mod(double _x, double _y) {
     if (0 == _y) return _x;
@@ -20,6 +18,4 @@ Matrix4d dh2transform(double _r0, double _a0, double _t1, double _d1) {
 		 sin(_t1)*sin(_a0), cos(_t1)*sin(_a0),  cos(_a0),  cos(_a0)*_d1,
 		 0,					0,					0,		   1;
 	return T;
-}
-
 }
