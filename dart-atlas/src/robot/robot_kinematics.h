@@ -1,8 +1,13 @@
 #pragma once
 #include <Eigen/Dense>
+#include <Eigen/Geometry>
+#include <vector>
 
-namespace Eigen { typedef Matrix<double, 6, 1> Vector6d; }
 namespace kinematics { class Skeleton; }
+namespace Eigen {
+	typedef Matrix<double, 6, 1> Vector6d;
+	typedef Matrix< double, 6, 2 > Matrix62d;
+}
 namespace robot
 {
 
@@ -36,6 +41,7 @@ public:
 
 	Eigen::Matrix4d legT(int _frame, double _u);
 	Eigen::Matrix4d legFK(const Eigen::Vector6d& _u, bool _left);
+
 	/* @function: bool legIK(const Eigen::Matrix4d& _Tbf,
 	 * 						 bool _left,
 	 * 						 const Eigen::Vector6d& _p,
@@ -95,42 +101,90 @@ public:
 	 * @postcondition:
 	 * 			- u top 6 is left leg, bottom 6 is right leg
 	 */
-	bool stanceIK(const Eigen::Matrix4d& _Twb,
-				  const Eigen::Matrix4d& _Twl,
-				  const Eigen::Matrix4d& _Twr,
-				  const Eigen::VectorXd& _p,
+	bool stanceIK(const Eigen::Matrix4d& _Twb, const Eigen::Matrix4d& _Twl,
+				  const Eigen::Matrix4d& _Twr, const Eigen::VectorXd& _p,
 				  Eigen::VectorXd& _u);
 
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-protected:
+public:
 	struct dh_t {
 		double r, a, t, d;
 	};
 
 	kinematics::Skeleton *robot;
 
-	double arm_u_off[6]; //< arm angle offsets to 0 position
-	double arm_u_lim[6][2]; //< arm joint limits
+	//FIXME: double arm_u_off[6]; //< arm angle offsets to 0 position
+	//FIXME: double arm_u_lim[6][2]; //< arm joint limits
 
 	double leg_u_off[6]; //< leg angle offsets to 0 position
 	double leg_u_lim[6][2]; //< leg joint limits
 
-	Eigen::Vector3d arm_link_disp[7]; //< arm link to link displacement
+	//FIXME: Eigen::Vector3d arm_link_disp[7]; //< arm link to link displacement
 	Eigen::Vector3d leg_link_disp[7]; //< leg link to link displacement
 
-	dh_t arm_dh[7]; //< arm DH parameters
+	//FIXME: dh_t arm_dh[7]; //< arm DH parameters
 	dh_t leg_dh[7]; //< leg DH parameters
 
 	int dart_dof_ind[NUM_MANIPULATORS][6]; //< index of joint angles in DART
 
 	Eigen::Matrix4d _legT(int _frame, double _u);
 	Eigen::Matrix4d _legFK(const Eigen::Vector6d& _u, bool _left);
-	bool _legIK(Eigen::Matrix4d _Tf,
-				bool _left,
-			    const Eigen::Vector6d& _p,
-			    bool _nearest,
-				Eigen::Vector6d& _u,
-				Eigen::MatrixXd& _U);
+	bool _legIK(Eigen::Matrix4d _Tf, bool _left, const Eigen::Vector6d& _p,
+			    bool _nearest, Eigen::Vector6d& _u, Eigen::MatrixXd& _U);
+
+
+	/**************************************************************************
+	 * HuboKin code - Adopted from Rowland's HUBO armIK solver. 		 	  *
+	 **************************************************************************/
+	typedef std::vector<int> IntArray;
+
+	enum {
+		SIDE_RIGHT = 0,
+		SIDE_LEFT = 1
+	};
+
+	struct robot_constants_t {
+		double arm_nsy, arm_ssz, arm_sez, arm_ewz, arm_whz;
+		//double arm_l1,          arm_l2, arm_l3, arm_l4;
+
+		//FIXME: double leg_nwz, leg_why, leg_whz, leg_hhx, leg_hhz, leg_hkz, leg_kaz;
+		//double leg_l1, leg_l2, leg_l3, leg_l4, leg_l5, leg_l6;
+
+		Eigen::Matrix62d arm_limits;
+		//FIXME: Eigen::Matrix62d leg_limits;
+
+		Eigen::Vector6d arm_offset;
+		//FIXME: Eigen::Vector6d leg_offset;
+
+		IntArray arm_mirror;
+		//FIXME: IntArray leg_mirror;
+
+		robot_constants_t();
+
+		Eigen::Matrix62d getArmLimits(int side) const;
+		//FIXME: Eigen::Matrix62d getLegLimits(int side) const;
+		Eigen::Vector6d  getArmOffset(int side) const;
+		//FIXME: Eigen::Vector6d  getLegOffset(int side) const;
+	};
+
+	robot_constants_t kc;
+
+    static Eigen::Matrix62d mirrorLimits(const Eigen::Matrix62d& orig, const IntArray& mirror);
+    static Eigen::Vector6d  mirrorAngles(const Eigen::Vector6d& orig, const IntArray& mirror);
+
+	static void _DH2HG(Eigen::Isometry3d &B, double t, double f, double r, double d);
+
+    void _armFK(Eigen::Isometry3d &B, const Eigen::Vector6d &q, int side) const;
+
+    void _armFK(Eigen::Isometry3d &B, const Eigen::Vector6d &q, int side,
+                const Eigen::Isometry3d &endEffector) const;
+
+    void _armIK(Eigen::Vector6d &q, const Eigen::Isometry3d& B,
+                const Eigen::Vector6d& qPrev, int side) const;
+
+    void _armIK(Eigen::Vector6d &q, const Eigen::Isometry3d& B,
+                const Eigen::Vector6d& qPrev, int side,
+                const Eigen::Isometry3d &endEffector) const;
 };
 
 }
