@@ -1,0 +1,46 @@
+[
+    {
+        "Forward": {
+            "conf": [
+                "Forward Stride Length",
+                "Stride Duration",
+                "Stride Width",
+                "Walk Sequence Length"
+            ],
+            "key": "i"
+        }
+    },
+    {
+        "Turn Right": {
+            "key": ".",
+            "conf": [
+                "In Place Turn Size",
+                "Stride Duration",
+                "Stride Width",
+                "Walk Sequence Length"
+            ]
+        }
+    },
+    {
+        "Turn Right": {
+            "key": ".",
+            "conf": [
+                "In Place Turn Size",
+                "Stride Duration",
+                "Stride Width",
+                "Walk Sequence Length"
+            ]
+        }
+    },
+    {
+        "Forward": {
+            "conf": [
+                "Forward Stride Length",
+                "Stride Duration",
+                "Stride Width",
+                "Walk Sequence Length"
+            ],
+            "key": "i"
+        }
+    }
+]
