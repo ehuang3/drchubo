@@ -2,7 +2,6 @@
 #include "dynamics/BodyNodeDynamics.h"
 #include "dynamics/ContactDynamics.h"
 #include "kinematics/Dof.h"
-#include "collision/CollisionSkeleton.h"
 #include "math/UtilsMath.h"
 #include "utils/Timer.h"
 #include <yui/GLFuncs.h>
@@ -185,48 +184,48 @@ void ZmpGUI::draw()
     glDisable(GL_CULL_FACE);
     glEnable(GL_NORMALIZE);
 
-    if (!mSim) {
-        if (mPlayFrame < mBakedStates.size()) {
-            for (unsigned int i = 0; i < mSkels.size(); i++) {
-                int start = mIndices[i];
-                int size = mDofs[i].size();
-                mSkels[i]->setPose(mBakedStates[mPlayFrame].segment(start, size), true, false);
-            }
-            if (mShowMarkers) {
-                int sumDofs = mIndices[mSkels.size()];
-                int nContact = (mBakedStates[mPlayFrame].size() - sumDofs) / 6;
-                for (int i = 0; i < nContact; i++) {
-                    Vector3d v = mBakedStates[mPlayFrame].segment(sumDofs + i * 6, 3);
-                    Vector3d f = mBakedStates[mPlayFrame].segment(sumDofs + i * 6 + 3, 3) / 10.0;
-                    glBegin(GL_LINES);
-                    glVertex3f(v[0], v[1], v[2]);
-                    glVertex3f(v[0] + f[0], v[1] + f[1], v[2] + f[2]);
-                    glEnd();
-                    mRI->setPenColor(Vector3d(0.2, 0.2, 0.8));
-                    mRI->pushMatrix();
-                    glTranslated(v[0], v[1], v[2]);
-                    mRI->drawEllipsoid(Vector3d(0.02, 0.02, 0.02));
-                    mRI->popMatrix();
-                }
-            }
-        }
-    }else{
-        if (mShowMarkers) {
-            for (int k = 0; k < mCollisionHandle->getCollisionChecker()->getNumContact(); k++) {
-                Vector3d  v = mCollisionHandle->getCollisionChecker()->getContact(k).point;
-                Vector3d f = mCollisionHandle->getCollisionChecker()->getContact(k).force / 10.0;
-                glBegin(GL_LINES);
-                glVertex3f(v[0], v[1], v[2]);
-                glVertex3f(v[0] + f[0], v[1] + f[1], v[2] + f[2]);
-                glEnd();
-                mRI->setPenColor(Vector3d(0.2, 0.2, 0.8));
-                mRI->pushMatrix();
-                glTranslated(v[0], v[1], v[2]);
-                mRI->drawEllipsoid(Vector3d(0.02, 0.02, 0.02));
-                mRI->popMatrix();
-            }
-        }
-    }
+//    if (!mSim) {
+//        if (mPlayFrame < mBakedStates.size()) {
+//            for (unsigned int i = 0; i < mSkels.size(); i++) {
+//                int start = mIndices[i];
+//                int size = mDofs[i].size();
+//                mSkels[i]->setPose(mBakedStates[mPlayFrame].segment(start, size), true, false);
+//            }
+//            if (mShowMarkers) {
+//                int sumDofs = mIndices[mSkels.size()];
+//                int nContact = (mBakedStates[mPlayFrame].size() - sumDofs) / 6;
+//                for (int i = 0; i < nContact; i++) {
+//                    Vector3d v = mBakedStates[mPlayFrame].segment(sumDofs + i * 6, 3);
+//                    Vector3d f = mBakedStates[mPlayFrame].segment(sumDofs + i * 6 + 3, 3) / 10.0;
+//                    glBegin(GL_LINES);
+//                    glVertex3f(v[0], v[1], v[2]);
+//                    glVertex3f(v[0] + f[0], v[1] + f[1], v[2] + f[2]);
+//                    glEnd();
+//                    mRI->setPenColor(Vector3d(0.2, 0.2, 0.8));
+//                    mRI->pushMatrix();
+//                    glTranslated(v[0], v[1], v[2]);
+//                    mRI->drawEllipsoid(Vector3d(0.02, 0.02, 0.02));
+//                    mRI->popMatrix();
+//                }
+//            }
+//        }
+//    }else{
+//        if (mShowMarkers) {
+//            for (int k = 0; k < mCollisionHandle->getCollisionChecker()->getNumContact(); k++) {
+//                Vector3d  v = mCollisionHandle->getCollisionChecker()->getContact(k).point;
+//                Vector3d f = mCollisionHandle->getCollisionChecker()->getContact(k).force / 10.0;
+//                glBegin(GL_LINES);
+//                glVertex3f(v[0], v[1], v[2]);
+//                glVertex3f(v[0] + f[0], v[1] + f[1], v[2] + f[2]);
+//                glEnd();
+//                mRI->setPenColor(Vector3d(0.2, 0.2, 0.8));
+//                mRI->pushMatrix();
+//                glTranslated(v[0], v[1], v[2]);
+//                mRI->drawEllipsoid(Vector3d(0.02, 0.02, 0.02));
+//                mRI->popMatrix();
+//            }
+//        }
+//    }
 
     renderer::OpenGLRenderInterface *mGLRI = dynamic_cast<renderer::OpenGLRenderInterface *>(mRI);
 
@@ -305,16 +304,16 @@ void ZmpGUI::keyboard(unsigned char key, int x, int y)
 
 void ZmpGUI::bake()
 {
-    int nContact = mCollisionHandle->getCollisionChecker()->getNumContact();
-    VectorXd state(mIndices.back() + 6 * nContact);
-    for (unsigned int i = 0; i < mSkels.size(); i++)
-        state.segment(mIndices[i], mDofs[i].size()) = mDofs[i];
-    for (int i = 0; i < nContact; i++) {
-        int begin = mIndices.back() + i * 6;
-        state.segment(begin, 3) = mCollisionHandle->getCollisionChecker()->getContact(i).point;
-        state.segment(begin + 3, 3) = mCollisionHandle->getCollisionChecker()->getContact(i).force;
-    }
-    mBakedStates.push_back(state);
+//    int nContact = mCollisionHandle->getCollisionChecker()->getNumContact();
+//    VectorXd state(mIndices.back() + 6 * nContact);
+//    for (unsigned int i = 0; i < mSkels.size(); i++)
+//        state.segment(mIndices[i], mDofs[i].size()) = mDofs[i];
+//    for (int i = 0; i < nContact; i++) {
+//        int begin = mIndices.back() + i * 6;
+//        state.segment(begin, 3) = mCollisionHandle->getCollisionChecker()->getContact(i).point;
+//        state.segment(begin + 3, 3) = mCollisionHandle->getCollisionChecker()->getContact(i).force;
+//    }
+//    mBakedStates.push_back(state);
 }
 
 void ZmpGUI::bake(const VectorXd &_dofs) {
