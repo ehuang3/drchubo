@@ -33,6 +33,9 @@ link_directories(
   ${GAZEBO_LIBRARY_DIRS}
 )
 
-rosbuild_add_executable(publish_joint_commands src/publish_joint_commands.cpp)
-rosbuild_add_executable(abc src/publish_joint_commands_old.cpp)
-#rosbuild_add_executable(atlasKin src/atlasKin.cpp)
+#rosbuild_add_executable(publish_joint_commands src/publish_joint_commands.cpp)
+#rosbuild_add_executable(joystickControl src/joystick.cpp src/atlasKin.cpp src/joystickControl.cpp)
+rosbuild_add_executable(joystickControl src/atlasKin.cpp src/joystickJacobian_ver2.cpp)
+#rosbuild_add_executable(joystickDemo src/joystickDemo.cpp src/atlasKin.cpp)TODO fix this
+#rosbuild_add_executable(motion src/motionTest.cpp)
+
