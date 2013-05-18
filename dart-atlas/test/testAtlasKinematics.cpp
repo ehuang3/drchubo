@@ -5,6 +5,7 @@
 #include <atlas/atlas_kinematics.h>
 #include <utils/math_utils.h>
 #include <utils/data_paths.h>
+#include <math/EigenHelper.h>
 
 #include <math.h>
 
@@ -224,7 +225,7 @@ TEST(KINEMATICS, STANCE_IK) {
 TEST(KINEMATICS, COM_IK) {
 	atlas_kinematics_t *AK = prepareAtlasKinematics();
 
-	cout << "com=\n" << _atlas->getWorldCOM() << endl;
+	//cout << "com=\n" << _atlas->getWorldCOM() << endl;
 	for(int i=0; i < _atlas->getNumDofs(); ++i) {
 		//cout << "[] = " << i << "; \\\\= " << _atlas->getDof(i)->getName() << endl;
 	}
@@ -245,13 +246,123 @@ TEST(KINEMATICS, COM_IK) {
 	mode[robot_kinematics_t::MANIP_R_HAND] = robot_kinematics_t::IK_MODE_FIXED;
 
 	VectorXd dofs = _atlas->getPose();
+	dofs.setZero();
+	_atlas->setPose(dofs, true);
 
-	Vector3d com;
-	com << 0, 0, 0; // origin in world frame
+	Vector3d com = _atlas->getWorldCOM();
+
+	cout << "current com=\n" << _atlas->getWorldCOM().transpose() << endl;
+
+	com(2) -= .15;
+
+	cout << "desired com=\n" << com.transpose() << endl;
 
 	AK->comIK(_atlas, com, Twb, mode, Tm, dofs);
 
-	//cout << "new com=\n" << _atlas->getWorldCOM();
+	Vector4d ncom = Vector4d::Ones();
+	ncom.block<3,1>(0,0) = _atlas->getWorldCOM();
+
+	//ncom = (Twb * ncom);
+
+	cout << "new com=\n" << ncom.block<3,1>(0,0).transpose() << endl;
+
+	_atlas->setPose(dofs, true);
+
+	cout << "dofd com=\n" << _atlas->getWorldCOM().transpose() << endl;
+
+	cout << (com - ncom.block<3,1>(0,0)).norm() << endl;
+
+
+	/// Test Dart Skeleton
+	dofs.setZero();
+	_atlas->setPose(dofs, true);
+	cout << "zero com=\n" << _atlas->getWorldCOM().transpose() << endl;
+
+	dofs.block(0,0,3,1) = Vector3d(0, 0, 0.15);
+	_atlas->setPose(dofs, true);
+	cout << "0.15 com=\n" << _atlas->getWorldCOM().transpose() << endl;
+
+	dofs.setZero();
+	_atlas->setPose(dofs, true);
+	cout << "pelvis=\n" << _atlas->getNode("pelvis")->getWorldTransform() << endl;
+
+	dofs.block(0,0,3,1) = Vector3d(0, 0, 0.15);
+	_atlas->setPose(dofs, true);
+	cout << "pelvis=\n" << _atlas->getNode("pelvis")->getWorldTransform() << endl;
+
+	// Assert that all joints have moved up by 0.15 m
+	int nNodes = _atlas->getNumNodes();
+	dofs.setZero();
+	_atlas->setPose(dofs, true);
+	EIGEN_V_MAT4D x0;
+	for(int i=0; i < nNodes; i++) {
+		x0.push_back(_atlas->getNode(i)->getWorldTransform());
+	}
+
+	dofs.block(0,0,3,1) = Vector3d(0, 0, 0.15);
+	_atlas->setPose(dofs, true);
+	EIGEN_V_MAT4D x1;
+	for(int i=0; i < nNodes; i++) {
+		x1.push_back(_atlas->getNode(i)->getWorldTransform());
+	}
+
+	double XFORM_TOL = 1e-10;
+	for(int i=0; i < nNodes; i++) {
+
+		//cout << _atlas->getNode(i)->getName() << endl;
+
+		ASSERT_NEAR(x0[i](2,3)+0.15, x1[i](2,3), XFORM_TOL);
+
+		for(int r=0; r < 4; r++)
+		for(int c=0; c < 4; c++)
+		if(!(r==2 && c==3))
+		ASSERT_NEAR(x0[i](r,c), x1[i](r,c), XFORM_TOL);
+	}
+
+	// Assert that all the com contributions have moved up by 0.15
+	dofs.setZero();
+	_atlas->setPose(dofs, true);
+	EIGEN_V_VEC3D c0;
+	for(int i=0; i < nNodes; i++) {
+		BodyNode *node = _atlas->getNode(i);
+		c0.push_back(node->getWorldCOM());
+	}
+
+	dofs.block(0,0,3,1) = Vector3d(0, 0, 0.15);
+	_atlas->setPose(dofs, true);
+	EIGEN_V_VEC3D c1;
+	for(int i=0; i < nNodes; i++) {
+		BodyNode *node = _atlas->getNode(i);
+		c1.push_back(node->getWorldCOM());
+	}
+
+	double mass = 0;
+	for(int i=0; i < nNodes; i++) {
+		BodyNode *node = _atlas->getNode(i);
+//		cout << node->getName() << endl;
+//
+//		cout << "c0=\n"<< c0[i].transpose() << endl;
+//		cout << "c1=\n"<< c1[i].transpose() << endl;
+//
+//		cout << "c0*m=\n" << (node->getMass() * c0[i]).transpose() << endl;
+//		cout << "c1*m=\n" << (node->getMass() * c1[i]).transpose() << endl;
+
+		//ASSERT_NEAR(c0[i](2), c1[i](2), XFORM_TOL);
+
+		mass += node->getMass();
+	}
+
+	Vector3d calc_com(0,0,0);
+	for(int i=0; i < nNodes; i++) {
+		BodyNode *node = _atlas->getNode(i);
+		calc_com += (node->getMass() * node->getWorldCOM());
+	}
+	calc_com = calc_com / _atlas->getMass();
+	cout << "calc_com=\n" << calc_com.transpose() << endl;
+
+	cout << "mass = " << mass << endl;
+	cout << "mass = " << _atlas->getMass() << endl;
+
 }
 /* ********************************************************************************************* */
 int main(int argc, char* argv[]) {

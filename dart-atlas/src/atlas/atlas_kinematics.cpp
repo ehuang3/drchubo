@@ -124,6 +124,14 @@ void atlas_kinematics_t::init(Skeleton *_atlas) {
 	leg_dh[6].r = 0;
 	leg_dh[6].a  = 0;
 
+	// ARM
+	BodyNode *LSP = _atlas->getNode("Body_LSP");
+	BodyNode *LSR = _atlas->getNode("Body_LSR");
+	BodyNode *LSY = _atlas->getNode("Body_LSY");
+	BodyNode *LEP = _atlas->getNode("Body_LEP");
+	BodyNode *LWY = _atlas->getNode("Body_LWY");
+	BodyNode *LWP = _atlas->getNode("Body_LWP");
+
 	// index of joint angles in DART
 	dart_dof_ind[MANIP_L_FOOT][0] = 7;  //= l_leg_uhz
 	dart_dof_ind[MANIP_L_FOOT][1] = 10; //= l_leg_mhx
