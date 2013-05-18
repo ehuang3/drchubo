@@ -1,24 +1,36 @@
 cmake_minimum_required (VERSION 2.8)
+include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+project (vrc-golem)
 
-project (dart-atlas)
+# ROS build setup - No!
+# set(ROSBUILD_DONT_REDEFINE_PROJECT True)
+# rosbuild_init()
 
-message(STATUS "Creating Makefile for dart-atlas")
+# find gazebo include (FindPkgConfig)
+include (FindPkgConfig)
+if (PKG_CONFIG_FOUND)
+  pkg_check_modules(GAZEBO gazebo)
+else()
+  message(FATAL_ERROR "pkg-config is required; please install it")
+endif()
+
+# depends on DRCVehiclePlugin
+include_directories(${GAZEBO_INCLUDE_DIRS})
+link_directories(${GAZEBO_LIBRARY_DIRS})
+
+# VRC-GOLEM setup
+message(STATUS "Creating Makefile for vrc-golem")
 message(STATUS "CMAKE_SOURCE_DIR = ${CMAKE_SOURCE_DIR}")
 message(STATUS "CMAKE_BINARY_DIR = ${CMAKE_BINARY_DIR}")
 
-#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
-#set(CMAKE_BUILD_TYPE Debug)
-
-###############
 # Build type
 IF(NOT CMAKE_BUILD_TYPE)
-   SET(CMAKE_BUILD_TYPE Release CACHE STRING
-       "Choose the type of build, options are: None Debug Release RelWithDebInfo Profile."
-       FORCE)
+  SET(CMAKE_BUILD_TYPE Release CACHE STRING
+      "Choose the type of build, options are: None Debug Release RelWithDebInfo Profile."
+      FORCE)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
-###############
-# Color gcc
+# Color GCC option
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_GNUCPP)
   option(COLOR_GCC "Use GCCFilter to color compiler output messages" OFF)
    set(COLOR_GCC_OPTIONS "-c -r -w -p -n")
@@ -27,7 +39,6 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_GNUCPP)
    endif()
 endif()
 
-###############
 # Compile flags
 if(WIN32)
   set (CMAKE_INSTALL_PREFIX "C:/Golems" CACHE PATH "Install prefix" FORCE)
@@ -48,13 +59,11 @@ endif()
 
 set(CMAKE_DEBUG_POSTFIX "d")
 
-###############
 # Generate the path header file
 set(PATH_HEADER_DIR ${CMAKE_SOURCE_DIR}/src/utils/data_paths.h)
 message(STATUS "Generate the path header file to ${PATH_HEADER_DIR}")
 configure_file(${PATH_HEADER_DIR}.in ${PATH_HEADER_DIR} @ONLY)
 
-###############
 # Link with DART and GRIP
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_INSTALL_PREFIX}/share/dart")
 #set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_INSTALL_PREFIX}/share/grip")
@@ -69,7 +78,6 @@ include_directories(${DART_INCLUDEDIR})
 link_directories(${DART_LIBRARY_DIRS})
 #link_directories(${GRIP_LIBRARY_DIRS})
 
-###############
 # Build source
 message(STATUS "Building DART-ATLAS source")
 include_directories(BEFORE src)

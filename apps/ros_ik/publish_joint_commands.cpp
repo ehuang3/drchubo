@@ -23,11 +23,11 @@
 #include <osrf_msgs/JointCommands.h>
 
 
-#include <atlas/AtlasKinematics.h>
-#include <atlas/AtlasUtils.h>
-#include <utils/AtlasPaths.h>
+#include <atlas/atlas_kinematics.h>
+#include <utils/math_utils.h>
+#include <utils/data_paths.h>
 #include <robotics/parser/dart_parser/DartLoader.h>
-#include <robotics/World.h>
+#include <simulation/World.h>
 #include <kinematics/Skeleton.h>
 #include <dynamics/SkeletonDynamics.h>
 
@@ -36,7 +36,7 @@ using namespace atlas;
 using namespace kinematics;
 using namespace Eigen;
 using namespace dynamics;
-using namespace robotics;
+using namespace simulation;
 
 ros::Publisher pub_joint_commands_;
 osrf_msgs::JointCommands jointcommands;
@@ -65,7 +65,7 @@ void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js)
     Vector6d u;
     u << 0, 0, 0, 0, 0, 0;
     try {
-    angles = AK.legIK(Tfoot, u);
+      AK.legIK(Tfoot, true, u, angles);
     } catch (char const* msg) {
       cerr << msg << endl;
       return;
@@ -111,7 +111,7 @@ int main(int argc, char** argv)
 {
   cout << "-----DART init-----" << endl;
   DartLoader dart_loader;
-  World *mWorld = dart_loader.parseWorld(ATLAS_DATA_PATH "atlas/atlas_world.urdf");
+  World *mWorld = dart_loader.parseWorld(VRC_DATA_PATH "models/atlas/atlas_world.urdf");
   SkeletonDynamics *atlas = mWorld->getSkeleton("atlas");
   cout << endl << "-----done-----" << endl << endl;
 
