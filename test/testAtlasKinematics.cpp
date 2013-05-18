@@ -31,7 +31,7 @@ kinematics::Skeleton *_atlas;
 atlas::atlas_kinematics_t *prepareAtlasKinematics() {
 	if(!_ak) {
 		DartLoader dart_loader;
-		World *mWorld = dart_loader.parseWorld(VRC_DATA_PATH "atlas/atlas_world.urdf");
+		World *mWorld = dart_loader.parseWorld(VRC_DATA_PATH "models/atlas/atlas_world.urdf");
 		_atlas = mWorld->getSkeleton("atlas");
 		_ak = new atlas_kinematics_t();
 		_ak->init(_atlas);
