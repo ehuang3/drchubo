@@ -48,3 +48,7 @@ build/
 
 # matlab
 *~
+
+# data header
+src/utils/data_paths.h
+
