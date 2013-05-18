@@ -1,0 +1,26 @@
+#ifndef atlasKin_H
+#define atlasKin_H
+
+class atlasKin {
+public:
+  MatrixXf trans;// Contains all 6 4x4 matrices
+  MatrixXf fk;
+  MatrixXf J;
+  MatrixXf pose;
+  VectorXf goal;
+  VectorXf goalPose;
+  VectorXf step;
+  int counterStart;
+  int counterStop;
+  VectorXf delQ;
+  VectorXf currentPose;
+  int name;
+
+  void jacobian(float q[]);
+  void stepDefine(float q[]);
+  void calcAndMove(float current[]);
+
+
+} //lleg, rleg, larm,rarm;
+
+#endif
