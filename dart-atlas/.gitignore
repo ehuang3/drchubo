@@ -1,9 +1,0 @@
-# cmake files
-build/
-
-# sublime
-*.sublime-project
-*.sublime-workspace
-
-# matlab
-*~

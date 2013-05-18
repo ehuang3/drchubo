@@ -39,3 +39,12 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+# cmake files
+build/
+
+# sublime
+*.sublime-project
+*.sublime-workspace
+
+# matlab
+*~
