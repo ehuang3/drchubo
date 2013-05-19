@@ -30,9 +30,9 @@ using namespace simulation;
 
 atlas::atlas_kinematics_t *_ak;
 kinematics::Skeleton *_atlas;
-kinematics::BodyNode *l_h;
-kinematics::BodyNode *l_s;
-Isometry3d TTws; // World to DH shoulder frame 0
+kinematics::BodyNode *node_hand;
+kinematics::BodyNode *node_clav;
+Isometry3d Tw_msy; // World to shoulder frame 0 (for dart to align with DH)
 /* ********************************************************************************************* */
 void prepareWorld2DHShoulder() {
     Joint *arm_usy = _atlas->getJoint("l_arm_usy");
@@ -41,47 +41,56 @@ void prepareWorld2DHShoulder() {
     Vector3d usy_axis = arm_usy->getAxis(0);
     Vector3d shx_disp = shx.block<3,1>(0,3);
 
-    cout << endl;
+//    cout << endl;
     
     double angle = -atan2(usy_axis(1), usy_axis(2)); //-30 angle
-    cout << "angle= " << angle << endl;
+//    cout << "angle= " << angle << endl;
 
-    cout << "usy_axis = " << usy_axis.transpose() << endl;
-    cout << "shx_disp = " << shx_disp.transpose() << endl;
+//    cout << "usy_axis = " << usy_axis.transpose() << endl;
+//    cout << "shx_disp = " << shx_disp.transpose() << endl;
 
     Vector3d usy_off = usy_axis;
     usy_off *= usy_axis.dot(shx_disp);
-    cout << "usy_off = " << usy_off.transpose() << endl;
-    cout << "usy_off norm = " << usy_off.norm() << endl;
+//    cout << "usy_off = " << usy_off.transpose() << endl;
+//    cout << "usy_off norm = " << usy_off.norm() << endl;
 
     Vector3d ssy_shx = shx_disp - usy_off;
-    cout << "ssy_shx = " << ssy_shx.transpose() << endl;
-    cout << "ssy_shx norm = " << ssy_shx.norm() << endl;
+//    cout << "ssy_shx = " << ssy_shx.transpose() << endl;
+//    cout << "ssy_shx norm = " << ssy_shx.norm() << endl;
 
-    // usy to dh origin
-    Isometry3d Tss;
-    Tss = Matrix4d::Identity();
-    Tss.rotate(AngleAxisd(angle, Vector3d::UnitX()));
-    Tss.translation() += usy_off;
-    cout << "Tss = \n" << Tss.matrix() << endl;
-    cout << endl;
+    // dsy = dh shoulder y
+    Isometry3d Tusy_dsy;
+    Tusy_dsy = Matrix4d::Identity();
+    Tusy_dsy.rotate(AngleAxisd(angle, Vector3d::UnitX()));
+    Tusy_dsy.translation() += usy_off;
+//    cout << "Tusy_dsy = \n" << Tusy_dsy.matrix() << endl;
+//    cout << endl;
 
     BodyNode *node_usy = arm_usy->getChildNode();
-//    cout << "T usy = \n" << node_usy->getWorldTransform() << endl;
     
-    Isometry3d Twss;
-    Twss = node_usy->getWorldTransform();
-    Twss = Twss * Tss;
+    Isometry3d Tw_dsy;
+    Tw_dsy = node_usy->getWorldTransform();
+    Tw_dsy = Tw_dsy * Tusy_dsy;
     
     BodyNode *node_shx = arm_shx->getChildNode();
 
-    Isometry3d Twshx;
-    Twshx = node_shx->getWorldTransform();
+    Isometry3d Tw_shx;
+    Tw_shx = node_shx->getWorldTransform();
     
-    Isometry3d Tsyx;
-    Tsyx = Twss.inverse() * Twshx;
+    Isometry3d Tdsy_shx;
+    Tdsy_shx = Tw_dsy.inverse() * Tw_shx;
+//    cout << "Tdsy_shx = \n" << Tdsy_shx.matrix() << endl;
 
-    cout << "Tsyx = \n" << Tsyx.matrix() << endl;
+    // msy = mock shoulder y (located on arm plane, behind shx)
+    Tw_msy = Matrix4d::Identity();
+    Isometry3d Tshx_msy;
+    Tshx_msy = Matrix4d::Identity();
+    Tshx_msy.translation() = Vector3d(0, -ssy_shx.norm(), 0); // move behind shx by correct ssy-shx disp
+    Tw_msy = Tw_shx * Tshx_msy;
+//    cout << "Tw_msy = \n" << Tw_msy.matrix() << endl;
+//    cout << "Tw_shx = \n" << Tw_shx.matrix() << endl;
+    
+
 }
 /* ********************************************************************************************* */
 atlas::atlas_kinematics_t *prepareAtlasKinematics() {
@@ -91,8 +100,8 @@ atlas::atlas_kinematics_t *prepareAtlasKinematics() {
 		_atlas = mWorld->getSkeleton("atlas");
 		_ak = new atlas_kinematics_t();
 		_ak->init(_atlas);
-        l_h = _atlas->getNode("l_hand");
-        l_s = _atlas->getNode("l_clav");
+        node_hand = _atlas->getNode("l_hand");
+        node_clav = _atlas->getNode("l_clav");
         prepareWorld2DHShoulder();
 	}
 	_atlas->setPose(_atlas->getPose().setZero(), true);
@@ -117,9 +126,11 @@ TEST(ARM_KINEMATICS, FK_CMP_DART) {
     // Compare 0 positions
     q.setZero();
     ak->_armFK(B, q, atlas_kinematics_t::SIDE_LEFT);
-//    cout << "B=\n" << B.matrix() << endl;
-    Bd = l_s->getWorldTransform().inverse() * l_h->getWorldTransform();
-//    cout << "lhand=\n" << Bd << endl;
+    cout << "B = \n" << B.matrix() << endl;
+    
+    Isometry3d Tmsy_hand;
+    Tmsy_hand = Tw_msy.inverse() * node_hand->getWorldTransform();
+    cout << "Tmsy_hand = \n" << Tmsy_hand.matrix() << endl;
 }
 /* ********************************************************************************************* */
 TEST(ARM_KINEMATICS, DART_LOCS) {
@@ -132,12 +143,27 @@ TEST(ARM_KINEMATICS, DART_LOCS) {
 
     auto clav_zero = l_clav->getWorldTransform().block<3,1>(0,3).transpose();
 
-//    cout << "l_clav= " << l_clav->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
-//    cout << "l_scap= " << l_scap->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
-//    cout << "l_uarm= " << l_uarm->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
-//    cout << "l_larm= " << l_larm->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
-//    cout << "l_farm= " << l_farm->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
-//    cout << "l_hand= " << l_hand->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
+    Matrix4d Tmsy_shx, Tmsy_ely, Tmsy_elx, Tmsy_uwy, Tmsy_mwx;
+    Matrix4d Tw_shx = l_scap->getWorldTransform();
+
+    Tmsy_shx = Tw_shx.inverse() * l_scap->getWorldTransform();
+    Tmsy_ely = Tw_shx.inverse() * l_uarm->getWorldTransform();
+    Tmsy_elx = Tw_shx.inverse() * l_larm->getWorldTransform();
+    Tmsy_uwy = Tw_shx.inverse() * l_farm->getWorldTransform();
+    Tmsy_mwx = Tw_shx.inverse() * l_hand->getWorldTransform();
+    
+    cout << "Tmsy_shx = \n" << Tmsy_shx.matrix() << endl;
+    cout << "Tmsy_ely = \n" << Tmsy_ely.matrix() << endl;
+    cout << "Tmsy_elx = \n" << Tmsy_elx.matrix() << endl;
+    cout << "Tmsy_uwy = \n" << Tmsy_uwy.matrix() << endl;
+    cout << "Tmsy_mwx = \n" << Tmsy_mwx.matrix() << endl;
+
+   // cout << "l_clav= " << l_clav->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
+   // cout << "l_scap= " << l_scap->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
+   // cout << "l_uarm= " << l_uarm->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
+   // cout << "l_larm= " << l_larm->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
+   // cout << "l_farm= " << l_farm->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
+   // cout << "l_hand= " << l_hand->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
 }
 /* ********************************************************************************************* */
 int main(int argc, char* argv[]) {

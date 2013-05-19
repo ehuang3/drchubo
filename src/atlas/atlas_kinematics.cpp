@@ -180,32 +180,27 @@ void atlas_kinematics_t::init(Skeleton *_atlas) {
 	Matrix4d uwy = arm_uwy->getTransform(0)->getTransform();
 	Matrix4d mwx = arm_mwx->getTransform(0)->getTransform();
 
-//	DEBUG_STREAM << "usy\n" << usy << endl;
-//	DEBUG_STREAM << "shx\n" << shx << endl;
-//	DEBUG_STREAM << "ely\n" << ely << endl;
-//	DEBUG_STREAM << "uwy\n" << uwy << endl;
-
+ 	// DEBUG_STREAM << "usy\n" << usy << endl;
+	// DEBUG_STREAM << "shx\n" << shx << endl;
+	// DEBUG_STREAM << "ely\n" << ely << endl;
+	// DEBUG_STREAM << "uwy\n" << uwy << endl;
+    
+    // Get disp from dsy to shx
+    // dsy = DH shoulder y
     Vector3d usy_axis = arm_usy->getAxis(0);
-    // rotate axis
-    double tmp = usy_axis(1);
-    usy_axis(1) = -usy_axis(2);
-    usy_axis(2) = tmp;
-
     Vector3d shx_disp = shx.block<3,1>(0,3);
-
-    double arm_ssz = usy_axis.dot(shx_disp);
-
-    cout << usy_axis << endl << shx_disp << endl;
-
-    cout << "arm_ssz= " << arm_ssz << endl;
+    Vector3d usy_dsy_off = usy_axis * usy_axis.dot(shx_disp);
+    Vector3d dsy_shx_disp = shx_disp - usy_dsy_off;
+    double dsy_shx_norm = dsy_shx_disp.norm();
 
     kc.arm_nsy = 0;
-    kc.arm_ssz = shx(2,3);
+    kc.arm_ssz = dsy_shx_norm;
     kc.arm_sez = ely(1,3) + elx(1,3);
     kc.arm_ewz = uwy(1,3) + mwx(1,3);
     kc.arm_whz = 0;
 
-    DEBUG_PRINT("arm_nsy %f\n"
+    DEBUG_PRINT("\n"
+                "arm_nsy %f\n"
                 "arm_ssz %f\n"
                 "arm_sez %f\n"
                 "arm_ewz %f\n",
@@ -218,7 +213,7 @@ void atlas_kinematics_t::init(Skeleton *_atlas) {
 
     kc.arm_offset = Vector6d::Zero();
     double shx_off = atan2(shx(1,3),shx(2,3));
-    DEBUG_PRINT("shx_off %f\n", shx_off);
+//    DEBUG_PRINT("shx_off %f\n", shx_off);
 //    kc.arm_offset(1) = shx_off;
 
     kc.arm_mirror.push_back(1);
