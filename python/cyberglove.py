@@ -1,18 +1,48 @@
 #!/usr/bin/env python
 
-#screw cyberglove, at RIM we reverse engineer the documentation ourselves.
-os.system("source /usr/share/drcsim/setup.sh") #Make sure the environment variables are correct so we can call rossservice
-
 import serial
 import os
 import time
+import signal
+import sys
 
+os.system("clear")
 
-print "Let's identify which port goes to which glove. Move your right hand and see if the number changes."
+class bcolors:
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+
+print bcolors.OKBLUE+"""
+   ______      __              ________              
+  / ____/_  __/ /_  ___  _____/ ____/ /___ _   _____ 
+ / /   / / / / __ \/ _ \/ ___/ / __/ / __ \ | / / _ \\
+/ /___/ /_/ / /_/ /  __/ /  / /_/ / / /_/ / |/ /  __/
+\____/\__, /_.___/\___/_/   \____/_/\____/|___/\___/ 
+     /____/                                          
+""" + bcolors.ENDC
+
+if not os.geteuid():
+	print ""
+	print bcolors.WARNING + "WARNING: It looks like you're running this as root. Make sure root has sourced /usr/share/drcsim/setup.sh" + bcolors.ENDC
+
+print ""
+print ""
+print ""
+def signal_handler(signal, frame):
+    print '\nExiting...'
+    sys.exit(0)
+signal.signal(signal.SIGINT, signal_handler)
+
+print "Let's identify each glove."
+print "Keep your left hand still and move your right hand to see if the numbers below change."
 raw_input("Press enter when you're ready.")
 
 ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)
 ser.write("S") #command to start streaming data
+last_j = 0
 for i in xrange(200):
 	s = ""
 	s = ser.read(48)        # read up to ten bytes (timeout)
@@ -29,9 +59,10 @@ else:
 	right_port = "/dev/ttyUSB1"
 	left_port = "/dev/ttyUSB0"
 
+print "Gloves identified!"
 
 ########################RIGHT CALIBRATION#############################
-
+os.system("clear")
 print "Ok, now let's calibrate your RIGHT hand."
 raw_input("Open your RIGHT hand and press enter when you're ready to begin.")
 
@@ -43,7 +74,7 @@ for i in xrange(200):
 	s = ""
 	s = ser.read(48)        # read up to ten bytes (timeout)
 	#print "Read: "+s
-	#We assume that we're reading the correct 48 bytes and aren't offset. If we get offset, we're gonna have a bad time...
+	#We assume that we're reading the 48 bytes in order and aren't offset. If we get offset, we're gonna have a bad time...
 	#We're going to look at the index finger metacarpal to decide the state of the hand.
 	value =  s[38].encode('hex') #39-1 since index starts at 0
 	#print value
@@ -135,7 +166,7 @@ while(1):
 		right_scaled_value = 0
 	if right_scaled_value > 1.0:
 		right_scaled_value = 1.0
-	right_command = "rosservice call /sandia_hands/r_hand/simple_grasp ' { grasp: { name: \"spherical\", closed_amount: "+str(right_scaled_value)+"} }'"
+	right_command = "rosservice call /sandia_hands/r_hand/simple_grasp ' { grasp: { name: \"cylindrical\", closed_amount: "+str(right_scaled_value)+"} }'"
 	#print command
 	os.system(right_command)
 
@@ -154,11 +185,9 @@ while(1):
 		left_scaled_value = 0
 	if left_scaled_value > 1.0:
 		left_scaled_value = 1.0
-	left_command = "rosservice call /sandia_hands/l_hand/simple_grasp ' { grasp: { name: \"spherical\", closed_amount: "+str(left_scaled_value)+"} }'"
+	left_command = "rosservice call /sandia_hands/l_hand/simple_grasp ' { grasp: { name: \"cylindrical\", closed_amount: "+str(left_scaled_value)+"} }'"
 	#print command
 	os.system(left_command)
 
 	#If performance sucks, uncomment the line below
 	#time.sleep(1) # one second delay so we don't kill the ros server with requests
-
-

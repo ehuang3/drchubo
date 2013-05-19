@@ -472,7 +472,7 @@ void robot_kinematics_t::_armFK(Isometry3d &B, const Vector6d &q, int side,
 #else
 
 	const double& l1 = kc.arm_nsy;
-	const double& l2 = kc.arm_sez;
+	const double& l2 = kc.arm_sez + kc.arm_ssz;
 	const double& l3 = kc.arm_ewz;
 	const double& l4 = kc.arm_whz;
 	//const Matrix62d limits = kc.getArmLimits(side);
@@ -580,7 +580,7 @@ void robot_kinematics_t::_armIK(Vector6d &q, const Isometry3d& B, const Vector6d
 #else
 
 	const double& l1 = kc.arm_nsy;
-	const double& l2 = kc.arm_sez;
+	const double& l2 = kc.arm_sez + kc.arm_ssz;
 	const double& l3 = kc.arm_ewz;
 	const double& l4 = kc.arm_whz;
 	Matrix62d limits = kc.getArmLimits(side);
