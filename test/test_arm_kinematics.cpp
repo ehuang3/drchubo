@@ -87,10 +87,10 @@ void prepareWorld2DHShoulder() {
     Tshx_msy = Matrix4d::Identity();
     Tshx_msy.translation() = Vector3d(0, -ssy_shx.norm(), 0); // move behind shx by correct ssy-shx disp
     Tw_msy = Tw_shx * Tshx_msy;
-//    cout << "Tw_msy = \n" << Tw_msy.matrix() << endl;
-//    cout << "Tw_shx = \n" << Tw_shx.matrix() << endl;
-    
-
+    // Rotate Tw_msy to reflect DH settings
+    // Tw_msy.rotate(AngleAxisd(-M_PI/2, Vector3d::UnitY()));
+    cout << "Tw_msy = \n" << Tw_msy.matrix() << endl;
+    cout << "Tw_shx = \n" << Tw_shx.matrix() << endl;
 }
 /* ********************************************************************************************* */
 atlas::atlas_kinematics_t *prepareAtlasKinematics() {
@@ -131,6 +131,13 @@ TEST(ARM_KINEMATICS, FK_CMP_DART) {
     Isometry3d Tmsy_hand;
     Tmsy_hand = Tw_msy.inverse() * node_hand->getWorldTransform();
     cout << "Tmsy_hand = \n" << Tmsy_hand.matrix() << endl;
+
+    q << 0, M_PI/2, 0, 0, 0, 0;
+    ak->_armFK(B, q, atlas_kinematics_t::SIDE_LEFT);
+    ak->dart_armFK(Tmsy_hand, q, robot_kinematics_t::SIDE_LEFT);
+    Tmsy_hand = Tw_msy.inverse() * Tmsy_hand;
+    cout << "B = \n" << B.matrix() << endl;
+    cout << "Tmsy_hand = \n" << Tmsy_hand.matrix() << endl;
 }
 /* ********************************************************************************************* */
 TEST(ARM_KINEMATICS, DART_LOCS) {
@@ -152,18 +159,18 @@ TEST(ARM_KINEMATICS, DART_LOCS) {
     Tmsy_uwy = Tw_shx.inverse() * l_farm->getWorldTransform();
     Tmsy_mwx = Tw_shx.inverse() * l_hand->getWorldTransform();
     
-    cout << "Tmsy_shx = \n" << Tmsy_shx.matrix() << endl;
-    cout << "Tmsy_ely = \n" << Tmsy_ely.matrix() << endl;
-    cout << "Tmsy_elx = \n" << Tmsy_elx.matrix() << endl;
-    cout << "Tmsy_uwy = \n" << Tmsy_uwy.matrix() << endl;
-    cout << "Tmsy_mwx = \n" << Tmsy_mwx.matrix() << endl;
+    // cout << "Tmsy_shx = \n" << Tmsy_shx.matrix() << endl;
+    // cout << "Tmsy_ely = \n" << Tmsy_ely.matrix() << endl;
+    // cout << "Tmsy_elx = \n" << Tmsy_elx.matrix() << endl;
+    // cout << "Tmsy_uwy = \n" << Tmsy_uwy.matrix() << endl;
+    // cout << "Tmsy_mwx = \n" << Tmsy_mwx.matrix() << endl;
 
-   // cout << "l_clav= " << l_clav->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
-   // cout << "l_scap= " << l_scap->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
-   // cout << "l_uarm= " << l_uarm->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
-   // cout << "l_larm= " << l_larm->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
-   // cout << "l_farm= " << l_farm->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
-   // cout << "l_hand= " << l_hand->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
+    // cout << "l_clav= " << l_clav->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
+    // cout << "l_scap= " << l_scap->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
+    // cout << "l_uarm= " << l_uarm->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
+    // cout << "l_larm= " << l_larm->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
+    // cout << "l_farm= " << l_farm->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
+    // cout << "l_hand= " << l_hand->getWorldTransform().block<3,1>(0,3).transpose() - clav_zero << endl;
 }
 /* ********************************************************************************************* */
 int main(int argc, char* argv[]) {
