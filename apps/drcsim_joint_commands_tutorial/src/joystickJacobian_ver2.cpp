@@ -7,7 +7,7 @@
 #include <boost/algorithm/string.hpp>
 #include <sensor_msgs/JointState.h>
 //#include <osrf_msgs/JointCommands.h>
-#include </usr/share/drcsim-2.5/ros/atlas_msgs/msg_gen/cpp/include/atlas_msgs/AtlasCommand.h>
+#include </usr/share/drcsim-2.6/ros/atlas_msgs/msg_gen/cpp/include/atlas_msgs/AtlasCommand.h>
 #include </usr/share/sandia-hand-5.1/ros/sandia_hand_msgs/msg_gen/cpp/include/sandia_hand_msgs/SimpleGrasp.h>
 #include <eigen3/Eigen/Dense>
 #include <complex>

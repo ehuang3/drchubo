@@ -2,10 +2,15 @@
 
 #include <kinematics/Skeleton.h>
 #include <kinematics/BodyNode.h>
+#include <kinematics/Transformation.h>
 #include <kinematics/Dof.h>
 #include <kinematics/Joint.h>
 
 #include <iostream>
+
+#define DEBUG
+#define MODULE_NAME "ATLAS-KIN"
+#include "utils/debug_utils.h"
 
 using namespace Eigen;
 using namespace kinematics;
@@ -124,14 +129,6 @@ void atlas_kinematics_t::init(Skeleton *_atlas) {
 	leg_dh[6].r = 0;
 	leg_dh[6].a  = 0;
 
-	// ARM
-	BodyNode *LSP = _atlas->getNode("Body_LSP");
-	BodyNode *LSR = _atlas->getNode("Body_LSR");
-	BodyNode *LSY = _atlas->getNode("Body_LSY");
-	BodyNode *LEP = _atlas->getNode("Body_LEP");
-	BodyNode *LWY = _atlas->getNode("Body_LWY");
-	BodyNode *LWP = _atlas->getNode("Body_LWP");
-
 	// index of joint angles in DART
 	dart_dof_ind[MANIP_L_FOOT][0] = 7;  //= l_leg_uhz
 	dart_dof_ind[MANIP_L_FOOT][1] = 10; //= l_leg_mhx
@@ -160,6 +157,68 @@ void atlas_kinematics_t::init(Skeleton *_atlas) {
 	dart_dof_ind[MANIP_R_HAND][3] = 30; //= r_arm_elx
 	dart_dof_ind[MANIP_R_HAND][4] = 32; //= r_arm_uwy
 	dart_dof_ind[MANIP_R_HAND][5] = 34; //= r_arm_mwx
+
+	// ARM
+	//	BodyNode *LSP = _atlas->getNode("Body_LSP");
+	//	BodyNode *LSR = _atlas->getNode("Body_LSR");
+	//	BodyNode *LSY = _atlas->getNode("Body_LSY");
+	//	BodyNode *LEP = _atlas->getNode("Body_LEP");
+	//	BodyNode *LWY = _atlas->getNode("Body_LWY");
+	//	BodyNode *LWP = _atlas->getNode("Body_LWP");
+
+	Joint *arm_usy = _atlas->getDof(dart_dof_ind[MANIP_L_HAND][0])->getJoint();
+	Joint *arm_shx = _atlas->getDof(dart_dof_ind[MANIP_L_HAND][1])->getJoint();
+	Joint *arm_ely = _atlas->getDof(dart_dof_ind[MANIP_L_HAND][2])->getJoint();
+	Joint *arm_elx = _atlas->getDof(dart_dof_ind[MANIP_L_HAND][3])->getJoint();
+	Joint *arm_uwy = _atlas->getDof(dart_dof_ind[MANIP_L_HAND][4])->getJoint();
+	Joint *arm_mwx = _atlas->getDof(dart_dof_ind[MANIP_L_HAND][5])->getJoint();
+
+	Matrix4d usy = arm_usy->getTransform(0)->getTransform();
+	Matrix4d shx = arm_shx->getTransform(0)->getTransform();
+	Matrix4d ely = arm_ely->getTransform(0)->getTransform();
+    Matrix4d elx = arm_elx->getTransform(0)->getTransform();
+	Matrix4d uwy = arm_uwy->getTransform(0)->getTransform();
+	Matrix4d mwx = arm_mwx->getTransform(0)->getTransform();
+
+ 	// DEBUG_STREAM << "usy\n" << usy << endl;
+	// DEBUG_STREAM << "shx\n" << shx << endl;
+	// DEBUG_STREAM << "ely\n" << ely << endl;
+	// DEBUG_STREAM << "uwy\n" << uwy << endl;
+    
+    // Get disp from dsy to shx
+    // dsy = DH shoulder y
+    Vector3d usy_axis = arm_usy->getAxis(0);
+    Vector3d shx_disp = shx.block<3,1>(0,3);
+    Vector3d usy_dsy_off = usy_axis * usy_axis.dot(shx_disp);
+    Vector3d dsy_shx_disp = shx_disp - usy_dsy_off;
+    double dsy_shx_norm = dsy_shx_disp.norm();
+
+    kc.arm_nsy = 0;
+    kc.arm_ssz = dsy_shx_norm;
+    kc.arm_sez = ely(1,3) + elx(1,3);
+    kc.arm_ewz = uwy(1,3) + mwx(1,3);
+    kc.arm_whz = 0;
+
+    DEBUG_PRINT("\n"
+                "arm_nsy %f\n"
+                "arm_ssz %f\n"
+                "arm_sez %f\n"
+                "arm_ewz %f\n",
+                kc.arm_nsy, kc.arm_ssz, kc.arm_sez, kc.arm_ewz);
+    
+    for(int i=0; i < 6; i++) {
+        kc.arm_limits(i,0) = _atlas->getDof(dart_dof_ind[MANIP_L_HAND][i])->getMin();
+        kc.arm_limits(i,1) = _atlas->getDof(dart_dof_ind[MANIP_L_HAND][i])->getMax();
+    }
+
+    kc.arm_offset = Vector6d::Zero();
+    double shx_off = atan2(shx(1,3),shx(2,3));
+//    DEBUG_PRINT("shx_off %f\n", shx_off);
+//    kc.arm_offset(1) = shx_off;
+
+    kc.arm_mirror.push_back(1);
+    kc.arm_mirror.push_back(2);
+    kc.arm_mirror.push_back(4);
 }
 
 }
