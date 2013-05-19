@@ -44,11 +44,155 @@ void Climber::init() {
  */
 void Climber::blindWalk() {
 
-  printf("Blind Walk \n");
+  printf("Blind Walk with no perception \n");
   // Initialize class
   init();
   // Walk straight 8m
-  blindStraightWalk( 8, 0.3, 0.15 );
+  blindStraightWalk( 6.5, 0.3, 0.15 );
+  // Rotate 90 to the left (positive)
+  blindTurnPoint( 14, 0.5, 0.15 );
+  // Walk straight 7m
+  blindStraightWalk( 7, 0.2, 0.15 );
+  // Rotate 90 to the left (positive)
+  blindTurnPoint( 14, 0.5, 0.15 );
+  // Walk straight 7m
+  blindStraightWalk( 7, 0.2, 0.15 );
+  // Rotate 90 to the rightt (negative) TO GET CLOSER TO THE CAR
+  blindTurnPoint( 14, -0.5, 0.15 );
+  // Walk straight 3m
+  blindStraightWalk( 3, 0.2, 0.15 );
+  // Rotate 90 to the rightt (negative) TO FACE THE CAR
+  blindTurnPoint( 14, -0.5, 0.15 );
+}
+
+/**
+ * @function blindTurnPoint
+ */
+void Climber::blindTurnPoint( int _numSteps,
+			      double _turn,
+			      double _strideWidth ) {
+
+  printf("Blind turn point %d steps turn: %f \n", _numSteps, _turn );
+  double L = 0.4;
+  double R = 2.0;
+  double X = 0;
+  double Y = 0;
+  double forward = 1;
+  
+  double dTheta; double theta;
+
+  // Create the steps
+  std::vector<atlas_msgs::AtlasBehaviorStepData> steps;
+
+  // First dummy step
+  steps.push_back( atlas_msgs::AtlasBehaviorStepData() );
+
+  // Create steps
+  dTheta = _turn * 2 * asin(L / (2 * (R + _strideWidth)));
+  printf("dTheta: %f \n", dTheta*180.0/3.1416 );
+  int is_left_foot; int is_right_foot;
+  int firstStep; int temp; int foot;
+  double R_foot;
+        
+  // First step 0 left 1 right
+  // If turn to left, start with right
+  if( _turn > 0 ) { firstStep = 0; }
+  else { firstStep = 1; }
+
+  // They will be switched at first
+  is_left_foot = firstStep;
+  is_right_foot = 1 - firstStep;
+        
+  // Builds the sequence of steps needed
+  theta = 0;
+  for( int i = 0; i < _numSteps + 1; ++i ) {
+
+    if( i == _numSteps ) { theta += 0; }
+    else { theta += dTheta; }
+    
+    temp = is_right_foot;
+    is_right_foot = is_left_foot;
+    is_left_foot = temp;
+
+    // left = 1, right = -1            
+    foot = 1 - 2 * is_right_foot;
+            
+    // Radius from point to foot (if turning)
+    // If turning to right, left radius will always be bigger
+    if( _turn < 0 ) {  R_foot = R + ( foot > 0 ) * _strideWidth; }
+    else { R_foot = R + ( foot < 0 ) * _strideWidth; }
+
+    
+    // turn > 0 for CCW, turn < 0 for CW
+    X = forward * _turn * R_foot * sin(theta);
+    Y = forward * _turn * (R - R_foot*cos(theta));
+                            
+    double xq, yq, zq, wq;
+    KDL::Rotation r = KDL::Rotation::RPY( 0, 0, theta );
+    r.GetQuaternion( xq, yq, zq, wq );
+
+    atlas_msgs::AtlasBehaviorStepData step;
+            
+    // One step already exists, so add one to index
+    step.step_index = i+1;
+            
+    // Alternate between feet, start with left
+    step.foot_index = is_right_foot;
+            
+    // Cheat values
+    step.duration = 0.63;
+    step.swing_height = 0.3;
+
+    // Pose
+    step.pose.position.x = X;
+    step.pose.position.y = Y;
+    step.pose.position.z = 0;
+      
+    step.pose.orientation.x = xq;
+    step.pose.orientation.y = yq;
+    step.pose.orientation.z = zq;
+    step.pose.orientation.w = wq;
+
+    // Transform to global frame
+    ros::spinOnce();
+    KDL::Frame f1, f2, f;
+    tf::PoseMsgToKDL( step.pose, f1 );
+    f2 = KDL::Frame( KDL::Rotation::Quaternion( mImu_msg.orientation.x,
+						mImu_msg.orientation.y,
+						mImu_msg.orientation.z,
+						mImu_msg.orientation.w ),
+		     KDL::Vector( mAsis_msg.pos_est.position.x,
+				  mAsis_msg.pos_est.position.y,
+				  mAsis_msg.pos_est.position.z) );
+    f = f2 * f1;
+    
+    tf::PoseKDLToMsg( f, step.pose );
+    
+    // Add
+    steps.push_back(step);
+  }        
+
+  // Send steps
+  // Create a message with the steps created
+  atlas_msgs::WalkDemoGoal goal;
+  // Insert current time
+  goal.header.stamp = ros::Time::now();
+  // Behavior: Walk
+  goal.behavior = goal.WALK;
+  // Fill the steps
+  goal.steps = steps;
+
+  // BDI Control
+  goal.k_effort = std::vector<uint8_t>( mNumJoints, 0 );
+
+  // Send it
+  mClient->sendGoal( goal );
+
+  // Wait for result
+  mClient->waitForResult( ros::Duration( 2*steps[1].duration*steps.size() + 5.0 ) );
+  printf("Done waiting for blind turn \n");
+
+  return;
 
 }
 
@@ -82,8 +226,8 @@ void Climber::blindStraightWalk( double _dist,
   mClient->sendGoal( goal );
 
   // Wait for result
-  mClient->waitForResult( ros::Duration( steps[1].duration*steps.size() + 2.0 ) );
-    
+  mClient->waitForResult( ros::Duration( 2*steps[1].duration*steps.size() + 5.0 ) );
+  printf("Done waiting for steps \n");
   return;
 }
 

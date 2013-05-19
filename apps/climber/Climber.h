@@ -25,6 +25,9 @@ class Climber {
   void demo();
   /**< Hard-coded walk to locate Atlas in front of car */
   void blindWalk();
+  void blindTurnPoint( int _numSteps,
+		       double _turn,
+		       double _strideWidth );
   void blindStraightWalk( double _dist,
 			  double _stepLength,
 			  double _stepDist = 0.15 );
