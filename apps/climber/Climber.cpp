@@ -5,6 +5,8 @@
 #include "Climber.h"
 
 #include <tf_conversions/tf_kdl.h>
+#include <atlas_msgs/WalkDemoGoal.h>
+
 
 /**
  * @function init
@@ -24,10 +26,151 @@ void Climber::init() {
 
   mAsis_sub = mNode->subscribe("atlas/atlas_sim_interface_state", 1000, &Climber::state_cb, this );
   mImu_sub = mNode->subscribe( "atlas/imu", 1000, &Climber::imu_cb, this );
-  
+
   // Wait for subscribers to hook up, lest they miss our commands
   ros::Duration(2.0).sleep();
+
+  // Create an client
+  mClient = new actionlib::SimpleActionClient<atlas_msgs::WalkDemoAction>( "atlas/bdi_control", true );
+  // Wait until the action erver has started
+  mClient->waitForServer();
+  
 }
+
+
+/**
+ * @function blindWalk
+ * @brief Hard-coded blind walk towards the car in VRC Task 1
+ */
+void Climber::blindWalk() {
+
+  printf("Blind Walk \n");
+  // Initialize class
+  init();
+  // Walk straight 8m
+  blindStraightWalk( 8, 0.3, 0.15 );
+
+}
+
+/**
+ * @function blindStraightWalk
+ */
+void Climber::blindStraightWalk( double _dist,
+				 double _stepLength,
+				 double _stepDist ) {
+
+  // Calculate how many steps you need
+  int numSteps = floor( _dist / _stepLength );
+
+  // Create the steps
+  std::vector<atlas_msgs::AtlasBehaviorStepData> steps;
+  steps = takeNSteps( numSteps, _stepLength, _stepDist );
+
+  // Create a message with the steps created
+  atlas_msgs::WalkDemoGoal goal;
+  // Insert current time
+  goal.header.stamp = ros::Time::now();
+  // Behavior: Walk
+  goal.behavior = goal.WALK;
+  // Fill the steps
+  goal.steps = steps;
+
+  // BDI Control
+  goal.k_effort = std::vector<uint8_t>( mNumJoints, 0 );
+
+  // Send it
+  mClient->sendGoal( goal );
+
+  // Wait for result
+  mClient->waitForResult( ros::Duration( steps[1].duration*steps.size() + 2.0 ) );
+    
+  return;
+}
+
+
+/**
+ * @function takeNSteps
+ */
+std::vector<atlas_msgs::AtlasBehaviorStepData> Climber::takeNSteps( int _numSteps,
+								    double _stepLength,
+								    double _stepDist ) {
+
+  std::vector<atlas_msgs::AtlasBehaviorStepData> steps;
+  
+  // Dummy first step
+  steps.push_back( atlas_msgs::AtlasBehaviorStepData() );
+
+  // Fill in some steps
+  for( int i = 0; i < _numSteps; ++i ) {
+
+    atlas_msgs::AtlasBehaviorStepData step;
+    
+    // Steps are indexed starting at 1
+    step.step_index = i+1;
+    // 0 = left, 1 = right (start with left here)
+    step.foot_index = i%2;
+    
+    // Default values (cheat, cheat!)
+    step.swing_height = 0.3;
+    step.duration = 0.63;
+    
+    // Specify steps in egocentric frame and then convert to global frame of robot
+    step.pose.position.x = (1+i)*_stepLength;
+    // Last to catch up and end up together
+    if( i == _numSteps - 1 ) {
+      step.pose.position.x = (i)*_stepLength;
+    }
+    
+    // Step stepDist to either side of center, alternating with feet
+    if( i % 2 == 0 ) { step.pose.position.y = _stepDist; } 
+    else { step.pose.position.y = -1*_stepDist; }
+    step.pose.position.z = 0.0;
+    
+    // Point those feet straight ahead
+    step.pose.orientation.x = 0.0;
+    step.pose.orientation.y = 0.0;
+    step.pose.orientation.z = 0.0;
+    step.pose.orientation.w = 1.0;
+    
+    // Transform to global frame
+    ros::spinOnce();
+    KDL::Frame f1, f2, f;
+    tf::PoseMsgToKDL( step.pose, f1 );
+    f2 = KDL::Frame( KDL::Rotation::Quaternion( mImu_msg.orientation.x,
+						mImu_msg.orientation.y,
+						mImu_msg.orientation.z,
+						mImu_msg.orientation.w ),
+		     KDL::Vector( mAsis_msg.pos_est.position.x,
+				  mAsis_msg.pos_est.position.y,
+				  mAsis_msg.pos_est.position.z) );
+    f = f2 * f1;
+    
+    tf::PoseKDLToMsg( f, step.pose );
+    // Store
+    steps.push_back( step );
+    
+  }
+
+  return steps;  
+}
+
+/**
+ * @function state_cb
+ * @brief Callback
+ */
+void Climber::state_cb( const atlas_msgs::AtlasSimInterfaceState& _asis_msg ) {
+  mAsis_msg = _asis_msg;
+}
+
+/**
+ * @function imu_cb
+ * @brief Callback
+ */
+void Climber::imu_cb( const sensor_msgs::Imu& _imu_msg ) {
+  mImu_msg = _imu_msg;
+}
+
+
 
 /**
  * @function demo
@@ -287,18 +430,3 @@ void Climber::demo() {
   printf("Demo is over \n");
 }
 
-/**
- * @function state_cb
- * @brief Callback
- */
-void Climber::state_cb( const atlas_msgs::AtlasSimInterfaceState& _asis_msg ) {
-  mAsis_msg = _asis_msg;
-}
-
-/**
- * @function imu_cb
- * @brief Callback
- */
-void Climber::imu_cb( const sensor_msgs::Imu& _imu_msg ) {
-  mImu_msg = _imu_msg;
-}

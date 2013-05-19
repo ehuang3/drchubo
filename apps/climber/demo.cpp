@@ -19,7 +19,7 @@ int main( int argc, char* argv[] ) {
   ros::init( argc, argv, "control_mode_switch" );
   
   Climber c;
-  c.demo();
-
+  //c.demo();
+  c.blindWalk();
 }
 
