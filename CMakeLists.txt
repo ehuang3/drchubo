@@ -79,7 +79,7 @@ link_directories(${DART_LIBRARY_DIRS})
 #link_directories(${GRIP_LIBRARY_DIRS})
 
 # Build source
-message(STATUS "Building DART-ATLAS source")
+message(STATUS "Building VRC-GOLEM source")
 include_directories(BEFORE src)
 link_directories(${CMAKE_SOURCE_DIR}/lib)
 add_subdirectory(src)
