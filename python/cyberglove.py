@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 #screw cyberglove, at RIM we reverse engineer the documentation ourselves.
+os.system("source /usr/share/drcsim/setup.sh") #Make sure the environment variables are correct so we can call rossservice
 
 import serial
 import os
@@ -157,7 +158,7 @@ while(1):
 	#print command
 	os.system(left_command)
 
-
-	time.sleep(1) # one second delay so we don't kill the ros server with requests
+	#If performance sucks, uncomment the line below
+	#time.sleep(1) # one second delay so we don't kill the ros server with requests
 
 
