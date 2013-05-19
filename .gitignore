@@ -54,5 +54,8 @@ build/
 # data header
 src/utils/data_paths.h
 
+# emacs
+\.#*
+
 # w/e this is
 .ropeproject/
