@@ -24,6 +24,7 @@ target_link_libraries(vrc_golem ${DART_LIBRARIES} ${DARTExt_LIBRARIES})
 set_target_properties(vrc_golem PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib"
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib")
 
+
 # if(MSVC)
 #    set_target_properties(${target} PROPERTIES STATIC_LIBRARY_FLAGS_RELEASE "/LTCG")
 # endif()

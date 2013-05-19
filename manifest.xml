@@ -11,7 +11,8 @@
   <depend package="roscpp"/>
   <depend package="trajectory_msgs"/>
   <depend package="osrf_msgs"/>
-
+  <depend package="atlas_msgs"/>
+  <depend package="actionlib" />
 </package>
 
 
