@@ -54,3 +54,5 @@ build/
 # data header
 src/utils/data_paths.h
 
+# w/e this is
+.ropeproject/
