@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Robot name="drchubo" >
+    <KinBody file="drchubo.kinbody.xml" makejoinedlinksadjacent="true">
+        <translation>0 0 .98</translation>
+    </KinBody>
+
+    <Manipulator name="leftArm">
+        <base>Body_Torso</base>
+        <effector>leftPalm</effector>
+        <direction>0 0 -1</direction>
+    </Manipulator>
+
+    <Manipulator name="rightArm">
+        <base>Body_Torso</base>
+        <effector>rightPalm</effector>
+        <direction>0 0 -1</direction>
+    </Manipulator>
+
+    <Manipulator name="leftFoot">
+        <base>Body_Hip</base>
+        <effector>leftFoot</effector>
+        <direction>0 0 -1</direction>
+    </Manipulator>
+
+    <Manipulator name="rightFoot">
+        <base>Body_Hip</base>
+        <effector>rightFoot</effector>
+        <direction>0 0 -1</direction>
+    </Manipulator>
+
+    <Manipulator name="Head">
+        <base>Body_Torso</base>
+        <effector>Body_NKP</effector>
+        <direction>0 0 1</direction>
+    </Manipulator>
+
+</Robot>

@@ -1,0 +1,1020 @@
+<?xml version="1.0" ?>
+<kinbody name="drchubo">
+    <body name="Body_Hip">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_Hip.stl 1</data>
+            <translation>0.0 0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>3.2753166647</total>
+            <inertia>0.0147101365201 -3.18965311766e-07 0.000204985841349
+                -3.18965311766e-07 0.0049150553305 6.91609383779e-08
+                0.000204985841349 6.91609383779e-08 0.0165336604409</inertia>
+            <com>-0.0180731198405 7.04087427348e-07 -0.0324926937854</com>
+        </mass>
+    </body>
+    <body name="Body_Torso">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_Torso.stl 1</data>
+            <translation>0.0 0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>1.07803381817</total>
+            <inertia>0.0175077067002 -8.66965202242e-06 -0.00105700122136
+                -8.66965202242e-06 0.0101292698627 -6.34050266241e-06
+                -0.00105700122136 -6.34050266241e-06 0.0117063035943</inertia>
+            <com>-0.0238238202159 -0.000303665394651 0.178273159469</com>
+        </mass>
+        <offsetfrom>Body_Hip</offsetfrom>
+        <translation>0.0 0.0 0.0</translation>
+    </body>
+    <joint name="TSY" type="hinge">
+        <body>Body_Hip</body>
+        <body>Body_Torso</body>
+        <offsetfrom>Body_Hip</offsetfrom>
+        <anchor>0.0 0.0 0.0</anchor>
+        <axis>0 0 1</axis>
+        <limitsdeg>-90.0 90.0</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <body name="Body_LSP">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_LSP.stl 1</data>
+            <translation>0.0 0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.632586291808</total>
+            <inertia>0.00111111449812 0.00025913285553 -1.56634343219e-06
+                0.00025913285553 0.00102933875391 -4.71727180543e-06
+                -1.56634343219e-06 -4.71727180543e-06 0.00154859148377</inertia>
+            <com>0.0117255870313 0.0467776068023 0.000222706021204</com>
+        </mass>
+        <offsetfrom>Body_Torso</offsetfrom>
+        <translation>0.00152455124741 0.125013409579 0.197099990396</translation>
+    </body>
+    <joint name="LSP" type="hinge">
+        <body>Body_Torso</body>
+        <body>Body_LSP</body>
+        <offsetfrom>Body_Torso</offsetfrom>
+        <anchor>0.00152455124741 0.125013409579 0.197099990396</anchor>
+        <axis>0 1 0</axis>
+        <limitsdeg>-179.9 179.9</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <body name="Body_LSR">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_LSR.stl 1</data>
+            <translation>0.0 0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.333136726339</total>
+            <inertia>0.000352000426975 1.27541844877e-08 4.69390949523e-06
+                1.27541844877e-08 0.000402774537852 -1.05628830152e-06
+                4.69390949523e-06 -1.05628830152e-06 0.00029532793293</inertia>
+            <com>-0.00014563682907 0.000254338055958 -0.0220669294167</com>
+        </mass>
+        <offsetfrom>Body_LSP</offsetfrom>
+        <translation>0.0 0.0834999954379 0.0</translation>
+    </body>
+    <joint name="LSR" type="hinge">
+        <body>Body_LSP</body>
+        <body>Body_LSR</body>
+        <offsetfrom>Body_LSP</offsetfrom>
+        <anchor>0.0 0.0834999954379 0.0</anchor>
+        <axis>1 0 0</axis>
+        <limitsdeg>-15.0 179.9</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <body name="Body_LSY">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_LSY.stl 1</data>
+            <translation>0.0 0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.730102750693</total>
+            <inertia>0.00482614381092 9.29900141905e-06 -0.000535313792861
+                9.29900141905e-06 0.00476185907752 -7.76901327191e-05
+                -0.000535313792861 -7.76901327191e-05 0.000629421244474</inertia>
+            <com>0.0105831537548 0.00193700924164 -0.172648720847</com>
+        </mass>
+        <offsetfrom>Body_LSR</offsetfrom>
+        <translation>0.0 0.0 -0.0576999988287</translation>
+    </body>
+    <joint name="LSY" type="hinge">
+        <body>Body_LSR</body>
+        <body>Body_LSY</body>
+        <offsetfrom>Body_LSR</offsetfrom>
+        <anchor>0.0 0.0 -0.0576999988287</anchor>
+        <axis>0 0 1</axis>
+        <limitsdeg>-114.6 179.9</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <body name="Body_LEP">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_LEP.stl 1</data>
+            <translation>0.0 0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.186908647452</total>
+            <inertia>0.000270994112009 5.10319022379e-06 4.85529326042e-05
+                5.10319022379e-06 0.000232506396573 -6.66148004212e-06
+                4.85529326042e-05 -6.66148004212e-06 0.000178996997312</inertia>
+            <com>-0.022698601786 -0.00410742429069 -0.0393890785161</com>
+        </mass>
+        <offsetfrom>Body_LSY</offsetfrom>
+        <translation>0.0299999971812 0.0 -0.243000001519</translation>
+    </body>
+    <joint name="LEP" type="hinge">
+        <body>Body_LSY</body>
+        <body>Body_LEP</body>
+        <offsetfrom>Body_LSY</offsetfrom>
+        <anchor>0.0299999971812 0.0 -0.243000001519</anchor>
+        <axis>0 1 0</axis>
+        <limitsdeg>-169.6 0.0</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <body name="Body_LWY">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_LWY.stl 1</data>
+            <translation>0.0 0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.434231425414</total>
+            <inertia>0.00354953016159 -6.67148734149e-07 2.34544677235e-06
+                -6.67148734149e-07 0.00320829277392 -0.000697731286306
+                2.34544677235e-06 -0.000697731286306 0.000522002143586</inertia>
+            <com>4.52566231005e-05 0.0636160497744 -0.095905021643</com>
+        </mass>
+        <offsetfrom>Body_LEP</offsetfrom>
+        <translation>-0.03 0.0 -0.116</translation>
+    </body>
+    <joint name="LWY" type="hinge">
+        <body>Body_LEP</body>
+        <body>Body_LWY</body>
+        <offsetfrom>Body_LEP</offsetfrom>
+        <anchor>-0.03 0.0 -0.116</anchor>
+        <axis>0 0 1</axis>
+        <limitsdeg>-179.9 179.9</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <body name="Body_LWP">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_LWP.stl 1</data>
+            <translation>0.0 0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.219016778294</total>
+            <inertia>0.000536599378762 -1.09317989334e-06 6.1983392933e-07
+                -1.09317989334e-06 0.000445108934527 -8.97810953897e-05
+                6.1983392933e-07 -8.97810953897e-05 0.000148767913029</inertia>
+            <com>-9.30858691358e-05 0.0135062835934 0.030501508687</com>
+        </mass>
+        <offsetfrom>Body_LWY</offsetfrom>
+        <translation>0.0 0.0 -0.18471</translation>
+        <rotationaxis>0 1 0 -90.0</rotationaxis>
+    </body>
+    <joint name="LWP" type="hinge">
+        <body>Body_LWY</body>
+        <body>Body_LWP</body>
+        <offsetfrom>Body_LWY</offsetfrom>
+        <anchor>0.0 0.0 -0.18471</anchor>
+        <rotationaxis>0 1 0 -90.0</rotationaxis>
+        <axis>0 1 0</axis>
+        <limitsdeg>-179.9 179.9</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <body name="Body_LWR">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_LWR.stl 1</data>
+            <translation>0.0 0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.169107516152</total>
+            <inertia>0.000237313165292 5.43644271427e-07 -8.57164775663e-07
+                5.43644271427e-07 0.000185745961103 5.88365761098e-06
+                -8.57164775663e-07 5.88365761098e-06 0.000116818847121</inertia>
+            <com>0.000574178510097 -0.00343467812603 -0.0508697974671</com>
+        </mass>
+        <offsetfrom>Body_LWP</offsetfrom>
+        <translation>0.0 0.0 -0.0115</translation>
+    </body>
+    <joint name="LWR" type="hinge">
+        <body>Body_LWP</body>
+        <body>Body_LWR</body>
+        <offsetfrom>Body_LWP</offsetfrom>
+        <anchor>0.0 0.0 -0.0115</anchor>
+        <axis>0 0 1</axis>
+        <limitsdeg>-179.9 179.9</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <body name="leftPalm">
+        <mass type="custom">
+            <total>0.1</total>
+            <inertia>0.0001 0.0 0.0
+                0.0 0.0001 0.0
+                0.0 0.0 0.0001</inertia>
+            <com>0.0 0.0 0.0</com>
+        </mass>
+        <offsetfrom>Body_LWR</offsetfrom>
+        <translation>0.0 0.0 -0.0904875</translation>
+    </body>
+    <joint enable="false" name="LWR_dummy" type="hinge">
+        <body>Body_LWR</body>
+        <body>leftPalm</body>
+        <offsetfrom>Body_LWR</offsetfrom>
+        <anchor>0.0 0.0 -0.0904875</anchor>
+    </joint>
+    <body name="Body_LF1">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_LF1.stl 1</data>
+            <translation>0.0 0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.054865905328</total>
+            <inertia>1.25605580669e-05 1.93835726312e-07 -1.55633617159e-05
+                1.93835726312e-07 5.80751787073e-05 -1.14010968938e-07
+                -1.55633617159e-05 -1.14010968938e-07 4.92972996143e-05</inertia>
+            <com>0.0408954106606 -0.0103258249487 -0.00671453606562</com>
+        </mass>
+        <offsetfrom>Body_LWR</offsetfrom>
+        <translation>0.0229999999999 -0.0164703577278 -0.0754999989787</translation>
+        <rotationaxis>0 1 0 5.45880527356</rotationaxis>
+    </body>
+    <joint name="LF1" type="hinge">
+        <body>Body_LWR</body>
+        <body>Body_LF1</body>
+        <offsetfrom>Body_LWR</offsetfrom>
+        <anchor>0.0229999999999 -0.0164703577278 -0.0754999989787</anchor>
+        <rotationaxis>0 1 0 5.45880527356</rotationaxis>
+        <axis>0 1 0</axis>
+        <limitsdeg>-5.7 63.0</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <body name="Body_LF2">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_LF2.stl 1</data>
+            <translation>0.0 0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.054865905328</total>
+            <inertia>1.25605580669e-05 1.93835726315e-07 -1.55633617159e-05
+                1.93835726315e-07 5.80751787073e-05 -1.1401096894e-07
+                -1.55633617159e-05 -1.1401096894e-07 4.92972996143e-05</inertia>
+            <com>0.040895410662 0.0107334595957 -0.0067145360655</com>
+        </mass>
+        <offsetfrom>Body_LWR</offsetfrom>
+        <translation>0.0229999999999 0.0164703577278 -0.0754999989787</translation>
+        <rotationaxis>0 1 0 5.45880527356</rotationaxis>
+    </body>
+    <joint name="LF2" type="hinge">
+        <body>Body_LWR</body>
+        <body>Body_LF2</body>
+        <offsetfrom>Body_LWR</offsetfrom>
+        <anchor>0.0229999999999 0.0164703577278 -0.0754999989787</anchor>
+        <rotationaxis>0 1 0 5.45880527356</rotationaxis>
+        <axis>0 1 0</axis>
+        <limitsdeg>-5.7 63.0</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <body name="Body_LF3">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_LF3.stl 1</data>
+            <translation>0.0 0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.054865905328</total>
+            <inertia>1.25605580669e-05 1.93835726311e-07 -1.55633617159e-05
+                1.93835726311e-07 5.80751787073e-05 -1.14010968938e-07
+                -1.55633617159e-05 -1.14010968938e-07 4.92972996143e-05</inertia>
+            <com>0.0408954106511 0.000203817323571 -0.00671453606653</com>
+        </mass>
+        <offsetfrom>Body_LWR</offsetfrom>
+        <translation>-0.0230000000001 0.0 -0.0754999989787</translation>
+        <rotationaxis>0 1 0 5.45880527356</rotationaxis>
+        <rotationaxis>0 0 1 -180.0</rotationaxis>
+    </body>
+    <joint name="LF3" type="hinge">
+        <body>Body_LWR</body>
+        <body>Body_LF3</body>
+        <offsetfrom>Body_LWR</offsetfrom>
+        <anchor>-0.0230000000001 0.0 -0.0754999989787</anchor>
+        <rotationaxis>0 1 0 5.45880527356</rotationaxis>
+        <rotationaxis>0 0 1 -180.0</rotationaxis>
+        <axis>0 1 0</axis>
+        <limitsdeg>-63.0 5.7</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <body name="Body_NKY">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_NKY.stl 1</data>
+            <translation>0.0 0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.239811996766</total>
+            <inertia>0.00013129380714 -2.1002226959e-05 -1.78408681287e-05
+                -2.1002226959e-05 0.000112105785122 -7.83573461288e-06
+                -1.78408681287e-05 -7.83573461288e-06 0.000131014108796</inertia>
+            <com>-0.0139147503519 -0.00578984455122 0.040669119392</com>
+        </mass>
+        <offsetfrom>Body_Torso</offsetfrom>
+        <translation>3.2347e-05 0.0 0.2561</translation>
+    </body>
+    <joint name="NKY" type="hinge">
+        <body>Body_Torso</body>
+        <body>Body_NKY</body>
+        <offsetfrom>Body_Torso</offsetfrom>
+        <anchor>3.2347e-05 0.0 0.2561</anchor>
+        <axis>0 0 1</axis>
+        <limitsdeg>-90.0 90.0</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <body name="Body_NKP">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_NKP.stl 1</data>
+            <translation>0.0 0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.2945123618</total>
+            <inertia>0.000655061505803 -5.24940133746e-07 1.40514049971e-06
+                -5.24940133746e-07 0.000132805092601 -1.47486200512e-05
+                1.40514049971e-06 -1.47486200512e-05 0.000621666505773</inertia>
+            <com>0.00266668832604 -0.00347538877157 0.0631853827117</com>
+        </mass>
+        <offsetfrom>Body_NKY</offsetfrom>
+        <translation>0.0 0.0 0.05</translation>
+        <rotationaxis>0 0 1 -180.0</rotationaxis>
+    </body>
+    <joint name="NKP" type="hinge">
+        <body>Body_NKY</body>
+        <body>Body_NKP</body>
+        <offsetfrom>Body_NKY</offsetfrom>
+        <anchor>0.0 0.0 0.05</anchor>
+        <rotationaxis>0 0 1 -180.0</rotationaxis>
+        <axis>0 1 0</axis>
+        <limitsdeg>-90.0 90.0</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <body name="Body_LHY">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_LHY.stl 1</data>
+            <translation>0.0 0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.417518389444</total>
+            <inertia>0.000939663257124 -2.86257426328e-10 -0.000211510302662
+                -2.86257426328e-10 0.00165966908335 -4.52230061997e-09
+                -0.000211510302662 -4.52230061997e-09 0.000936466435958</inertia>
+            <com>0.0136717763718 -4.98458450626e-08 -0.0799369258398</com>
+        </mass>
+        <offsetfrom>Body_Hip</offsetfrom>
+        <translation>3.2347e-05 0.0885 -0.0235</translation>
+    </body>
+    <joint name="LHY" type="hinge">
+        <body>Body_Hip</body>
+        <body>Body_LHY</body>
+        <offsetfrom>Body_Hip</offsetfrom>
+        <anchor>3.2347e-05 0.0885 -0.0235</anchor>
+        <axis>0 0 1</axis>
+        <limitsdeg>-110.0 110.0</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <body name="Body_LHR">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_LHR.stl 1</data>
+            <translation>0.0 0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>2.40944525523</total>
+            <inertia>0.00487691965138 -0.000379137788702 0.000631094588081
+                -0.000379137788702 0.00495611046912 0.000648224499068
+                0.000631094588081 0.000648224499068 0.00515522620781</inertia>
+            <com>0.0167408107781 0.00936838573598 -0.0157494964333</com>
+        </mass>
+        <offsetfrom>Body_LHY</offsetfrom>
+        <translation>0.0 0.0 -0.14102</translation>
+    </body>
+    <joint name="LHR" type="hinge">
+        <body>Body_LHY</body>
+        <body>Body_LHR</body>
+        <offsetfrom>Body_LHY</offsetfrom>
+        <anchor>0.0 0.0 -0.14102</anchor>
+        <axis>1 0 0</axis>
+        <limitsdeg>-29.8 29.8</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <body name="Body_LHP">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_LHP.stl 1</data>
+            <translation>0.0 0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>2.3703458788</total>
+            <inertia>0.0313848573081 -0.000257888030489 0.000464519122139
+                -0.000257888030489 0.0297969550958 -7.62276306711e-05
+                0.000464519122139 -7.62276306711e-05 0.00544518516521</inertia>
+            <com>0.0154168521201 0.013437605865 -0.229568670559</com>
+        </mass>
+        <offsetfrom>Body_LHR</offsetfrom>
+        <translation>0.0 0.0 0.0</translation>
+    </body>
+    <joint name="LHP" type="hinge">
+        <body>Body_LHR</body>
+        <body>Body_LHP</body>
+        <offsetfrom>Body_LHR</offsetfrom>
+        <anchor>0.0 0.0 0.0</anchor>
+        <axis>0 1 0</axis>
+        <limitsdeg>-107.1 92.2</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <body name="Body_LKP">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_LKP.stl 1</data>
+            <translation>0.0 0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.942741975127</total>
+            <inertia>0.0140834614744 3.80466382642e-08 -5.82548390175e-05
+                3.80466382642e-08 0.0125968551173 -0.000498008689825
+                -5.82548390175e-05 -0.000498008689825 0.00257590331692</inertia>
+            <com>0.0168840679066 0.0107094491488 -0.153976168182</com>
+        </mass>
+        <offsetfrom>Body_LHP</offsetfrom>
+        <translation>0.0 0.0 -0.33008</translation>
+    </body>
+    <joint name="LKP" type="hinge">
+        <body>Body_LHP</body>
+        <body>Body_LKP</body>
+        <offsetfrom>Body_LHP</offsetfrom>
+        <anchor>0.0 0.0 -0.33008</anchor>
+        <axis>0 1 0</axis>
+        <limitsdeg>-4.0 149.5</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <body name="Body_LAP">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_LAP.stl 1</data>
+            <translation>0.0 0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>2.05747609582</total>
+            <inertia>0.00327242471395 -0.000200723929097 -0.000256255896565
+                -0.000200723929097 0.00353130419741 -0.000293646277561
+                -0.000256255896565 -0.000293646277561 0.00382005435653</inertia>
+            <com>0.0130864125988 0.0193486179903 0.00939148948521</com>
+        </mass>
+        <offsetfrom>Body_LKP</offsetfrom>
+        <translation>0.0 0.0 -0.32995</translation>
+    </body>
+    <joint name="LAP" type="hinge">
+        <body>Body_LKP</body>
+        <body>Body_LAP</body>
+        <offsetfrom>Body_LKP</offsetfrom>
+        <anchor>0.0 0.0 -0.32995</anchor>
+        <axis>0 1 0</axis>
+        <limitsdeg>-94.0 96.8</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <body name="Body_LAR">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/raw/Body_LAR.stl 1</data>
+            <translation>0.0 0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>1.05883958126</total>
+            <inertia>0.00267469460888 -8.4864864367e-06 0.000234342536736
+                -8.4864864367e-06 0.00595096647226 -3.69090743362e-05
+                0.000234342536736 -3.69090743362e-05 0.00656595176302</inertia>
+            <com>0.00536968440701 0.00343324837182 -0.0738628460696</com>
+        </mass>
+        <offsetfrom>Body_LAP</offsetfrom>
+        <translation>0.0 0.01 0.0</translation>
+    </body>
+    <joint name="LAR" type="hinge">
+        <body>Body_LAP</body>
+        <body>Body_LAR</body>
+        <offsetfrom>Body_LAP</offsetfrom>
+        <anchor>0.0 0.01 0.0</anchor>
+        <axis>1 0 0</axis>
+        <limitsdeg>-25.2 25.2</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <body name="leftFoot">
+        <mass type="custom">
+            <total>0.1</total>
+            <inertia>0.0001 0.0 0.0
+                0.0 0.0001 0.0
+                0.0 0.0 0.0001</inertia>
+            <com>0.0 0.0 0.0</com>
+        </mass>
+        <offsetfrom>Body_LAR</offsetfrom>
+        <translation>0.0 0.0 -0.119063</translation>
+    </body>
+    <joint enable="false" name="LAR_dummy" type="hinge">
+        <body>Body_LAR</body>
+        <body>leftFoot</body>
+        <offsetfrom>Body_LAR</offsetfrom>
+        <anchor>0.0 0.0 -0.119063</anchor>
+    </joint>
+    <body name="Body_RSP">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_RSP.stl 1</data>
+            <translation>0.0 -0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.632586291808</total>
+            <inertia>0.00111111449812 -0.00025913285553 -1.56634343219e-06
+                -0.00025913285553 0.00102933875391 4.71727180543e-06
+                -1.56634343219e-06 4.71727180543e-06 0.00154859148377</inertia>
+            <com>0.0117255870313 -0.0467776068023 0.000222706021204</com>
+        </mass>
+        <offsetfrom>Body_Torso</offsetfrom>
+        <translation>0.00152455124741 -0.125013409579 0.197099990396</translation>
+    </body>
+    <body name="Body_RSR">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_RSR.stl 1</data>
+            <translation>0.0 -0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.333136726339</total>
+            <inertia>0.000352000426975 -1.27541844877e-08 4.69390949523e-06
+                -1.27541844877e-08 0.000402774537852 1.05628830152e-06
+                4.69390949523e-06 1.05628830152e-06 0.00029532793293</inertia>
+            <com>-0.00014563682907 -0.000254338055958 -0.0220669294167</com>
+        </mass>
+        <offsetfrom>Body_RSP</offsetfrom>
+        <translation>0.0 -0.0834999954379 0.0</translation>
+    </body>
+    <body name="Body_RSY">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_RSY.stl 1</data>
+            <translation>0.0 -0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.730102750693</total>
+            <inertia>0.00482614381092 -9.29900141905e-06 -0.000535313792861
+                -9.29900141905e-06 0.00476185907752 7.76901327191e-05
+                -0.000535313792861 7.76901327191e-05 0.000629421244474</inertia>
+            <com>0.0105831537548 -0.00193700924164 -0.172648720847</com>
+        </mass>
+        <offsetfrom>Body_RSR</offsetfrom>
+        <translation>0.0 -0.0 -0.0576999988287</translation>
+    </body>
+    <body name="Body_REP">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_REP.stl 1</data>
+            <translation>0.0 -0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.186908647452</total>
+            <inertia>0.000270994112009 -5.10319022379e-06 4.85529326042e-05
+                -5.10319022379e-06 0.000232506396573 6.66148004212e-06
+                4.85529326042e-05 6.66148004212e-06 0.000178996997312</inertia>
+            <com>-0.022698601786 0.00410742429069 -0.0393890785161</com>
+        </mass>
+        <offsetfrom>Body_RSY</offsetfrom>
+        <translation>0.0299999971812 -0.0 -0.243000001519</translation>
+    </body>
+    <body name="Body_RWY">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_RWY.stl 1</data>
+            <translation>0.0 -0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.434231425414</total>
+            <inertia>0.00354953016159 6.67148734149e-07 2.34544677235e-06
+                6.67148734149e-07 0.00320829277392 0.000697731286306
+                2.34544677235e-06 0.000697731286306 0.000522002143586</inertia>
+            <com>4.52566231005e-05 -0.0636160497744 -0.095905021643</com>
+        </mass>
+        <offsetfrom>Body_REP</offsetfrom>
+        <translation>-0.03 -0.0 -0.116</translation>
+    </body>
+    <body name="Body_RWP">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_RWP.stl 1</data>
+            <translation>0.0 -0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.219016778294</total>
+            <inertia>0.000536599378762 1.09317989334e-06 6.1983392933e-07
+                1.09317989334e-06 0.000445108934527 8.97810953897e-05
+                6.1983392933e-07 8.97810953897e-05 0.000148767913029</inertia>
+            <com>-9.30858691358e-05 -0.0135062835934 0.030501508687</com>
+        </mass>
+        <offsetfrom>Body_RWY</offsetfrom>
+        <translation>0.0 -0.0 -0.18471</translation>
+        <rotationaxis>0 1 0 -90.0</rotationaxis>
+    </body>
+    <body name="Body_RWR">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_RWR.stl 1</data>
+            <translation>0.0 -0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.169107516152</total>
+            <inertia>0.000237313165292 -5.43644271427e-07 -8.57164775663e-07
+                -5.43644271427e-07 0.000185745961103 -5.88365761098e-06
+                -8.57164775663e-07 -5.88365761098e-06 0.000116818847121</inertia>
+            <com>0.000574178510097 0.00343467812603 -0.0508697974671</com>
+        </mass>
+        <offsetfrom>Body_RWP</offsetfrom>
+        <translation>0.0 -0.0 -0.0115</translation>
+    </body>
+    <body name="rightPalm">
+        <mass type="custom">
+            <total>0.1</total>
+            <inertia>0.0001 -0.0 0.0
+                -0.0 0.0001 -0.0
+                0.0 -0.0 0.0001</inertia>
+            <com>0.0 -0.0 0.0</com>
+        </mass>
+        <offsetfrom>Body_RWR</offsetfrom>
+        <translation>0.0 -0.0 -0.0904875</translation>
+    </body>
+    <body name="Body_RF1">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_RF1.stl 1</data>
+            <translation>0.0 -0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.054865905328</total>
+            <inertia>1.25605580669e-05 -1.93835726312e-07 -1.55633617159e-05
+                -1.93835726312e-07 5.80751787073e-05 1.14010968938e-07
+                -1.55633617159e-05 1.14010968938e-07 4.92972996143e-05</inertia>
+            <com>0.0408954106606 0.0103258249487 -0.00671453606562</com>
+        </mass>
+        <offsetfrom>Body_RWR</offsetfrom>
+        <translation>0.0229999999999 0.0164703577278 -0.0754999989787</translation>
+        <rotationaxis>0 1 0 5.45880527356</rotationaxis>
+    </body>
+    <body name="Body_RF2">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_RF2.stl 1</data>
+            <translation>0.0 -0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.054865905328</total>
+            <inertia>1.25605580669e-05 -1.93835726315e-07 -1.55633617159e-05
+                -1.93835726315e-07 5.80751787073e-05 1.1401096894e-07
+                -1.55633617159e-05 1.1401096894e-07 4.92972996143e-05</inertia>
+            <com>0.040895410662 -0.0107334595957 -0.0067145360655</com>
+        </mass>
+        <offsetfrom>Body_RWR</offsetfrom>
+        <translation>0.0229999999999 -0.0164703577278 -0.0754999989787</translation>
+        <rotationaxis>0 1 0 5.45880527356</rotationaxis>
+    </body>
+    <body name="Body_RF3">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_RF3.stl 1</data>
+            <translation>0.0 -0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.054865905328</total>
+            <inertia>1.25605580669e-05 -1.93835726311e-07 -1.55633617159e-05
+                -1.93835726311e-07 5.80751787073e-05 1.14010968938e-07
+                -1.55633617159e-05 1.14010968938e-07 4.92972996143e-05</inertia>
+            <com>0.0408954106511 -0.000203817323571 -0.00671453606653</com>
+        </mass>
+        <offsetfrom>Body_RWR</offsetfrom>
+        <translation>-0.0230000000001 -0.0 -0.0754999989787</translation>
+        <rotationaxis>0 1 0 5.45880527356</rotationaxis>
+        <rotationaxis>0 0 1 180.0</rotationaxis>
+    </body>
+    <body name="Body_RHY">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_RHY.stl 1</data>
+            <translation>0.0 -0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.417518389444</total>
+            <inertia>0.000939663257124 2.86257426328e-10 -0.000211510302662
+                2.86257426328e-10 0.00165966908335 4.52230061997e-09
+                -0.000211510302662 4.52230061997e-09 0.000936466435958</inertia>
+            <com>0.0136717763718 4.98458450626e-08 -0.0799369258398</com>
+        </mass>
+        <offsetfrom>Body_Hip</offsetfrom>
+        <translation>3.2347e-05 -0.0885 -0.0235</translation>
+    </body>
+    <body name="Body_RHR">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_RHR.stl 1</data>
+            <translation>0.0 -0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>2.40944525523</total>
+            <inertia>0.00487691965138 0.000379137788702 0.000631094588081
+                0.000379137788702 0.00495611046912 -0.000648224499068
+                0.000631094588081 -0.000648224499068 0.00515522620781</inertia>
+            <com>0.0167408107781 -0.00936838573598 -0.0157494964333</com>
+        </mass>
+        <offsetfrom>Body_RHY</offsetfrom>
+        <translation>0.0 -0.0 -0.14102</translation>
+    </body>
+    <body name="Body_RHP">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_RHP.stl 1</data>
+            <translation>0.0 -0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>2.3703458788</total>
+            <inertia>0.0313848573081 0.000257888030489 0.000464519122139
+                0.000257888030489 0.0297969550958 7.62276306711e-05
+                0.000464519122139 7.62276306711e-05 0.00544518516521</inertia>
+            <com>0.0154168521201 -0.013437605865 -0.229568670559</com>
+        </mass>
+        <offsetfrom>Body_RHR</offsetfrom>
+        <translation>0.0 -0.0 0.0</translation>
+    </body>
+    <body name="Body_RKP">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_RKP.stl 1</data>
+            <translation>0.0 -0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>0.942741975127</total>
+            <inertia>0.0140834614744 -3.80466382642e-08 -5.82548390175e-05
+                -3.80466382642e-08 0.0125968551173 0.000498008689825
+                -5.82548390175e-05 0.000498008689825 0.00257590331692</inertia>
+            <com>0.0168840679066 -0.0107094491488 -0.153976168182</com>
+        </mass>
+        <offsetfrom>Body_RHP</offsetfrom>
+        <translation>0.0 -0.0 -0.33008</translation>
+    </body>
+    <body name="Body_RAP">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/Body_RAP.stl 1</data>
+            <translation>0.0 -0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>2.05747609582</total>
+            <inertia>0.00327242471395 0.000200723929097 -0.000256255896565
+                0.000200723929097 0.00353130419741 0.000293646277561
+                -0.000256255896565 0.000293646277561 0.00382005435653</inertia>
+            <com>0.0130864125988 -0.0193486179903 0.00939148948521</com>
+        </mass>
+        <offsetfrom>Body_RKP</offsetfrom>
+        <translation>0.0 -0.0 -0.32995</translation>
+    </body>
+    <body name="Body_RAR">
+        <geometry type="trimesh">
+            <data>../../drchubo/meshes/raw/Body_RAR.stl 1</data>
+            <translation>0.0 -0.0 0.0</translation>
+        </geometry>
+        <mass type="custom">
+            <total>1.05883958126</total>
+            <inertia>0.00267469460888 8.4864864367e-06 0.000234342536736
+                8.4864864367e-06 0.00595096647226 3.69090743362e-05
+                0.000234342536736 3.69090743362e-05 0.00656595176302</inertia>
+            <com>0.00536968440701 -0.00343324837182 -0.0738628460696</com>
+        </mass>
+        <offsetfrom>Body_RAP</offsetfrom>
+        <translation>0.0 -0.01 0.0</translation>
+    </body>
+    <body name="rightFoot">
+        <mass type="custom">
+            <total>0.1</total>
+            <inertia>0.0001 -0.0 0.0
+                -0.0 0.0001 -0.0
+                0.0 -0.0 0.0001</inertia>
+            <com>0.0 -0.0 0.0</com>
+        </mass>
+        <offsetfrom>Body_RAR</offsetfrom>
+        <translation>0.0 -0.0 -0.119063</translation>
+    </body>
+    <joint name="RSP" type="hinge">
+        <body>Body_Torso</body>
+        <body>Body_RSP</body>
+        <offsetfrom>Body_Torso</offsetfrom>
+        <anchor>0.00152455124741 -0.125013409579 0.197099990396</anchor>
+        <axis>0 1 0</axis>
+        <limitsdeg>-179.9 179.9</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <joint name="RSR" type="hinge">
+        <body>Body_RSP</body>
+        <body>Body_RSR</body>
+        <offsetfrom>Body_RSP</offsetfrom>
+        <anchor>0.0 -0.0834999954379 0.0</anchor>
+        <axis>1 0 0</axis>
+        <limitsdeg>-179.9 15.0</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <joint name="RSY" type="hinge">
+        <body>Body_RSR</body>
+        <body>Body_RSY</body>
+        <offsetfrom>Body_RSR</offsetfrom>
+        <anchor>0.0 -0.0 -0.0576999988287</anchor>
+        <axis>0 0 1</axis>
+        <limitsdeg>-179.9 114.6</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <joint name="REP" type="hinge">
+        <body>Body_RSY</body>
+        <body>Body_REP</body>
+        <offsetfrom>Body_RSY</offsetfrom>
+        <anchor>0.0299999971812 -0.0 -0.243000001519</anchor>
+        <axis>0 1 0</axis>
+        <limitsdeg>-169.6 0.0</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <joint name="RWY" type="hinge">
+        <body>Body_REP</body>
+        <body>Body_RWY</body>
+        <offsetfrom>Body_REP</offsetfrom>
+        <anchor>-0.03 -0.0 -0.116</anchor>
+        <axis>0 0 1</axis>
+        <limitsdeg>-179.9 179.9</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <joint name="RWP" type="hinge">
+        <body>Body_RWY</body>
+        <body>Body_RWP</body>
+        <offsetfrom>Body_RWY</offsetfrom>
+        <anchor>0.0 -0.0 -0.18471</anchor>
+        <rotationaxis>0 1 0 -90.0</rotationaxis>
+        <axis>0 1 0</axis>
+        <limitsdeg>-179.9 179.9</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <joint name="RWR" type="hinge">
+        <body>Body_RWP</body>
+        <body>Body_RWR</body>
+        <offsetfrom>Body_RWP</offsetfrom>
+        <anchor>0.0 -0.0 -0.0115</anchor>
+        <axis>0 0 1</axis>
+        <limitsdeg>-179.9 179.9</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <joint enable="false" name="RWR_dummy" type="hinge">
+        <body>Body_RWR</body>
+        <body>rightPalm</body>
+        <offsetfrom>Body_RWR</offsetfrom>
+        <anchor>0.0 -0.0 -0.0904875</anchor>
+    </joint>
+    <joint name="RF1" type="hinge">
+        <body>Body_RWR</body>
+        <body>Body_RF1</body>
+        <offsetfrom>Body_RWR</offsetfrom>
+        <anchor>0.0229999999999 0.0164703577278 -0.0754999989787</anchor>
+        <rotationaxis>0 1 0 5.45880527356</rotationaxis>
+        <axis>0 1 0</axis>
+        <limitsdeg>-5.7 63.0</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <joint name="RF2" type="hinge">
+        <body>Body_RWR</body>
+        <body>Body_RF2</body>
+        <offsetfrom>Body_RWR</offsetfrom>
+        <anchor>0.0229999999999 -0.0164703577278 -0.0754999989787</anchor>
+        <rotationaxis>0 1 0 5.45880527356</rotationaxis>
+        <axis>0 1 0</axis>
+        <limitsdeg>-5.7 63.0</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <joint name="RF3" type="hinge">
+        <body>Body_RWR</body>
+        <body>Body_RF3</body>
+        <offsetfrom>Body_RWR</offsetfrom>
+        <anchor>-0.0230000000001 -0.0 -0.0754999989787</anchor>
+        <rotationaxis>0 1 0 5.45880527356</rotationaxis>
+        <rotationaxis>0 0 1 180.0</rotationaxis>
+        <axis>0 1 0</axis>
+        <limitsdeg>-63.0 5.7</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <joint name="RHY" type="hinge">
+        <body>Body_Hip</body>
+        <body>Body_RHY</body>
+        <offsetfrom>Body_Hip</offsetfrom>
+        <anchor>3.2347e-05 -0.0885 -0.0235</anchor>
+        <axis>0 0 1</axis>
+        <limitsdeg>-110.0 110.0</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <joint name="RHR" type="hinge">
+        <body>Body_RHY</body>
+        <body>Body_RHR</body>
+        <offsetfrom>Body_RHY</offsetfrom>
+        <anchor>0.0 -0.0 -0.14102</anchor>
+        <axis>1 0 0</axis>
+        <limitsdeg>-29.8 29.8</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <joint name="RHP" type="hinge">
+        <body>Body_RHR</body>
+        <body>Body_RHP</body>
+        <offsetfrom>Body_RHR</offsetfrom>
+        <anchor>0.0 -0.0 0.0</anchor>
+        <axis>0 1 0</axis>
+        <limitsdeg>-107.1 92.2</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <joint name="RKP" type="hinge">
+        <body>Body_RHP</body>
+        <body>Body_RKP</body>
+        <offsetfrom>Body_RHP</offsetfrom>
+        <anchor>0.0 -0.0 -0.33008</anchor>
+        <axis>0 1 0</axis>
+        <limitsdeg>-4.0 149.5</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <joint name="RAP" type="hinge">
+        <body>Body_RKP</body>
+        <body>Body_RAP</body>
+        <offsetfrom>Body_RKP</offsetfrom>
+        <anchor>0.0 -0.0 -0.32995</anchor>
+        <axis>0 1 0</axis>
+        <limitsdeg>-94.0 96.8</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <joint name="RAR" type="hinge">
+        <body>Body_RAP</body>
+        <body>Body_RAR</body>
+        <offsetfrom>Body_RAP</offsetfrom>
+        <anchor>0.0 -0.01 0.0</anchor>
+        <axis>1 0 0</axis>
+        <limitsdeg>-25.2 25.2</limitsdeg>
+        <maxvel>10.0</maxvel>
+        <maxtorque>100.0</maxtorque>
+    </joint>
+    <joint enable="false" name="RAR_dummy" type="hinge">
+        <body>Body_RAR</body>
+        <body>rightFoot</body>
+        <offsetfrom>Body_RAR</offsetfrom>
+        <anchor>0.0 -0.0 -0.119063</anchor>
+    </joint>
+    <adjacent>Body_RWR rightPalm</adjacent>
+    <adjacent>Body_LEP Body_LWY</adjacent>
+    <adjacent>Body_LWP Body_LWR</adjacent>
+    <adjacent>Body_LWY Body_LWP</adjacent>
+    <adjacent>Body_LWR leftPalm</adjacent>
+    <adjacent>Body_Hip Body_Torso</adjacent>
+    <adjacent>Body_LHP Body_LKP</adjacent>
+    <adjacent>Body_RWR Body_RF3</adjacent>
+    <adjacent>Body_LSY Body_LEP</adjacent>
+    <adjacent>Body_RWR Body_RF1</adjacent>
+    <adjacent>Body_RHP Body_RKP</adjacent>
+    <adjacent>Body_LSP Body_LSR</adjacent>
+    <adjacent>Body_Torso Body_LSP</adjacent>
+    <adjacent>Body_RAP Body_RAR</adjacent>
+    <adjacent>Body_RSY Body_REP</adjacent>
+    <adjacent>Body_LSR Body_LSY</adjacent>
+    <adjacent>Body_RAR rightFoot</adjacent>
+    <adjacent>Body_RKP Body_RAP</adjacent>
+    <adjacent>Body_RWR Body_RF2</adjacent>
+    <adjacent>Body_RSR Body_RSY</adjacent>
+    <adjacent>Body_LWR Body_LF1</adjacent>
+    <adjacent>Body_LHY Body_LHR</adjacent>
+    <adjacent>Body_LWR Body_LF3</adjacent>
+    <adjacent>Body_LWR Body_LF2</adjacent>
+    <adjacent>Body_Hip Body_LHY</adjacent>
+    <adjacent>Body_Hip Body_RHY</adjacent>
+    <adjacent>Body_LAR leftFoot</adjacent>
+    <adjacent>Body_LKP Body_LAP</adjacent>
+    <adjacent>Body_RHY Body_RHR</adjacent>
+    <adjacent>Body_RWY Body_RWP</adjacent>
+    <adjacent>Body_NKY Body_NKP</adjacent>
+    <adjacent>Body_RWP Body_RWR</adjacent>
+    <adjacent>Body_RSP Body_RSR</adjacent>
+    <adjacent>Body_RHR Body_RHP</adjacent>
+    <adjacent>Body_Torso Body_NKY</adjacent>
+    <adjacent>Body_LHR Body_LHP</adjacent>
+    <adjacent>Body_REP Body_RWY</adjacent>
+    <adjacent>Body_Torso Body_RSP</adjacent>
+    <adjacent>Body_LAP Body_LAR</adjacent>
+</kinbody>

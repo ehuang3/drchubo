@@ -1,0 +1,5 @@
+<package>
+  <description brief="drchubo">drchubo</description>
+  <depend package="gazebo" />
+  <author>Robert Ellenberg</author>
+</package>
