@@ -20,7 +20,7 @@
 #include <boost/thread.hpp>
 #include <boost/algorithm/string.hpp>
 #include <sensor_msgs/JointState.h>
-#include <osrf_msgs/JointCommands.h>
+#include <atlas_msgs/AtlasCommand.h>
 
 #include <atlas/atlas_kinematics.h>
 #include <utils/math_utils.h>
@@ -40,10 +40,11 @@ using namespace dynamics;
 using namespace simulation;
 
 ros::Publisher pub_joint_commands_;
-osrf_msgs::JointCommands jointcommands;
+atlas_msgs::AtlasCommand jointcommands;
 
 Vector6d angles;
 atlas_kinematics_t AK;
+std::vector<string> name;
 
 void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js)
 {
@@ -73,9 +74,9 @@ void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js)
         // }
 
         // // assign sinusoidal joint angle targets
-        // for (unsigned int i = 0; i < jointcommands.name.size(); i++)
+        // for (unsigned int i = 0; i < name.size(); i++)
         // {
-        //     string name = jointcommands.name[i];
+        //     string name = name[i];
         //     jointcommands.position[i] = 0;
         //     if(name == "atlas::l_leg_uhz")
         //     {
@@ -105,18 +106,34 @@ void SetJointStates(const sensor_msgs::JointState::ConstPtr &_js)
         // //jointcommands.position[i] = 3.2* sin((ros::Time::now() - startTime).toSec());
 
         // pub_joint_commands_.publish(jointcommands);
+
+
+
+        // std::cout << ros::Time::now() << std::endl;
+
+        // for testing round trip time
+        jointcommands.header.stamp = _js->header.stamp;
+
+        // assign sinusoidal joint angle and velocity targets
+        for (unsigned int i = 0; i < name.size(); i++)
+        {
+            jointcommands.position[i] = 3.2* sin((ros::Time::now() - startTime).toSec());
+            jointcommands.velocity[i] = 3.2* cos((ros::Time::now() - startTime).toSec());
+        }
+
+        pub_joint_commands_.publish(jointcommands);
     }
 }
 
 int main(int argc, char** argv)
 {
-    cout << "-----DART init-----" << endl;
-    DartLoader dart_loader;
-    World *mWorld = dart_loader.parseWorld(VRC_DATA_PATH "models/atlas/atlas_world.urdf");
-    SkeletonDynamics *atlas = mWorld->getSkeleton("atlas");
-    cout << endl << "-----done-----" << endl << endl;
+    // cout << "-----DART init-----" << endl;
+    // DartLoader dart_loader;
+    // World *mWorld = dart_loader.parseWorld(VRC_DATA_PATH "models/atlas/atlas_world.urdf");
+    // SkeletonDynamics *atlas = mWorld->getSkeleton("atlas");
+    // cout << endl << "-----done-----" << endl << endl;
 
-    AK.init(atlas);
+    // AK.init(atlas);
 
     // Begin ROS init code
 
@@ -134,39 +151,41 @@ int main(int argc, char** argv)
     }
 
     // must match those inside AtlasPlugin
-    jointcommands.name.push_back("atlas::back_lbz");
-    jointcommands.name.push_back("atlas::back_mby");
-    jointcommands.name.push_back("atlas::back_ubx");
-    jointcommands.name.push_back("atlas::neck_ay");
-    jointcommands.name.push_back("atlas::l_leg_uhz");
-    jointcommands.name.push_back("atlas::l_leg_mhx");
-    jointcommands.name.push_back("atlas::l_leg_lhy");
-    jointcommands.name.push_back("atlas::l_leg_kny");
-    jointcommands.name.push_back("atlas::l_leg_uay");
-    jointcommands.name.push_back("atlas::l_leg_lax");
-    jointcommands.name.push_back("atlas::r_leg_uhz");
-    jointcommands.name.push_back("atlas::r_leg_mhx");
-    jointcommands.name.push_back("atlas::r_leg_lhy");
-    jointcommands.name.push_back("atlas::r_leg_kny");
-    jointcommands.name.push_back("atlas::r_leg_uay");
-    jointcommands.name.push_back("atlas::r_leg_lax");
-    jointcommands.name.push_back("atlas::l_arm_usy");
-    jointcommands.name.push_back("atlas::l_arm_shx");
-    jointcommands.name.push_back("atlas::l_arm_ely");
-    jointcommands.name.push_back("atlas::l_arm_elx");
-    jointcommands.name.push_back("atlas::l_arm_uwy");
-    jointcommands.name.push_back("atlas::l_arm_mwx");
-    jointcommands.name.push_back("atlas::r_arm_usy");
-    jointcommands.name.push_back("atlas::r_arm_shx");
-    jointcommands.name.push_back("atlas::r_arm_ely");
-    jointcommands.name.push_back("atlas::r_arm_elx");
-    jointcommands.name.push_back("atlas::r_arm_uwy");
-    jointcommands.name.push_back("atlas::r_arm_mwx");
+    name = std::vector<string>();
+    name.push_back("atlas::back_lbz");
+    name.push_back("atlas::back_mby");
+    name.push_back("atlas::back_ubx");
+    name.push_back("atlas::neck_ay");
+    name.push_back("atlas::l_leg_uhz");
+    name.push_back("atlas::l_leg_mhx");
+    name.push_back("atlas::l_leg_lhy");
+    name.push_back("atlas::l_leg_kny");
+    name.push_back("atlas::l_leg_uay");
+    name.push_back("atlas::l_leg_lax");
+    name.push_back("atlas::r_leg_uhz");
+    name.push_back("atlas::r_leg_mhx");
+    name.push_back("atlas::r_leg_lhy");
+    name.push_back("atlas::r_leg_kny");
+    name.push_back("atlas::r_leg_uay");
+    name.push_back("atlas::r_leg_lax");
+    name.push_back("atlas::l_arm_usy");
+    name.push_back("atlas::l_arm_shx");
+    name.push_back("atlas::l_arm_ely");
+    name.push_back("atlas::l_arm_elx");
+    name.push_back("atlas::l_arm_uwy");
+    name.push_back("atlas::l_arm_mwx");
+    name.push_back("atlas::r_arm_usy");
+    name.push_back("atlas::r_arm_shx");
+    name.push_back("atlas::r_arm_ely");
+    name.push_back("atlas::r_arm_elx");
+    name.push_back("atlas::r_arm_uwy");
+    name.push_back("atlas::r_arm_mwx");
 
-    unsigned int n = jointcommands.name.size();
+    unsigned int n = name.size();
     jointcommands.position.resize(n);
     jointcommands.velocity.resize(n);
     jointcommands.effort.resize(n);
+    jointcommands.k_effort.resize(n);
     jointcommands.kp_position.resize(n);
     jointcommands.ki_position.resize(n);
     jointcommands.kd_position.resize(n);
@@ -177,27 +196,29 @@ int main(int argc, char** argv)
     for (unsigned int i = 0; i < n; i++)
     {
         std::vector<std::string> pieces;
-        boost::split(pieces, jointcommands.name[i], boost::is_any_of(":"));
+        boost::split(pieces, name[i], boost::is_any_of(":"));
+        double temp;
 
-        rosnode->getParam("atlas_controller/gains/" + pieces[2] + "/p",
-                          jointcommands.kp_position[i]);
+        rosnode->getParam("atlas_controller/gains/" + pieces[2] + "/p", temp);
+        jointcommands.kp_position[i] = temp;
 
-        rosnode->getParam("atlas_controller/gains/" + pieces[2] + "/i",
-                          jointcommands.ki_position[i]);
+        rosnode->getParam("atlas_controller/gains/" + pieces[2] + "/i", temp);
+        jointcommands.ki_position[i] = temp;
 
-        rosnode->getParam("atlas_controller/gains/" + pieces[2] + "/d",
-                          jointcommands.kd_position[i]);
+        rosnode->getParam("atlas_controller/gains/" + pieces[2] + "/d", temp);
+        jointcommands.kd_position[i] = temp;
 
-        rosnode->getParam("atlas_controller/gains/" + pieces[2] + "/i_clamp",
-                          jointcommands.i_effort_min[i]);
+        rosnode->getParam("atlas_controller/gains/" + pieces[2] + "/i_clamp", temp);
+        jointcommands.i_effort_min[i] = temp;
         jointcommands.i_effort_min[i] = -jointcommands.i_effort_min[i];
-
-        rosnode->getParam("atlas_controller/gains/" + pieces[2] + "/i_clamp",
-                          jointcommands.i_effort_max[i]);
+        
+        rosnode->getParam("atlas_controller/gains/" + pieces[2] + "/i_clamp", temp);
+        jointcommands.i_effort_max[i] = temp;
 
         jointcommands.velocity[i]     = 0;
         jointcommands.effort[i]       = 0;
-        jointcommands.kp_velocity[i]  = 0;
+        jointcommands.kp_velocity[i]  = 1;
+        jointcommands.k_effort[i]     = 255;
     }
 
     // ros topic subscribtions
@@ -219,8 +240,8 @@ int main(int argc, char** argv)
     //   rosnode->subscribe("/atlas/joint_states", 1000, SetJointStates);
 
     pub_joint_commands_ =
-        rosnode->advertise<osrf_msgs::JointCommands>(
-            "/atlas/joint_commands", 1, true);
+        rosnode->advertise<atlas_msgs::AtlasCommand>(
+            "/atlas/atlas_command", 1, true);
 
     ros::spin();
   
