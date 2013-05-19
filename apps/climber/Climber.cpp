@@ -211,10 +211,10 @@ void Climber::demo() {
     // We'll specify desired foot poses in ego-centric frame then
     // transform them into the robot's world frame.
     // Match feet so that we end with them together
-    step_data.pose.position.x = (1 + i/2.0 )*0.4;
+    step_data.pose.position.x = (1 +i)*0.3;
     // Step 0.15m to either side of center, alternating with feet
-    if (i%2==0) { step_data.pose.position.y = 0.15; } 
-    else { step_data.pose.position.y = -0.15; }
+    if (i%2==0) { step_data.pose.position.y = 0.14; } 
+    else { step_data.pose.position.y = -0.14; }
     step_data.pose.position.z = 0.0;
 
     // Point those feet straight ahead
@@ -238,40 +238,6 @@ void Climber::demo() {
 				  mAsis_msg.pos_est.position.z) );
     f = f2 * f1;
 
-    //////////////////////////////////
-    printf("\n [%d] Imu info: %f %f %f %f Asis pos: %f %f %f \n",
-	   i,
-	   mImu_msg.orientation.x,
-	   mImu_msg.orientation.y,
-	   mImu_msg.orientation.z,
-	   mImu_msg.orientation.w,
-	   mAsis_msg.pos_est.position.x,
-	   mAsis_msg.pos_est.position.y,
-	   mAsis_msg.pos_est.position.z );
-
-    double xq, yq, zq, wq;
-    f1.M.GetQuaternion( xq, yq, zq, wq );
-    printf(" \n f1[%d]: %f %f %f rot: %f %f %f %f \n",
-	   i,
-	   f1.p.x(), f1.p.y(), f1.p.z(),
-	   xq, yq, zq, wq );
-
-    f2.M.GetQuaternion( xq, yq, zq, wq );
-    printf(" \n f2[%d]: %f %f %f rot: %f %f %f %f \n",
-	   i,
-	   f2.p.x(), f2.p.y(), f2.p.z(),
-	   xq, yq, zq, wq );
-
-    f.M.GetQuaternion( xq, yq, zq, wq );
-    printf(" \n f[%d]: %f %f %f rot: %f %f %f %f \n",
-	   i,
-	   f.p.x(), f.p.y(), f.p.z(),
-	   xq, yq, zq, wq );
-
-    //////////////////////////////////
-
-
-
     tf::PoseKDLToMsg( f, step_data.pose );
     printf("\n Step [%d]: %f, %f, %f Orientation: %f %f %f %f \n", i, step_data.pose.position.x,
 	   step_data.pose.position.y,
@@ -290,7 +256,7 @@ void Climber::demo() {
   printf( "[USER/BDI] Walking... \n" );
   mAsic_pub.publish( walk_msg );
   ros::Duration(6.0).sleep();
-  /*
+  
   // Step 5: Go back to home pose under user control
 
   // Always insert current time
@@ -317,7 +283,7 @@ void Climber::demo() {
   mAc_pub.publish( home_msg );
   ros::Duration(2.0).sleep();
   
-  */
+  
   printf("Demo is over \n");
 }
 
