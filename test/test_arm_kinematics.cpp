@@ -185,6 +185,43 @@ TEST(KINEMATICS, INIT) {
 	atlas_kinematics_t *AK = prepareAtlasKinematics();
 }
 /* ********************************************************************************************* */
+TEST(ARM_KINEMATICS, DART_JOINT_OFFSETS) {
+    // Determine if joint offsets zero atlas out correctly in DART
+    Vector6d q;
+    q.setZero();
+    Isometry3d Tw_mwx;
+    DART_ZEROD_FK(Tw_mwx, q, robot_kinematics_t::SIDE_LEFT);
+    Isometry3d Tw_dsy;
+    XFORM_W_DSY(Tw_dsy, TEST_LEFT);
+    Isometry3d Tdsy_mwx = Tw_dsy.inverse() * Tw_mwx;
+    cout << "Joint offsets put LEFT Tdsy_mwx at = \n" << Tdsy_mwx.matrix() << endl;
+    // Location of first joint w/ joint offsets
+    // Assume dofs have been set correctly in atlas from before
+    Isometry3d Tw_shx;
+    Tw_shx = _atlas->getJoint("l_arm_shx")->getChildNode()->getWorldTransform();
+    Isometry3d Tdsy_shx = Tw_dsy.inverse() * Tw_shx;
+    // cout << "Joint offsets put LEFT Tdsy_shx at = \n" << Tdsy_shx.matrix() << endl;
+    // Determine if joint offsets zero RIGHT side correctly
+    DART_ZEROD_FK(Tw_mwx, q, robot_kinematics_t::SIDE_RIGHT);
+    XFORM_W_DSY(Tw_dsy, TEST_RIGHT);
+    Tdsy_mwx = Tw_dsy.inverse() * Tw_mwx;
+    cout << "Joint offsets put RIGHT Tdsy_mwx at = \n" << Tdsy_mwx.matrix() << endl;
+    Tw_shx = _atlas->getJoint("r_arm_shx")->getChildNode()->getWorldTransform();
+    Tdsy_shx = Tw_dsy.inverse() * Tw_shx;
+    // cout << "Joint offsets put RIGHT Tdsy_shx at = \n" << Tdsy_shx.matrix() << endl;
+    // Determine what a positive angle is for joints
+    q << 0, 0, 0, M_PI/2, 0, 0; // Should rotate elx
+    DART_ZEROD_FK(Tw_mwx, q, TEST_LEFT);
+    XFORM_W_DSY(Tw_dsy, TEST_LEFT);
+    Tdsy_mwx = Tw_dsy.inverse() * Tw_mwx;
+    cout << "90 elx puts LEFT Tdsy_mwx at = \n" << Tdsy_mwx.matrix() << endl;
+    // now right
+    DART_ZEROD_FK(Tw_mwx, q, TEST_RIGHT);
+    XFORM_W_DSY(Tw_dsy, TEST_RIGHT);
+    Tdsy_mwx = Tw_dsy.inverse() * Tw_mwx;
+    cout << "90 elx puts RIGHT Tdsy_mwx at = \n" << Tdsy_mwx.matrix() << endl;
+}
+/* ********************************************************************************************* */
 TEST(KINEMATICS, FORWARD) {
 	atlas_kinematics_t *AK = prepareAtlasKinematics();
 	Vector6d u = Vector6d::Zero();
