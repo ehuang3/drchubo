@@ -40,7 +40,12 @@ void DART_ZEROD_FK(Isometry3d& B, const Vector6d& q, int side) {
     int manip_index = left ? robot_kinematics_t::MANIP_L_HAND : robot_kinematics_t::MANIP_R_HAND;
     VectorXd dofs = _atlas->getPose();
     for(int i=0; i < 6; i++) {
-        dofs(_ak->dart_dof_ind[manip_index][i]) = q(i);
+        // Mirror for right arm
+        if(!left && (i == 1 || i == 3 || i == 5)) {
+            dofs(_ak->dart_dof_ind[manip_index][i]) = -q(i);
+        } else {
+            dofs(_ak->dart_dof_ind[manip_index][i]) = q(i);
+        }
         // Offset joint to DH zero config
         if(i == 1) {
             Vector3d usy_axis = _atlas->getJoint(left ? "l_arm_usy" : "r_arm_usy")->getAxis(0);
