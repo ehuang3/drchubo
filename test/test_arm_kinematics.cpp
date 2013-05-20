@@ -201,7 +201,7 @@ TEST(ARM_KINEMATICS, DART_JOINT_OFFSETS) {
     Isometry3d Tw_shx;
     Tw_shx = _atlas->getJoint("l_arm_shx")->getChildNode()->getWorldTransform();
     Isometry3d Tdsy_shx = Tw_dsy.inverse() * Tw_shx;
-    cout << "Joint offsets put LEFT Tdsy_shx at = \n" << Tdsy_shx.matrix() << endl;
+    // cout << "Joint offsets put LEFT Tdsy_shx at = \n" << Tdsy_shx.matrix() << endl;
     // Determine if joint offsets zero RIGHT side correctly
     DART_ZEROD_FK(Tw_mwx, q, robot_kinematics_t::SIDE_RIGHT);
     XFORM_W_DSY(Tw_dsy, TEST_RIGHT);
@@ -209,7 +209,18 @@ TEST(ARM_KINEMATICS, DART_JOINT_OFFSETS) {
     cout << "Joint offsets put RIGHT Tdsy_mwx at = \n" << Tdsy_mwx.matrix() << endl;
     Tw_shx = _atlas->getJoint("r_arm_shx")->getChildNode()->getWorldTransform();
     Tdsy_shx = Tw_dsy.inverse() * Tw_shx;
-    cout << "Joint offsets put RIGHT Tdsy_shx at = \n" << Tdsy_shx.matrix() << endl;
+    // cout << "Joint offsets put RIGHT Tdsy_shx at = \n" << Tdsy_shx.matrix() << endl;
+    // Determine what a positive angle is for joints
+    q << 0, 0, 0, M_PI/2, 0, 0; // Should rotate elx
+    DART_ZEROD_FK(Tw_mwx, q, TEST_LEFT);
+    XFORM_W_DSY(Tw_dsy, TEST_LEFT);
+    Tdsy_mwx = Tw_dsy.inverse() * Tw_mwx;
+    cout << "90 elx puts LEFT Tdsy_mwx at = \n" << Tdsy_mwx.matrix() << endl;
+    // now right
+    DART_ZEROD_FK(Tw_mwx, q, TEST_RIGHT);
+    XFORM_W_DSY(Tw_dsy, TEST_RIGHT);
+    Tdsy_mwx = Tw_dsy.inverse() * Tw_mwx;
+    cout << "90 elx puts RIGHT Tdsy_mwx at = \n" << Tdsy_mwx.matrix() << endl;
 }
 /* ********************************************************************************************* */
 TEST(KINEMATICS, FORWARD) {
