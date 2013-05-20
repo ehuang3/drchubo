@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdio.h>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include <gtest/gtest.h>
@@ -79,7 +80,7 @@ void XFORM_W_DSY(Isometry3d& B, int side) {
     Tusy_dsy = Matrix4d::Identity();
     Tusy_dsy.rotate(AngleAxisd(angle, Vector3d::UnitX()));
     Tusy_dsy.translation() += usy_dsy;
-    cout << "Tusy_dsy = \n" << Tusy_dsy.matrix() << endl;
+    // cout << "Tusy_dsy = \n" << Tusy_dsy.matrix() << endl;
     // Transform w to dsy
     Isometry3d Tw_usy;
     Tw_usy = arm_usy->getChildNode()->getWorldTransform();
@@ -88,76 +89,78 @@ void XFORM_W_DSY(Isometry3d& B, int side) {
     B = Tw_dsy;
 }
 /* ********************************************************************************************* */
-// I used this for testing transforms
-// now, prints some DH link stuff
-void prepareWorld2DHShoulder() {
+struct atlas_constants_t {
+    double r_shx_angle;
+    double l_shx_angle;
+    double usy_dsy_norm;
+    double dsy_shx_norm;
+    double shx_elx_norm;
+    double elx_mwx_norm;
+    double dsy_mwx_norm;
+    
+    void print() {
+        printf("r_shx_angle = %f\n"
+               "l_shx_angle = %f\n"
+               "usy_dsy_norm = %f\n"
+               "dsy_shx_norm = %f\n"
+               "shx_elx_norm = %f\n"
+               "elx_mwx_norm = %f\n"
+               "dsy_mwx_norm = %f\n",
+               r_shx_angle, l_shx_angle, usy_dsy_norm, dsy_shx_norm,
+               shx_elx_norm, elx_mwx_norm, dsy_mwx_norm);
+    }
+};
+void ATLAS_CONSTANTS(atlas_constants_t& ac) {
+    // Zero atlas
+    _atlas->setPose(_atlas->getPose().setZero(), true);
+    // Calculate distances
     Joint *arm_usy = _atlas->getJoint("l_arm_usy");
     Joint *arm_shx = _atlas->getJoint("l_arm_shx");
     Matrix4d shx = arm_shx->getTransform(0)->getTransform();
-    // usy joint axis
     // shx_disp = usy to shx offset (dart)
     Vector3d usy_axis = arm_usy->getAxis(0);
     Vector3d shx_disp = shx.block<3,1>(0,3);
-    // cout << "usy_axis = " << usy_axis.transpose() << endl;
-    // cout << "shx_disp = " << shx_disp.transpose() << endl;
-
     // Offset to 0 arm at joint shx
-    double angle = -atan2(usy_axis(1), usy_axis(2)); //-30 angle
-    cout << "shx angle = " << angle << endl;
-
+    double angle = atan2(usy_axis(1), usy_axis(2)); //-30 angle
+    // cout << "shx angle = " << angle << endl;
+    ac.l_shx_angle = angle;
+    ac.r_shx_angle = -angle;
     // Vector from usy to dsy
     Vector3d usy_dsy = usy_axis;
     usy_dsy *= usy_axis.dot(shx_disp);
-    // cout << "usy_dsy = " << usy_dsy.transpose() << endl;
-    cout << "usy_dsy norm = " << usy_dsy.norm() << endl;
-    
+    ac.usy_dsy_norm = usy_dsy.norm();
     // Vector dsy to shx
     Vector3d dsy_shx = shx_disp - usy_dsy;
-    // cout << "dsy_shx = " << dsy_shx.transpose() << endl;
-    cout << "dsy_shx norm = " << dsy_shx.norm() << endl;
+    // cout << "dsy_shx norm = " << dsy_shx.norm() << endl;
+    ac.dsy_shx_norm = dsy_shx.norm();
     
-    // dsy = dh shoulder y
-    Isometry3d Tusy_dsy;
-    Tusy_dsy = Matrix4d::Identity();
-    Tusy_dsy.rotate(AngleAxisd(angle, Vector3d::UnitX()));
-    Tusy_dsy.translation() += usy_dsy;
-//    cout << "Tusy_dsy = \n" << Tusy_dsy.matrix() << endl;
-//    cout << endl;
-
-    BodyNode *node_usy = arm_usy->getChildNode();
-    
-    Isometry3d Tw_dsy;
-    Tw_dsy = node_usy->getWorldTransform();
-    Tw_dsy = Tw_dsy * Tusy_dsy;
-    // cout << "Tw_dsy = \n" << Tw_dsy.matrix() << endl;
-    
-    // Want to print out the canonical 0 offset values of Tdsy_mwx
-    BodyNode *node_mwx = _atlas->getJoint("l_arm_mwx")->getChildNode();
-    Isometry3d Tw_mwx;
-    Tw_mwx = node_mwx->getWorldTransform();
-    Isometry3d Tdsy_mwx = Tw_dsy.inverse() * Tw_mwx;
-    // cout << "Tdsy_mwx = \n" << Tdsy_mwx.matrix() << endl;
-    
+    // Find link lengths using msy.
+    // msy = mock shoulder y (located on arm plane, behind shx)
     BodyNode *node_shx = arm_shx->getChildNode();
-
     Isometry3d Tw_shx;
     Tw_shx = node_shx->getWorldTransform();
-    
-    Isometry3d Tdsy_shx;
-    Tdsy_shx = Tw_dsy.inverse() * Tw_shx;
-//    cout << "Tdsy_shx = \n" << Tdsy_shx.matrix() << endl;
-
-    // msy = mock shoulder y (located on arm plane, behind shx)
     Isometry3d Tw_msy;
     Tw_msy = Matrix4d::Identity();
     Isometry3d Tshx_msy;
     Tshx_msy = Matrix4d::Identity();
     Tshx_msy.translation() = Vector3d(0, -dsy_shx.norm(), 0); // move behind shx by correct ssy-shx disp
     Tw_msy = Tw_shx * Tshx_msy;
-    // Rotate Tw_msy to reflect DH settings
-    // Tw_msy.rotate(AngleAxisd(-M_PI/2, Vector3d::UnitY()));
-    // cout << "Tw_msy = \n" << Tw_msy.matrix() << endl;
-    // cout << "Tw_shx = \n" << Tw_shx.matrix() << endl;
+
+    // Link lengths
+    BodyNode *l_clav = _atlas->getNode("l_clav");
+    BodyNode *l_scap = _atlas->getNode("l_scap");
+    BodyNode *l_uarm = _atlas->getNode("l_uarm");
+    BodyNode *l_larm = _atlas->getNode("l_larm");
+    BodyNode *l_farm = _atlas->getNode("l_farm");
+    BodyNode *l_hand = _atlas->getNode("l_hand");
+
+    Tw_shx = l_scap->getWorldTransform();
+    Matrix4d Tw_elx = l_larm->getWorldTransform();
+    Matrix4d Tw_mwx = l_hand->getWorldTransform();
+
+    ac.shx_elx_norm = (Tw_shx.inverse() * Tw_elx)(1,3);
+    ac.elx_mwx_norm = (Tw_elx.inverse() * Tw_mwx)(1,3);
+    ac.dsy_mwx_norm = (Tw_msy.inverse() * Tw_mwx)(1,3);
 }
 /* ********************************************************************************************* */
 atlas::atlas_kinematics_t *prepareAtlasKinematics() {
@@ -169,7 +172,10 @@ atlas::atlas_kinematics_t *prepareAtlasKinematics() {
 		_ak->init(_atlas);
         node_hand = _atlas->getNode("l_hand");
         node_clav = _atlas->getNode("l_clav");
-        prepareWorld2DHShoulder();
+
+        atlas_constants_t ac;
+        ATLAS_CONSTANTS(ac);
+        ac.print();
 	}
 	_atlas->setPose(_atlas->getPose().setZero(), true);
 	return _ak;
