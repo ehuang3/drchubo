@@ -119,7 +119,7 @@ int main(int argc, char** argv)
 
   // Begin ROS init code
 
-  ros::init(argc, argv, "pub_joint_command_test");
+  ros::init(argc, argv, "quadruped_enter");
 
   ros::NodeHandle* rosnode = new ros::NodeHandle();
 
