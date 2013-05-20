@@ -1,0 +1,35 @@
+[
+    {
+        "Forward": {
+            "key": "i",
+            "conf": [
+                "Forward Stride Length",
+                "Stride Duration",
+                "Stride Width",
+                "Walk Sequence Length"
+            ]
+        }
+    },
+    {
+        "Forward": {
+            "key": "i",
+            "conf": [
+                "Forward Stride Length",
+                "Stride Duration",
+                "Stride Width",
+                "Walk Sequence Length"
+            ]
+        }
+    },
+    {
+        "Forward": {
+            "key": "i",
+            "conf": [
+                "Forward Stride Length",
+                "Stride Duration",
+                "Stride Width",
+                "Walk Sequence Length"
+            ]
+        }
+    }
+]

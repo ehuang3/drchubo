@@ -1,0 +1,152 @@
+[
+    {
+        "Walk Sequence Length": {
+            "max": 35,
+            "incr": 0,
+            "type": "int",
+            "value": 35,
+            "min": 35
+        },
+        "Forward Stride Length": {
+            "max": 0.3,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.3,
+            "min": 0.3
+        },
+        "Stride Duration": {
+            "max": 0.63,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.63,
+            "min": 0.63
+        },
+        "Stride Width": {
+            "max": 0.2,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.2,
+            "min": 0.2
+        }
+    },
+    {
+        "Walk Sequence Length": {
+            "max": 32,
+            "incr": 0,
+            "type": "int",
+            "value": 32,
+            "min": 32
+        },
+        "In Place Turn Size": {
+            "max": 0.102,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.102,
+            "min": 0.102
+        },
+        "Stride Duration": {
+            "max": 0.63,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.63,
+            "min": 0.63
+        },
+        "Stride Width": {
+            "max": 0.2,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.2,
+            "min": 0.2
+        }
+    },
+    {
+        "Walk Sequence Length": {
+            "max": 27,
+            "incr": 0,
+            "type": "int",
+            "value": 27,
+            "min": 27
+        },
+        "Forward Stride Length": {
+            "max": 0.3,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.3,
+            "min": 0.3
+        },
+        "Stride Duration": {
+            "max": 0.63,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.63,
+            "min": 0.63
+        },
+        "Stride Width": {
+            "max": 0.2,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.2,
+            "min": 0.2
+        }
+    },
+    {
+        "Walk Sequence Length": {
+            "max": 31,
+            "incr": 0,
+            "type": "int",
+            "value": 31,
+            "min": 31
+        },
+        "In Place Turn Size": {
+            "max": 0.101,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.101,
+            "min": 0.101
+        },
+        "Stride Duration": {
+            "max": 0.63,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.63,
+            "min": 0.63
+        },
+        "Stride Width": {
+            "max": 0.2,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.2,
+            "min": 0.2
+        }
+    },
+    {
+        "Walk Sequence Length": {
+            "max": 23,
+            "incr": 0,
+            "type": "int",
+            "value": 23,
+            "min": 23
+        },
+        "Forward Stride Length": {
+            "max": 0.301,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.301,
+            "min": 0.301
+        },
+        "Stride Duration": {
+            "max": 0.63,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.63,
+            "min": 0.63
+        },
+        "Stride Width": {
+            "max": 0.2,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.2,
+            "min": 0.2
+        }
+    }
+]

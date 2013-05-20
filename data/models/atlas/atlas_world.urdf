@@ -1,0 +1,8 @@
+<world name="drc_skeleton">
+  <include filename="atlas.urdf" model_name="atlas"/>
+
+  <entity model="atlas" name="atlas">
+    <origin xyz="0 0 1.0" rpy="1.57 0 0"/>
+  </entity>
+  
+</world>

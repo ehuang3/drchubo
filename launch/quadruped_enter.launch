@@ -1,0 +1,6 @@
+<launch>
+	<!-- Set the actionlib stuff to use BDI to command Attila -->
+	<node pkg="atlas_msgs" type="actionlib_server" name="walking_actionlib_server" />
+	<!-- Use our customized teleop -->
+	<node pkg="vrc-golem" type="quadruped_enter" name="quadruped_enter_actionlib_client" output="screen" />
+</launch>

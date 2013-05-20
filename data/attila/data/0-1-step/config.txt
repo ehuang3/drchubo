@@ -1,0 +1,32 @@
+[
+    {
+        "Walk Sequence Length": {
+            "max": 1,
+            "incr": 0,
+            "type": "int",
+            "value": 1,
+            "min": 1
+        },
+        "Forward Stride Length": {
+            "max": 0.52,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.52,
+            "min": 0.52
+        },
+        "Stride Duration": {
+            "max": 0.7,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.7,
+            "min": 0.7
+        },
+        "Stride Width": {
+            "max": 0.2,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.2,
+            "min": 0.2
+        }
+    }
+]

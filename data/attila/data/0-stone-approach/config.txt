@@ -1,0 +1,92 @@
+[
+    {
+        "Walk Sequence Length": {
+            "max": 3,
+            "incr": 0,
+            "type": "int",
+            "value": 3,
+            "min": 3
+        },
+        "Forward Stride Length": {
+            "max": 0.4,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.4,
+            "min": 0.4
+        },
+        "Stride Duration": {
+            "max": 0.63,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.63,
+            "min": 0.63
+        },
+        "Stride Width": {
+            "max": 0.2,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.2,
+            "min": 0.2
+        }
+    },
+    {
+        "Walk Sequence Length": {
+            "max": 8,
+            "incr": 0,
+            "type": "int",
+            "value": 8,
+            "min": 8
+        },
+        "Forward Stride Length": {
+            "max": 0.05,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.05,
+            "min": 0.05
+        },
+        "Stride Duration": {
+            "max": 0.63,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.63,
+            "min": 0.63
+        },
+        "Stride Width": {
+            "max": 0.2,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.2,
+            "min": 0.2
+        }
+    },
+    {
+        "Walk Sequence Length": {
+            "max": 3,
+            "incr": 0,
+            "type": "int",
+            "value": 3,
+            "min": 3
+        },
+        "Forward Stride Length": {
+            "max": 0.05,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.05,
+            "min": 0.05
+        },
+        "Stride Duration": {
+            "max": 0.63,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.63,
+            "min": 0.63
+        },
+        "Stride Width": {
+            "max": 0.2,
+            "incr": 0.0,
+            "type": "float",
+            "value": 0.2,
+            "min": 0.2
+        }
+    }
+]
