@@ -1,4 +1,4 @@
-vrc
+DRC-HUBO
 ===
 
-Repository for Georgia Tech's Darpa Robotics Challenge Track C team
+Repository for DRC rubble clearing task.
