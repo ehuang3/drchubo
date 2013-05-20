@@ -199,26 +199,41 @@ void atlas_kinematics_t::init(Skeleton *_atlas) {
     kc.arm_ewz = uwy(1,3) + mwx(1,3);
     kc.arm_whz = 0;
 
-    DEBUG_PRINT("\n"
-                "arm_nsy %f\n"
-                "arm_ssz %f\n"
-                "arm_sez %f\n"
-                "arm_ewz %f\n",
-                kc.arm_nsy, kc.arm_ssz, kc.arm_sez, kc.arm_ewz);
+    // DEBUG_PRINT("\n"
+    //             "arm_nsy %f\n"
+    //             "arm_ssz %f\n"
+    //             "arm_sez %f\n"
+    //             "arm_ewz %f\n",
+    //             kc.arm_nsy, kc.arm_ssz, kc.arm_sez, kc.arm_ewz);
     
     for(int i=0; i < 6; i++) {
         kc.arm_limits(i,0) = _atlas->getDof(dart_dof_ind[MANIP_L_HAND][i])->getMin();
         kc.arm_limits(i,1) = _atlas->getDof(dart_dof_ind[MANIP_L_HAND][i])->getMax();
     }
-
+    
+    // Joint offsets for zeroing into DH configuration
     kc.arm_offset = Vector6d::Zero();
-    double shx_off = atan2(shx(1,3),shx(2,3));
-//    DEBUG_PRINT("shx_off %f\n", shx_off);
-//    kc.arm_offset(1) = shx_off;
+    double shx_off = atan2(usy_axis(1), usy_axis(2)); //-30 angle
+    // double shx_off = -atan2(shx(1,3),shx(2,3));
+    DEBUG_PRINT("shx_off %f\n", shx_off);
+    kc.arm_offset(1) = shx_off;
 
     kc.arm_mirror.push_back(1);
     kc.arm_mirror.push_back(2);
     kc.arm_mirror.push_back(4);
+
+    // Print out information about DART mappings
+    int manip_index[2] = { MANIP_L_HAND, MANIP_R_HAND };
+    for(int i=0; i < 2; i++) {
+        // Print out limit information
+        for(int j=0; j < 6; j++) {
+            Dof *dof = _atlas->getDof(dart_dof_ind[manip_index[i]][j]);
+            Joint *joint = dof->getJoint();
+            BodyNode *node = joint->getChildNode();
+            DEBUG_PRINT("Joint: %s limits %f to %f\n",
+                        joint->getName(), dof->getMin(), dof->getMax());
+        }
+    }
 }
 
 }
