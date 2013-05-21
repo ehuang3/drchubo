@@ -1,4 +1,4 @@
-#include "atlas_jacobians.h"
+#include "atlas_jacobian.h"
 #include "robot/robot.h"
 #include <kinematics/BodyNode.h>
 #include <kinematics/Skeleton.h>
@@ -12,7 +12,7 @@ using namespace kinematics;
 
 namespace atlas {
 
-void atlas_jacobians_t::init(Skeleton *_atlas) {
+void atlas_jacobian_t::init(Skeleton *_atlas) {
     DEBUG_PRINT("Initializing...\n");
     robot = _atlas;
     manip_node[MANIP_L_FOOT] = "l_foot";

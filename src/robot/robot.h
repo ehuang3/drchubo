@@ -1,4 +1,10 @@
 #pragma once
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
+
+namespace Eigen {
+    typedef Matrix<double,6,1> Vector6d;
+}
 
 namespace robot {
 
@@ -8,6 +14,16 @@ namespace robot {
         MANIP_L_HAND,
         MANIP_R_HAND,
         NUM_MANIPULATORS,
+    };
+
+    enum LimbIndex {
+        LIMB_L_LEG,
+        LIMB_R_LEG,
+        LIMB_L_ARM,
+        LIMB_R_ARM,
+        LIMB_HEAD,
+        LIMB_TORSO,
+        NUM_LIMBS,
     };
     
     enum IK_Mode {
