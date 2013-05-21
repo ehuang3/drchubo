@@ -8,7 +8,7 @@ foreach(APPDIR
     robot_viz
     drcsim_joint_commands_tutorial
     quadruped
-    # climber
+    climber
     )
     add_subdirectory(${APPDIR})
 endforeach(APPDIR)

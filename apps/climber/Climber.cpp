@@ -534,7 +534,7 @@ void Climber::demo() {
 	   step_data.pose.orientation.z,
 	   step_data.pose.orientation.w );
     
-    walk_msg.walk_params.step_data[i] = step_data;
+    walk_msg.walk_params.step_queue[i] = step_data;
   }
   // Use the same k_effort from the last step, to retain user control over some
   // joints. BDI has control of the other joints.
