@@ -5,6 +5,8 @@
 #define MODULE_NAME "atlas-state"
 #include "utils/debug_utils.h"
 
+#include <kinematics/Skeleton.h>
+
 using namespace Eigen;
 using namespace kinematics;
 using namespace std;
@@ -13,6 +15,9 @@ namespace atlas {
     
     void atlas_state_t::init(Skeleton *_robot) {
         robot = _robot;
+
+        dofs = robot->getPose();
+        dofs.setZero();
 
         if(robot_state_t::g_init)
             return;
