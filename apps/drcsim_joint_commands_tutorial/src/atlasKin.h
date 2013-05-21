@@ -52,6 +52,8 @@ public:
   void setJointStates();
   void joystick(const sensor_msgs::Joy::ConstPtr& joy);
   void joystick_J(const sensor_msgs::Joy::ConstPtr& joy);
+
+  void fastrakDifferential();
 };
 
 #endif

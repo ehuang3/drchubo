@@ -144,7 +144,10 @@ printf("Next\n");
   jointcommands.kp_velocity.resize(n);
   jointcommands.i_effort_min.resize(n);
   jointcommands.i_effort_max.resize(n);
-  float gains[28] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,100000,50000,10000,10000,2500,5000,100000,50000,10000,10000,2500,5000};
+
+  float p_gains[28] = {500.0, 200000.0, 100000.0, 1000.0, 250.0, 5000.0, 100000.0, 50000.0, 45000.0, 15000.0, 250.0, 5000.0, 100000.0, 50000.0, 45000.0, 15000.0, 100000.0, 50000.0, 50000.0, 10000.0, 2500.0, 5000.0, 100000.0, 50000.0, 50000.0, 10000.0, 2500.0, 5000.0};
+  float i_gains[28] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  float d_gains[28] = {100.0, 2.0, 1.0, 1.0, 0.01, 1.0, 10.0, 10.0, 2.0, 1.0, 0.01, 1.0, 10.0, 10.0, 2.0, 1.0, 3.0, 20.0, 3.0, 3.0, 0.1, 0.2, 3.0, 20.0, 3.0, 3.0, 0.1, 0.2};
   for (unsigned int i = 0; i < n; i++)
   {
     /*std::vector<std::string> pieces;
@@ -173,7 +176,9 @@ printf("Next\n");
     else
       jointcommands.k_effort[i]	  = 0;
     jointcommands.kp_velocity[i]  = 0;
-    jointcommands.kp_position[i]  = gains[i];
+    jointcommands.kp_position[i]  = p_gains[i];
+    jointcommands.ki_position[i]  = i_gains[i];
+    jointcommands.kd_position[i]  = d_gains[i];
 
   }
 
@@ -184,13 +189,12 @@ printf("Next\n");
   pub_joint_commands_ = rosnode->advertise<atlas_msgs::AtlasCommand>("/atlas/atlas_command", 1, true);
   pub_hand_commands = rosnode->advertise<sandia_hand_msgs::SimpleGrasp>("/sandia_hands/r_hand/simple_grasp", 1, true);
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~            ~~~~~~~~~~~~~~~~~
-  float start[28] = {0,0.00062,0.00017,-0.00107,0.303711,0.03325,-0.24969,0.50624,-0.24686,-0.04443,-030352,-0.06482,-0.25276,0.52750,-0.27308,0.050106,0.29955,1.30236,-2.00036,-0.49928,0,-0.00094,-0.45,0.6,1.5708,-1.1708,-1.708,0};
+  float start[28] = {0,0.00062,0.00017,-0.00107,0.303711,0.03325,-0.24969,0.50624,-0.24686,-0.04443,-030352,-0.06482,-0.25276,0.52750,-0.27308,0.050106,0,-1.250,0,0,0,-0.45,-0.6,1.5708,-1.1708,-1.708,0};
  // float i[28] = {1000,1000,0,0,2000,2000,1000,1000,500,500,2000,2000,1000,1000,500,500,2000,2000,1000,1000,500,500,2000,2000,1000,1000,500,500};
   for (int a = 0; a<28; a++){
     jointcommands.position[a] = start[a];
-    //jointcommands.ki_position[a] = i[a];
-    jointcommands.kp_position[a] = jointcommands.kp_position[a]*50;
-    //jointcommands.kd_position[a] = 0;//jointcommands.kp_position[a]/50;
+    jointcommands.kp_position[a] = jointcommands.kp_position[a]*10;
+    jointcommands.kd_position[a] = jointcommands.kd_position[a]*10;
   }
   jointcommands.kp_position[0] = 500;// jointcommands.kp_position[0]*3;
   jointcommands.kd_position[0] = 100;
