@@ -1,12 +1,15 @@
 #pragma once
 
+#include <stdio.h>
+#include <iostream>
+
 #undef ERROR_STREAM
 #undef ERROR_PRINT
 #undef DEBUG_STREAM
 #undef DEBUG_PRINT
 
 #ifdef MODULE_NAME
-#define DEBUG_ID "[" MODULE_NAME " DEBUG] "
+#define DEBUG_ID "[" MODULE_NAME "] "
 #define ERROR_ID "[" MODULE_NAME " ERROR] "
 #endif
 

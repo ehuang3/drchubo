@@ -262,7 +262,7 @@ TEST(ARM_KINEMATICS, DART_LOCS) {
     BodyNode *l_farm = _atlas->getNode("l_farm");
     BodyNode *l_hand = _atlas->getNode("l_hand");
 
-    auto clav_zero = l_clav->getWorldTransform().block<3,1>(0,3).transpose();
+//    auto clav_zero = l_clav->getWorldTransform().block<3,1>(0,3).transpose();
 
     Matrix4d Tmsy_shx, Tmsy_ely, Tmsy_elx, Tmsy_uwy, Tmsy_mwx;
     Matrix4d Tw_shx = l_scap->getWorldTransform();

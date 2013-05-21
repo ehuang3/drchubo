@@ -7,6 +7,7 @@
 #include <kinematics/Joint.h>
 
 #include <iostream>
+#include <stdio.h>
 
 #define DEBUG
 #define MODULE_NAME "ATLAS-KIN"
