@@ -30,6 +30,8 @@ int main(int argc, char* argv[])
 	World *mWorld = dart_loader.parseWorld(robot_file.c_str());
 	SkeletonDynamics *robot = mWorld->getSkeleton("atlas");
 
+    robot->setPose(robot->getPose().setZero(), true);
+
     // load a skeleton file
     FileInfoSkel<SkeletonDynamics> model;
     model.loadFile(VRC_DATA_PATH"/skel/ground1.skel", SKEL);

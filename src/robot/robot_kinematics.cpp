@@ -22,6 +22,16 @@ robot_kinematics_t::robot_kinematics_t() {
 robot_kinematics_t::~robot_kinematics_t() {
 }
 
+void robot_kinematics_t::dart_armFK(Isometry3d &B, const Vector6d &q, int side) {
+    int manip_index = side == SIDE_LEFT ? MANIP_L_HAND : MANIP_R_HAND;
+    VectorXd dofs = robot->getPose();
+    for(int i=0; i < 6; i++) {
+        dofs(dart_dof_ind[manip_index][i]) = q(i);
+    }
+    robot->setPose(dofs, true);
+    B = robot->getNode(side == SIDE_LEFT ? "l_hand" : "r_hand")->getWorldTransform();
+}
+
 Matrix4d robot_kinematics_t::legT(int _frame, double _u) {
 	return _legT(_frame, _u + leg_u_off[_frame-1]);
 }
