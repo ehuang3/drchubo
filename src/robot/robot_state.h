@@ -23,9 +23,10 @@ namespace robot {
         int num_links_torso() { return g_d_limb[LIMB_TORSO].size(); }
         int num_links_arm() { return g_d_limb[LIMB_L_ARM].size(); }
         int num_links_leg() { return g_d_limb[LIMB_L_LEG].size(); }
-
-        void set_manip(const Eigen::VectorXd& q, ManipIndex mi);
-        void get_manip(Eigen::VectorXd& q, ManipIndex mi);
+        
+        // accepts both ManipIndex and LimbIndex
+        void set_manip(const Eigen::VectorXd& q, int mi);
+        void get_manip(Eigen::VectorXd& q, int mi);
 
         Eigen::VectorXd& d_pose() { return dofs; }
 
@@ -34,6 +35,9 @@ namespace robot {
 
         void set_r_pose(const Eigen::VectorXd& q);
         void get_r_pose(Eigen::VectorXd& q);
+        
+        // accepts both ManipIndex and LimbIndex
+        void get_manip_indexes(std::vector<int>& indexes, int mi);
 
         static void print_mappings(); //< prints out all mappings
 
@@ -50,7 +54,7 @@ namespace robot {
         static int find_d_name(std::string name, kinematics::Skeleton *robot);
 
         // Assume 1 robot type
-        // globals
+        // globals to avoid copying
         static bool g_init;
         static std::string g_ros_prefix;
         

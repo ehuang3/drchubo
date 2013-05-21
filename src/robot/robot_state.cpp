@@ -196,6 +196,8 @@ namespace robot {
             q(iter->first) = dofs(iter->second);
         }
     }
-            
 
+    void get_manip_indexes(vector<int>& indexes, int mi) {
+        m_ind = g_d_limb[mi];
+    }
 }
