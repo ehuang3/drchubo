@@ -3,6 +3,8 @@
 #include <kinematics/BodyNode.h>
 #include <kinematics/Dof.h>
 #include <kinematics/Joint.h>
+//#define NDEBUG
+#include <assert.h>
 #define DEBUG
 #define MODULE_NAME "robot-jac"
 #include "utils/debug_utils.h"
@@ -59,6 +61,33 @@ namespace robot {
         J.resize(rows*6, cols);
         // 
         
+    }
+
+    void robot_jacobian_t::remap_jacobian(MatrixXd& J, 
+                                          const vector<int>& dependent_dofs,
+                                          vector<int>& desired_dofs)
+    {
+        MatrixXd newJ(J.rows(), desired_dofs.size());
+        newJ.setZero();
+        vector<int> new_order;
+        for(int i=0; i < dependent_dofs.size(); ++i) {
+            bool found = false;
+            for(int j=0; j < desired_dofs.size(); ++j) {
+                if(dependent_dofs[i] == desired_dofs[j]) {
+                    found = true;
+                    break;
+                }
+            }
+            if(found) {
+                int k = new_order.size();
+                newJ.col(k) = J.col(i);
+                new_order.push_back(dependent_dofs[i]);
+            }
+        }
+        J = newJ;
+        desired_dofs = new_order;
+
+        assert(J.cols() == desired_dofs.size());
     }
 
 }

@@ -28,6 +28,9 @@ namespace robot {
         std::string& name(ManipIndex mi) { return manip_node[mi]; }
     
         void get_jacobian(Eigen::MatrixXd& J, const Eigen::MatrixXd& indexes, const Eigen::VectorXd& dofs);
+
+        void remap_jacobian(Eigen::MatrixXd& J, const std::vector<int>& dependent_dofs, 
+                            std::vector<int>& desired_dofs);
     
     protected:
         kinematics::Skeleton *robot;

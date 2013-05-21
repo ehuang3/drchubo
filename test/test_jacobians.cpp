@@ -123,6 +123,34 @@ TEST(JACOBIAN, TEST_SINGLE_ARM) {
         
 }
 /* ********************************************************************************************* */
+TEST(JACOBIAN, TEST_DART) {
+    // Examine DART conventions for returning Jacobians
+    Skeleton *robot = PREPARE_ROBOT();
+    PRINT_KINEMATIC_CHAIN(robot->getNode(LEFT_HAND));
+    BodyNode *end_effector = robot->getNode(LEFT_HAND);
+    printf("dependent dofs:\n");
+    for(int i=0; i < end_effector->getNumDependentDofs(); i++) {
+        Dof *dof = robot->getDof(end_effector->getDependentDof(i));
+        printf("%d %s %s\n", i, dof->getJoint()->getName(), dof->getName());
+    }
+}
+/* ********************************************************************************************* */
+TEST(JACOBIAN, TEST_REMAP_JACOBIAN) {
+    robot_jacobian_t* rjac = PREPARE_ROBOT_JACOBIAN();
+    
+    MatrixXd J(3, 6);
+    for(int i=0; i < J.cols(); i++)
+        J.col(i) = i*Vector3d::Ones();
+    
+    vector<int> dependent = { 0, 1, 2, 3, 4, 5 };
+    vector<int> desired = { 0, 5, 1 };
+    
+    rjac->remap_jacobian(J, dependent, desired);
+
+    cout << "remapped J = \n" << J << endl;
+
+}
+/* ********************************************************************************************* */
 int main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
