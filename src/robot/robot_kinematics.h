@@ -35,8 +35,8 @@ public:
 	virtual void init(kinematics::Skeleton *_robot) = 0;
 
 	//TODO: Convert to global rotation frames for joints
-	Eigen::Matrix4d armT(int _link, double _u);
-	Eigen::Matrix4d armFK(const Eigen::Vector6d& _u, bool _left);
+	Eigen::Matrix4d dart_armT(int _link, double _u);
+	void dart_armFK(Eigen::Isometry3d &B, const Eigen::Vector6d& _u, int _left);
 	bool armIK();
 
 	Eigen::Matrix4d legT(int _frame, double _u);

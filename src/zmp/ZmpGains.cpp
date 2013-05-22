@@ -1,5 +1,5 @@
 #include "ZmpGains.h"
-#include <regex>
+//#include <regex>
 #include <sstream>
 #include <fstream>
 #include <iterator>
@@ -18,8 +18,9 @@ gain_element_t::gain_element_t(string _gname, double _val)
 }
 
 bool gain_element_t::regex_match(string _regex) const {
-	std::regex e(_regex.c_str());
-	return std::regex_match(gname, e);
+//	std::regex e(_regex.c_str());
+//	return std::regex_match(gname, e);
+    return true;
 }
 
 ostream& operator<<(ostream &out, const gain_element_t& gain) {

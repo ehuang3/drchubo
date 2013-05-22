@@ -13,7 +13,7 @@
  * @brief Initialize ROS stuff
  */
 void Climber::init() {
-
+  ros::spinOnce();
   mNode = new ros::NodeHandle();
   mFrequency = 200;
   mLoopRate = new ros::Rate( mFrequency );
@@ -21,18 +21,19 @@ void Climber::init() {
   mNumJoints = 28;
   
   // Set up publishers / subscribers
-  mAc_pub = mNode->advertise<atlas_msgs::AtlasCommand>( "atlas/atlas_command", 1, false );
-  mAsic_pub = mNode->advertise<atlas_msgs::AtlasSimInterfaceCommand>("atlas/atlas_sim_interface_command", 1, false );
+  //mAc_pub = mNode->advertise<atlas_msgs::AtlasCommand>( "atlas/atlas_command", 1, false );
+  //mAsic_pub = mNode->advertise<atlas_msgs::AtlasSimInterfaceCommand>("atlas/atlas_sim_interface_command", 1, false );
 
   mAsis_sub = mNode->subscribe("atlas/atlas_sim_interface_state", 1000, &Climber::state_cb, this );
   mImu_sub = mNode->subscribe( "atlas/imu", 1000, &Climber::imu_cb, this );
 
   // Wait for subscribers to hook up, lest they miss our commands
   ros::Duration(2.0).sleep();
-
+  
   // Create an client
   mClient = new actionlib::SimpleActionClient<atlas_msgs::WalkDemoAction>( "atlas/bdi_control", true );
   // Wait until the action erver has started
+  ros::spinOnce();
   mClient->waitForServer();
   
 }
@@ -45,12 +46,32 @@ void Climber::init() {
 void Climber::blindWalk() {
 
   printf("Blind Walk with no perception \n");
+
   // Initialize class
   init();
+
   // Walk straight 8m
+  ros::spinOnce();
   blindStraightWalk( 6.5, 0.3, 0.15 );
+  
+  if( mClient->getState() == actionlib::SimpleClientGoalState::ACTIVE ) {
+    printf("State is active! This should NOT happen \n");
+  }
+  else if( mClient->getState() == actionlib::SimpleClientGoalState::SUCCEEDED ) {
+    printf("State is succeeded! This DOES look good \n");
+  } else {
+    printf("Any other state \n");
+  }
+  mClient->cancelGoal();
+  mClient->stopTrackingGoal();
+
+  ros::Duration(0.5).sleep();
+
+  ros::spinOnce();
   // Rotate 90 to the left (positive)
   blindTurnPoint( 14, 0.5, 0.15 );
+
+  /*
   // Walk straight 7m
   blindStraightWalk( 7, 0.2, 0.15 );
   // Rotate 90 to the left (positive)
@@ -63,6 +84,7 @@ void Climber::blindWalk() {
   blindStraightWalk( 3, 0.2, 0.15 );
   // Rotate 90 to the rightt (negative) TO FACE THE CAR
   blindTurnPoint( 14, -0.5, 0.15 );
+  */
 }
 
 /**
@@ -189,8 +211,7 @@ void Climber::blindTurnPoint( int _numSteps,
   mClient->sendGoal( goal );
 
   // Wait for result
-  mClient->waitForResult( ros::Duration( 2*steps[1].duration*steps.size() + 5.0 ) );
-  printf("Done waiting for blind turn \n");
+  mClient->waitForResult();
 
   return;
 
@@ -210,6 +231,8 @@ void Climber::blindStraightWalk( double _dist,
   std::vector<atlas_msgs::AtlasBehaviorStepData> steps;
   steps = takeNSteps( numSteps, _stepLength, _stepDist );
 
+  printf("Blind Straight walk %d steps with step dist: %f \n", numSteps, _stepDist );
+
   // Create a message with the steps created
   atlas_msgs::WalkDemoGoal goal;
   // Insert current time
@@ -226,8 +249,8 @@ void Climber::blindStraightWalk( double _dist,
   mClient->sendGoal( goal );
 
   // Wait for result
-  mClient->waitForResult( ros::Duration( 2*steps[1].duration*steps.size() + 5.0 ) );
-  printf("Done waiting for steps \n");
+  mClient->waitForResult();
+
   return;
 }
 
@@ -534,7 +557,7 @@ void Climber::demo() {
 	   step_data.pose.orientation.z,
 	   step_data.pose.orientation.w );
     
-    walk_msg.walk_params.step_data[i] = step_data;
+    walk_msg.walk_params.step_queue[i] = step_data;
   }
   // Use the same k_effort from the last step, to retain user control over some
   // joints. BDI has control of the other joints.

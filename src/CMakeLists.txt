@@ -20,7 +20,7 @@ file(GLOB_RECURSE vrc_golem_hdrs *.h *.hpp)
 
 # Library
 add_library(vrc_golem ${vrc_golem_srcs} ${vrc_golem_hdrs})
-target_link_libraries(vrc_golem ${DART_LIBRARIES} ${DARTExt_LIBRARIES})
+target_link_libraries(vrc_golem ${DART_LIBRARIES} ${DARTExt_LIBRARIES} amino)
 set_target_properties(vrc_golem PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib"
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib")
 
