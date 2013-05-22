@@ -9,7 +9,6 @@ include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 #  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
 #set(ROS_BUILD_TYPE RelWithDebInfo)
 
-set(ROSBUILD_DONT_REDEFINE_PROJECT True)
 rosbuild_init()
 
 #set the default path for built executables to the "bin" directory
@@ -36,6 +35,6 @@ link_directories(
 #rosbuild_add_executable(publish_joint_commands src/publish_joint_commands.cpp)
 #rosbuild_add_executable(joystickControl src/joystick.cpp src/atlasKin.cpp src/joystickControl.cpp)
 rosbuild_add_executable(joystickControl src/atlasKin.cpp src/joystickJacobian_ver2.cpp)
-#rosbuild_add_executable(joystickDemo src/joystickDemo.cpp src/atlasKin.cpp)TODO fix this
+rosbuild_add_executable(absolute src/atlasKin.cpp src/absolute.cpp)
 #rosbuild_add_executable(motion src/motionTest.cpp)
 
