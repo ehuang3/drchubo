@@ -137,34 +137,21 @@ namespace robot {
         return -1;
     }
 
-    //FIXME: Doesn't work
     void robot_state_t::set_d_body(const Isometry3d& Twb) {
-        dofs.block<3,1>(0,0) = Twb.translation();
-
-        Matrix3d R = Twb.linear();
-
-        double beta, alpha, gamma;
-        beta = atan2( -R(2,1), sqrt( R(0,0)*R(0,0) + R(1,0)*R(1,0) ) );
+        // you spin me right round, Talt-Bryan, Z1Y2X3
+        double u1, u2, u3;
         double ZERO_TOL = 1e-9;
-        if( fabs(beta-M_PI/2) < ZERO_TOL ) {
-            alpha = 0;
-            gamma = atan2( R(0,1), R(1,1) );
-        } else if( fabs(beta+M_PI/2) < ZERO_TOL ) {
-            alpha = 0;
-            gamma = -atan2( R(0,1), R(1,1) );
+        u2 = atan2( -Twb(2,0), sqrt( Twb(0,0)*Twb(0,0) + Twb(1,0)*Twb(1,0) ) );
+        if( fabs( fabs( u2 ) - M_PI/2 ) < ZERO_TOL ) {
+            u1 = -atan2( Twb(0,1), Twb(0,2) );
+            u3 = 0;
         } else {
-            alpha = atan2( R(1,0)/cos(beta), R(0,0)/cos(beta) );
-            gamma = atan2( R(2,1)/cos(beta), R(2,2)/cos(beta) );
+            u1 = atan2( Twb(1,0)/cos(u2), Twb(0,0)/cos(u2) );
+            u3 = atan2( Twb(2,1)/cos(u2), Twb(2,2)/cos(u2) );
         }
-
-        double roll = gamma;
-        double pitch = beta;
-        double yaw = alpha;
-
-        dofs(3) = yaw;
-        dofs(4) = pitch;
-        dofs(5) = roll;
-
+        dofs(3) = u1; // yaw
+        dofs(4) = u2; // pitch
+        dofs(5) = u3; // roll
     }
 
     void robot_state_t::set_manip(const VectorXd& q, int mi) 
