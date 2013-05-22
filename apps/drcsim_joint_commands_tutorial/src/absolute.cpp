@@ -30,11 +30,9 @@ void atlasKin::getJointStates(const sensor_msgs::JointState::ConstPtr &_js){
   trans(current);
   getJacobian(current);
 
-//TODO fix badness
-
   l_goalPosition << 0.0,0.4,0.0;
-  l_goalRot << 1,0,0,0,1,0,0,0,1
-  r_goalPosition << 0.3,-0.3-0.15;
+  l_goalRot << 1,0,0,0,1,0,0,0,1;
+  r_goalPosition << 0.3,-0.3,-0.15;
   r_goalRot << 1,0,0,0,1,0,0,0,1;
 
   VectorXf l_cmd(6);
@@ -62,13 +60,16 @@ void atlasKin::getError(){
   cout << "   Right Goal:" << r_goalPosition.transpose() << endl;
   r_diff.head<3>() = r_goalPosition - RA06.block<3,1>(0,3);
   cout << "   Right Diff:" << r_diff.head<3>().transpose() << endl << endl;
-  r_diff(3) = (r_goalRot(2,1)-RA06(2,1)+RA06(1,2)-r_goalRot(1,2))/2;
-  r_diff(4) = (RA06(0,3)-r_goalRot(0,3)+r_goalRot(3,0)-RA06(3,0))/2;
-  r_diff(5) = (r_goalRot(1,0)-RA06(1,0)+RA06(0,1)-r_goalRot(0,1))/2;
+  r_diff(3) = -(r_goalRot(1,2)-RA06(1,2))/(r_goalRot(0,0)-RA06(0,0));//(r_goalRot(2,1)-RA06(2,1)+RA06(1,2)-r_goalRot(1,2))/2;
+  r_diff(4) = (r_goalRot(0,2)-RA06(0,2))/(r_goalRot(0,0)-RA06(0,0));//(RA06(0,2)-r_goalRot(0,2)+r_goalRot(2,0)-RA06(2,0))/2;
+  r_diff(5) = -(r_goalRot(0,1)-RA06(0,1))/(r_goalRot(0,0)-RA06(0,0));//(r_goalRot(1,0)-RA06(1,0)+RA06(0,1)-r_goalRot(0,1))/2;
+  r_diff.tail<3>() << 0,0,0;
+
   if (r_diff.head<3>().norm() > 0.003){
     r_diff = r_diff/r_diff.head<3>().norm();
     r_diff = 0.003*r_diff;
   }
+  else {r_diff << 0,0,0,0,0,0;}
 
   // Repeat for Left arm
   cout << " Left Current:" << LA06.block<3,1>(0,3).transpose() << endl;
@@ -76,14 +77,16 @@ void atlasKin::getError(){
   cout << "    Left Goal:" << l_goalPosition.transpose() << endl;
   l_diff.head<3>() = l_goalPosition - LA06.block<3,1>(0,3);
   cout << "    Left Diff:" << l_diff.head<3>().transpose() << endl << endl;
-  l_diff(3) = (l_goalRot(2,1)-LA06(2,1)+LA06(1,2)-l_goalRot(1,2))/2;
-  l_diff(4) = (LA06(0,3)-l_goalRot(0,3)+l_goalRot(3,0)-LA06(3,0))/2;
-  l_diff(5) = (l_goalRot(1,0)-LA06(1,0)+LA06(0,1)-l_goalRot(0,1))/2;
+  l_diff(3) = -(l_goalRot(1,2)-LA06(1,2))/(l_goalRot(0,0)-LA06(0,0));//(l_goalRot(2,1)-LA06(2,1)+LA06(1,2)-l_goalRot(1,2))/2;
+  l_diff(4) = (l_goalRot(0,2)-LA06(0,2))/(l_goalRot(0,0)-LA06(0,0));//(LA06(0,2)-l_goalRot(0,2)+l_goalRot(2,0)-LA06(2,0))/2;
+  l_diff(5) = -(l_goalRot(0,1)-LA06(0,1))/(l_goalRot(0,0)-LA06(0,0));//(l_goalRot(1,0)-LA06(1,0)+LA06(0,1)-l_goalRot(0,1))/2;
+  l_diff.tail<3>() << 0,0,0;
 
   if (l_diff.head<3>().norm() > 0.003){
     l_diff = l_diff/l_diff.head<3>().norm();
     l_diff = 0.005*l_diff;
   }
+  else {l_diff << 0,0,0,0,0,0;}
 }
 
 void atlasKin::setJointStates(){
