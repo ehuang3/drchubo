@@ -1,18 +1,16 @@
 <package>
-  <description brief="vrc_golem">
+  <description brief="drchubo">
 
-     vrc_golem
+     drchubo
 
   </description>
-  <author>Eric Huang</author>
+  <author>Eric Huang and Ana Huaman</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/vrc_golem</url>
   <depend package="roscpp"/>
   <depend package="trajectory_msgs"/>
   <depend package="osrf_msgs"/>
-  <depend package="atlas_msgs"/>
-  <depend package="actionlib" />
 </package>
 
 
