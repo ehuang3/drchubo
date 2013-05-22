@@ -32,10 +32,10 @@ void atlasKin::getJointStates(const sensor_msgs::JointState::ConstPtr &_js){
 
 //TODO fix badness
 
-  l_goalPose.resize(4,4);
-  r_goalPose.resize(4,4);
-  l_goalPose << 1,0,0,0.0,0,1,0,0.4,0,0,1,0.0,0,0,0,1;
-  r_goalPose << 1,0,0,0.3,0,1,0,-0.3,0,0,1,-0.15,0,0,0,1;
+  l_goalPosition << 0.0,0.4,0.0;
+  l_goalRot << 1,0,0,0,1,0,0,0,1
+  r_goalPosition << 0.3,-0.3-0.15;
+  r_goalRot << 1,0,0,0,1,0,0,0,1;
 
   VectorXf l_cmd(6);
   VectorXf r_cmd(6);
@@ -59,12 +59,12 @@ void atlasKin::getJointStates(const sensor_msgs::JointState::ConstPtr &_js){
 void atlasKin::getError(){
   // Get the error for the right arm
   cout << "Right Current:" << RA06.block<3,1>(0,3).transpose() << endl;;
-  cout << "   Right Goal:" << r_goalPose.block<3,1>(0,3).transpose() << endl;
-  r_diff.head<3>() = r_goalPose.block<3,1>(0,3) - RA06.block<3,1>(0,3);
+  cout << "   Right Goal:" << r_goalPosition.transpose() << endl;
+  r_diff.head<3>() = r_goalPosition - RA06.block<3,1>(0,3);
   cout << "   Right Diff:" << r_diff.head<3>().transpose() << endl << endl;
-  r_diff(3) = (r_goalPose(2,1)-RA06(2,1)+RA06(1,2)-r_goalPose(1,2))/2;
-  r_diff(4) = (RA06(0,3)-r_goalPose(0,3)+r_goalPose(3,0)-RA06(3,0))/2;
-  r_diff(5) = (r_goalPose(1,0)-RA06(1,0)+RA06(0,1)-r_goalPose(0,1))/2;
+  r_diff(3) = (r_goalRot(2,1)-RA06(2,1)+RA06(1,2)-r_goalRot(1,2))/2;
+  r_diff(4) = (RA06(0,3)-r_goalRot(0,3)+r_goalRot(3,0)-RA06(3,0))/2;
+  r_diff(5) = (r_goalRot(1,0)-RA06(1,0)+RA06(0,1)-r_goalRot(0,1))/2;
   if (r_diff.head<3>().norm() > 0.003){
     r_diff = r_diff/r_diff.head<3>().norm();
     r_diff = 0.003*r_diff;
@@ -73,12 +73,12 @@ void atlasKin::getError(){
   // Repeat for Left arm
   cout << " Left Current:" << LA06.block<3,1>(0,3).transpose() << endl;
 
-  cout << "    Left Goal:" << l_goalPose.block<3,1>(0,3).transpose() << endl;
-  l_diff.head<3>() = l_goalPose.block<3,1>(0,3) - LA06.block<3,1>(0,3);
+  cout << "    Left Goal:" << l_goalPosition.transpose() << endl;
+  l_diff.head<3>() = l_goalPosition - LA06.block<3,1>(0,3);
   cout << "    Left Diff:" << l_diff.head<3>().transpose() << endl << endl;
-  l_diff(3) = (l_goalPose(2,1)-LA06(2,1)+LA06(1,2)-l_goalPose(1,2))/2;
-  l_diff(4) = (LA06(0,3)-l_goalPose(0,3)+l_goalPose(3,0)-LA06(3,0))/2;
-  l_diff(5) = (l_goalPose(1,0)-LA06(1,0)+LA06(0,1)-l_goalPose(0,1))/2;
+  l_diff(3) = (l_goalRot(2,1)-LA06(2,1)+LA06(1,2)-l_goalRot(1,2))/2;
+  l_diff(4) = (LA06(0,3)-l_goalRot(0,3)+l_goalRot(3,0)-LA06(3,0))/2;
+  l_diff(5) = (l_goalRot(1,0)-LA06(1,0)+LA06(0,1)-l_goalRot(0,1))/2;
 
   if (l_diff.head<3>().norm() > 0.003){
     l_diff = l_diff/l_diff.head<3>().norm();
