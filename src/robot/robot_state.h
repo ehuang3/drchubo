@@ -15,7 +15,6 @@ namespace robot {
     public:
         virtual void init(kinematics::Skeleton *_robot) = 0;
 
-        //FIXME: Not implemented converting to floating dofs
         void set_d_body(const Eigen::Isometry3d& Twb);
         void get_d_body(Eigen::Isometry3d& Twb);
 
@@ -28,10 +27,10 @@ namespace robot {
         void set_manip(const Eigen::VectorXd& q, int mi);
         void get_manip(Eigen::VectorXd& q, int mi);
 
-        Eigen::VectorXd& d_pose() { return dofs; }
+        Eigen::VectorXd& d_pose() { return _dofs; }
 
-        void set_d_pose(const Eigen::VectorXd& q) { dofs = q; }
-        void get_d_pose(Eigen::VectorXd& q) { q = dofs; }
+        void set_d_pose(const Eigen::VectorXd& q) { _dofs = q; }
+        void get_d_pose(Eigen::VectorXd& q) { q = _dofs; }
 
         void set_r_pose(const Eigen::VectorXd& q);
         void get_r_pose(Eigen::VectorXd& q);
@@ -39,13 +38,22 @@ namespace robot {
         // accepts both ManipIndex and LimbIndex
         void get_manip_indexes(std::vector<int>& indexes, int mi);
 
+        void get_dofs(Eigen::VectorXd& q, const std::vector<int>& indexes);
         void set_dofs(const Eigen::VectorXd& q, const std::vector<int>& indexes);
+
+        void print_dofs(const std::vector<int>& indexes);
+
+        double& dofs(int i) { return _dofs(i); }
+        Eigen::VectorXd& dofs() { return _dofs; }
+
+        kinematics::Skeleton* robot() { return _robot; }
+        
 
         static void print_mappings(); //< prints out all mappings
 
     protected:
-        Eigen::VectorXd dofs; //< DART format
-        kinematics::Skeleton *robot;
+        Eigen::VectorXd _dofs; //< DART format
+        kinematics::Skeleton *_robot;
 
         static void static_init(kinematics::Skeleton *robot, std::map<int, std::string> ros2s,
                                 std::vector<std::string> l2s[NUM_LIMBS]);

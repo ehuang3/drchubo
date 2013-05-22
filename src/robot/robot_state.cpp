@@ -149,16 +149,16 @@ namespace robot {
             u1 = atan2( Twb(1,0)/cos(u2), Twb(0,0)/cos(u2) );
             u3 = atan2( Twb(2,1)/cos(u2), Twb(2,2)/cos(u2) );
         }
-        dofs(3) = u1; // yaw
-        dofs(4) = u2; // pitch
-        dofs(5) = u3; // roll
+        _dofs(3) = u1; // yaw
+        _dofs(4) = u2; // pitch
+        _dofs(5) = u3; // roll
     }
 
     void robot_state_t::set_manip(const VectorXd& q, int mi) 
     {
         const vector<int>& mmap = g_d_limb[mi];
         for(int i=0; i < mmap.size(); i++) {
-            dofs(mmap[i]) = q(i);
+            _dofs(mmap[i]) = q(i);
         }
     }
 
@@ -166,21 +166,21 @@ namespace robot {
     {
         const vector<int>& mmap = g_d_limb[mi];
         for(int i=0; i < mmap.size(); ++i) {
-            q(i) = dofs(mmap[i]);
+            q(i) = _dofs(mmap[i]);
         }
     }
 
     void robot_state_t::set_r_pose(const Eigen::VectorXd& q)
     {
         for(auto iter = g_r2d.begin(); iter != g_r2d.end(); ++iter) {
-            dofs(iter->second) = q(iter->first);
+            _dofs(iter->second) = q(iter->first);
         }
     }
 
     void robot_state_t::get_r_pose(VectorXd& q)
     {
         for(auto iter = g_r2d.begin(); iter != g_d2r.end(); ++iter) {
-            q(iter->first) = dofs(iter->second);
+            q(iter->first) = _dofs(iter->second);
         }
     }
 
@@ -189,10 +189,24 @@ namespace robot {
         indexes = g_d_limb[mi];
     }
 
+    void robot_state_t::get_dofs(VectorXd& q, const vector<int>& indexes)
+    {
+        for(int i=0; i < indexes.size(); ++i) {
+            q(i) = _dofs(indexes[i]);
+        }
+    }
+
     void robot_state_t::set_dofs(const VectorXd& q, const vector<int>& indexes)
     {
         for(int i=0; i < indexes.size(); ++i) {
-            dofs(indexes[i]) = q(i);
+            _dofs(indexes[i]) = q(i);
+        }
+    }
+    
+    void robot_state_t::print_dofs(const vector<int>& indexes)
+    {
+        for(int i=0; i < indexes.size(); ++i) {
+            DEBUG_PRINT("%d %s\n", i, g_d2s[indexes[i]].c_str());
         }
     }
 }
