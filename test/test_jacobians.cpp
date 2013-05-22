@@ -175,7 +175,9 @@ TEST(JACOBIAN, TEST_MANIP_JACOBIAN) {
     VectorXd dofs = robot->getPose();
     dofs.setZero();
 
-    rjac->manip_jacobian(J, desired_dofs, l_arm, dofs);
+    rstat->dofs() = dofs;
+
+    rjac->manip_jacobian(J, desired_dofs, l_arm, *rstat);
 
     VectorXd q(J.cols());
     VectorXd x(6);
@@ -184,17 +186,78 @@ TEST(JACOBIAN, TEST_MANIP_JACOBIAN) {
     aa_la_dls(J.rows(), J.cols(), 0.1, J.data(), x.data(), q.data());
 
     rstat->d_pose() = dofs;
+
+    //FIXME: mistakes
     
-    rstat->set_dofs(q, desired_dofs);
+    // rstat->set_dofs(q, desired_dofs);
     
-    robot->setPose(dofs);
+    // robot->setPose(dofs);
 
-    cout << "l arm before = \n" << l_arm->getWorldTransform() << endl;
+    // cout << "l arm before = \n" << l_arm->getWorldTransform() << endl;
 
-    robot->setPose(rstat->d_pose(), true);
+    // robot->setPose(rstat->d_pose(), true);
 
-    cout << "l arm = \n" << l_arm->getWorldTransform() << endl;
+    // cout << "l arm = \n" << l_arm->getWorldTransform() << endl;
 
+}
+/* ********************************************************************************************* */
+TEST(JACOBIAN, TEST_ANGLE_AXIS) {
+    Isometry3d B;
+    Isometry3d W;
+    W = Matrix4d::Identity();
+    B = Matrix4d::Identity();
+    
+    W.rotate(AngleAxisd(-M_PI/2, Vector3d::UnitX()));
+    B.rotate(AngleAxisd(M_PI/2, Vector3d::UnitY()));
+
+    Matrix3d R = B.rotation();
+
+    AngleAxisd ob;
+    ob.fromRotationMatrix(B.rotation());
+    AngleAxisd ow;
+    ow.fromRotationMatrix(W.rotation());
+
+    cout << "ob = \n" << ob.axis() << endl;
+    cout << "angle = \n" << ob.angle() << endl;
+
+    cout << "ow = \n" << ow.axis() << endl;
+    cout << "angle = " << ow.angle() << endl;
+
+    AngleAxisd wb;
+    wb.fromRotationMatrix(  (W.inverse() * B).rotation() );
+   
+    cout << "wb = \n" << wb.axis() << endl;
+    cout << "angle = " << wb.angle() << endl;
+}
+/* ********************************************************************************************* */
+TEST(JACOBIAN, TEST_MANIP_IK) {
+    robot_jacobian_t* robot = PREPARE_ROBOT_JACOBIAN();
+    robot_state_t* state = PREPARE_ROBOT_STATE();
+
+    vector<int> desired_dofs;
+    state->get_manip_indexes(desired_dofs, LIMB_L_ARM);
+
+    BodyNode *left_hand = state->robot()->getNode(LEFT_HAND);
+    state->dofs().setZero();
+
+    VectorXd q(6);
+    q << 0.1, 0.2, 0.3, 0.4, 0.5, 0.5;
+    // q << 0, 0, 0.5, 0, 0, 0;
+    state->set_manip(q, LIMB_L_ARM);
+
+    state->robot()->setPose(state->dofs());
+    Isometry3d B;
+    B = left_hand->getWorldTransform();
+    cout << "B = \n" << B.matrix() << endl;
+
+    state->dofs().setZero();
+    
+    robot->manip_jacobian_ik(B, desired_dofs, left_hand, *state);
+
+    state->print_dofs(desired_dofs);
+    
+    cout << "ans = \n" << left_hand->getWorldTransform() << endl;
+    
 }
 /* ********************************************************************************************* */
 int main(int argc, char* argv[]) {

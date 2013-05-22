@@ -27,13 +27,17 @@ namespace robot {
 
         void get_jacobian(Eigen::MatrixXd& J, const Eigen::MatrixXd& indexes, const Eigen::VectorXd& dofs);
 
-        void manip_jacobian_ik(const Eigen::Isometry3d& B, robot_state_t& r_state);
+        void manip_jacobian_ik(Eigen::Isometry3d& B, std::vector<int>& desired_dofs,
+                               kinematics::BodyNode *end_effector, robot_state_t& state);
 
         void manip_jacobian(Eigen::MatrixXd& J, std::vector<int>& desired_dofs,
-                            kinematics::BodyNode *end_effector, const Eigen::VectorXd& dofs);
+                            kinematics::BodyNode *end_effector, robot_state_t& state);
 
         void remap_jacobian(Eigen::MatrixXd& J, const std::vector<int>& dependent_dofs, 
                             std::vector<int>& desired_dofs);
+
+        void clamp_jacobian(Eigen::MatrixXd& J, const std::vector<int>& desired_dofs,
+                            robot_state_t& state);
 
         void find_dependent_dofs(std::vector<int>& dependent_dofs, kinematics::BodyNode *end_effector);
     
