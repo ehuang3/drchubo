@@ -6,9 +6,10 @@ set_property(DIRECTORY PROPERTY EXCLUDE_FROM_DEFAULT_BUILD ON)
 foreach(APPDIR
     ros_ik
     robot_viz
-    drcsim_joint_commands_tutorial
+    #drcsim_joint_commands_tutorial
     quadruped
     climber
+    car_test
     )
     add_subdirectory(${APPDIR})
 endforeach(APPDIR)
