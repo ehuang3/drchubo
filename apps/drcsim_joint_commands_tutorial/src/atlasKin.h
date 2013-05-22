@@ -25,8 +25,11 @@ public:
   Matrix4f RA6;
   Matrix4f RA06;
 
-  MatrixXf l_goalPose;
-  MatrixXf r_goalPose;
+  Vector3f l_goalPosition;
+  Vector3f r_goalPosition;
+
+  Matrix3f l_goalRot;
+  Matrix3f r_goalRot;
 
   float l_closed_amount;
   float r_closed_amount;
