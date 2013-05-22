@@ -23,6 +23,8 @@
 #include <amino.h>
 
 #include <atlas/atlas_jacobian.h>
+#include <robot/robot_state.h>
+#include <atlas/atlas_state.h>
 
 using namespace std;
 using namespace Eigen;
@@ -38,6 +40,7 @@ using namespace simulation;
 #define LEFT_HAND "l_hand"
 #define RIGHT_HAND "r_hand"
 #define ROBOT_JACOBIAN_T atlas::atlas_jacobian_t
+#define ROBOT_STATE_T atlas::atlas_state_t
 /* ********************************************************************************************* */
 kinematics::Skeleton* _robot_;
 Skeleton* PREPARE_ROBOT() {
@@ -56,6 +59,15 @@ robot_jacobian_t* PREPARE_ROBOT_JACOBIAN() {
         _rj_->init(PREPARE_ROBOT());
     }
     return _rj_;
+}
+/* ********************************************************************************************* */
+robot_state_t* _rs_;
+robot_state_t* PREPARE_ROBOT_STATE() {
+    if(_rs_ == 0) {
+        _rs_ = new ROBOT_STATE_T;
+        _rs_->init(PREPARE_ROBOT());
+    }
+    return _rs_;
 }
 /* ********************************************************************************************* */
 void DART_INCR_FK(Isometry3d& B, const VectorXd& q, ManipIndex mi) {
@@ -88,38 +100,38 @@ TEST(JACOBIAN, TEST_INIT) {
 }
 /* ********************************************************************************************* */
 TEST(JACOBIAN, TEST_SINGLE_ARM) {
-    Skeleton* robot = PREPARE_ROBOT();
-    // Set dofs to something (?)
-    VectorXd dofs = robot->getPose();
-    dofs.setZero();
-    robot->setPose(dofs, true);
-    Isometry3d B;
-    VectorXd q_zero(6);
-    DART_INCR_FK(B, q_zero, MANIP_L_HAND);
-    // Print out ground truth
-    cout << "Tw_mwx = \n" << B.matrix() << endl;
+    // Skeleton* robot = PREPARE_ROBOT();
+    // // Set dofs to something (?)
+    // VectorXd dofs = robot->getPose();
+    // dofs.setZero();
+    // robot->setPose(dofs, true);
+    // Isometry3d B;
+    // VectorXd q_zero(6);
+    // DART_INCR_FK(B, q_zero, MANIP_L_HAND);
+    // // Print out ground truth
+    // cout << "Tw_mwx = \n" << B.matrix() << endl;
 
-    // Get manip jacobian
-    robot_jacobian_t* rojac = PREPARE_ROBOT_JACOBIAN();
-    MatrixXd jac;
-    rojac->manip_jacobian(jac, MANIP_L_HAND, dofs);
-    // Try damped least squares
-    int m = jac.rows();
-    int n = jac.cols();
-    // Solve q for x
-    VectorXd q(jac.cols());
-    VectorXd x(6);
-    x << 0, -0.1, 0, 0, 0, 0;
-    aa_la_dls(m, n, 0.1, jac.data(), x.data(), q.data());
-    // output
-    cout << "dls q = \n" << q << endl;
+    // // Get manip jacobian
+    // robot_jacobian_t* rojac = PREPARE_ROBOT_JACOBIAN();
+    // MatrixXd jac;
+    // // rojac->manip_jacobian(jac, MANIP_L_HAND, dofs);
+    // // Try damped least squares
+    // int m = jac.rows();
+    // int n = jac.cols();
+    // // Solve q for x
+    // VectorXd q(jac.cols());
+    // VectorXd x(6);
+    // x << 0, -0.1, 0, 0, 0, 0;
+    // aa_la_dls(m, n, 0.1, jac.data(), x.data(), q.data());
+    // // output
+    // cout << "dls q = \n" << q << endl;
 
-    // See how we did
-    dofs.setZero();
-    robot->setPose(dofs, true);
-    DART_INCR_FK(B, q, MANIP_L_HAND);
+    // // See how we did
+    // dofs.setZero();
+    // robot->setPose(dofs, true);
+    // DART_INCR_FK(B, q, MANIP_L_HAND);
 
-    cout << "Tw_mwx after jacobian = \n" << B.matrix() << endl;
+    // cout << "Tw_mwx after jacobian = \n" << B.matrix() << endl;
         
 }
 /* ********************************************************************************************* */
@@ -148,6 +160,40 @@ TEST(JACOBIAN, TEST_REMAP_JACOBIAN) {
     rjac->remap_jacobian(J, dependent, desired);
 
     cout << "remapped J = \n" << J << endl;
+
+}
+/* ********************************************************************************************* */
+TEST(JACOBIAN, TEST_MANIP_JACOBIAN) {
+    Skeleton *robot = PREPARE_ROBOT();
+    robot_jacobian_t* rjac = PREPARE_ROBOT_JACOBIAN();
+    robot_state_t* rstat = PREPARE_ROBOT_STATE();
+    
+    MatrixXd J;
+    vector<int> desired_dofs;
+    rstat->get_manip_indexes(desired_dofs, LIMB_L_ARM);
+    BodyNode *l_arm = robot->getNode(LEFT_HAND);
+    VectorXd dofs = robot->getPose();
+    dofs.setZero();
+
+    rjac->manip_jacobian(J, desired_dofs, l_arm, dofs);
+
+    VectorXd q(J.cols());
+    VectorXd x(6);
+    x << 0, -0.01, 0, 0, 0, 0;
+    
+    aa_la_dls(J.rows(), J.cols(), 0.1, J.data(), x.data(), q.data());
+
+    rstat->d_pose() = dofs;
+    
+    rstat->set_dofs(q, desired_dofs);
+    
+    robot->setPose(dofs);
+
+    cout << "l arm before = \n" << l_arm->getWorldTransform() << endl;
+
+    robot->setPose(rstat->d_pose(), true);
+
+    cout << "l arm = \n" << l_arm->getWorldTransform() << endl;
 
 }
 /* ********************************************************************************************* */

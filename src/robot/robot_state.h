@@ -39,6 +39,8 @@ namespace robot {
         // accepts both ManipIndex and LimbIndex
         void get_manip_indexes(std::vector<int>& indexes, int mi);
 
+        void set_dofs(const Eigen::VectorXd& q, const std::vector<int>& indexes);
+
         static void print_mappings(); //< prints out all mappings
 
     protected:

@@ -167,7 +167,7 @@ namespace robot {
 
     }
 
-    void robot_state_t::set_manip(const VectorXd& q, ManipIndex mi) 
+    void robot_state_t::set_manip(const VectorXd& q, int mi) 
     {
         const vector<int>& mmap = g_d_limb[mi];
         for(int i=0; i < mmap.size(); i++) {
@@ -175,7 +175,7 @@ namespace robot {
         }
     }
 
-    void robot_state_t::get_manip(VectorXd& q, ManipIndex mi)
+    void robot_state_t::get_manip(VectorXd& q, int mi)
     {
         const vector<int>& mmap = g_d_limb[mi];
         for(int i=0; i < mmap.size(); ++i) {
@@ -197,7 +197,15 @@ namespace robot {
         }
     }
 
-    void get_manip_indexes(vector<int>& indexes, int mi) {
-        m_ind = g_d_limb[mi];
+    void robot_state_t::get_manip_indexes(vector<int>& indexes, int mi)
+    {
+        indexes = g_d_limb[mi];
+    }
+
+    void robot_state_t::set_dofs(const VectorXd& q, const vector<int>& indexes)
+    {
+        for(int i=0; i < indexes.size(); ++i) {
+            dofs(indexes[i]) = q(i);
+        }
     }
 }

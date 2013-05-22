@@ -9,6 +9,7 @@
 #define MODULE_NAME "robot-jac"
 #include "utils/debug_utils.h"
 
+using namespace kinematics;
 using namespace Eigen;
 using namespace std;
 
@@ -17,31 +18,6 @@ namespace robot {
     robot_jacobian_t::robot_jacobian_t() {}
 
     robot_jacobian_t::~robot_jacobian_t() {}
-
-    void robot_jacobian_t::arm_jacobian(MatrixXd& J, bool left, const VectorXd& dofs) {
-        manip_jacobian(J, left ? MANIP_L_HAND : MANIP_R_HAND, dofs);
-    }
-
-    void robot_jacobian_t::leg_jacobian(MatrixXd& J, bool left, const VectorXd& dofs) {
-        manip_jacobian(J, left ? MANIP_L_FOOT : MANIP_R_FOOT, dofs);
-    }
-
-    void robot_jacobian_t::manip_jacobian(MatrixXd& J, ManipIndex mi, const VectorXd& dofs) {
-        int num_q = manip_joints[mi].size();
-        robot->setPose(dofs, true);
-        J.resize(6, num_q);
-
-        MatrixXd jlin = robot->getNode(manip_node[mi].c_str())->getJacobianLinear();
-        MatrixXd jang = robot->getNode(manip_node[mi].c_str())->getJacobianAngular();
-
-        DEBUG_PRINT("num q = %d\n", num_q);
-
-        DEBUG_STREAM << "jac lin = \n" << jlin << endl;
-        DEBUG_STREAM << "jac ang = \n" << jang << endl;
-        
-        J.block(0, 0, 3, num_q) = robot->getNode(manip_node[mi].c_str())->getJacobianLinear().block(0, 0, 3, num_q);
-        J.block(3, 0, 3, num_q) = robot->getNode(manip_node[mi].c_str())->getJacobianAngular().block(0, 0, 3, num_q);
-    }
 
     void robot_jacobian_t::get_indexes(VectorXd& indexes, ManipIndex mi) {
         DEBUG_PRINT("Getting indices ... \n");
@@ -61,6 +37,28 @@ namespace robot {
         J.resize(rows*6, cols);
         // 
         
+    }
+
+    void robot_jacobian_t::find_dependent_dofs(vector<int>& dependent_dofs, BodyNode *end_effector)
+    {
+        dependent_dofs.clear();
+        for(int i=0; i < end_effector->getNumDependentDofs(); ++i) {
+            dependent_dofs.push_back(end_effector->getDependentDof(i));
+        }
+    }
+
+    void robot_jacobian_t::manip_jacobian(MatrixXd& J, vector<int>& desired_dofs, 
+                                          BodyNode *end_effector, const VectorXd& dofs)
+    {
+        // Build jacobian
+        J.resize(6, end_effector->getNumDependentDofs());
+        J.topRows(3) = end_effector->getJacobianLinear();
+        J.bottomRows(3) = end_effector->getJacobianAngular();
+        // Find dependent dofs
+        vector<int> dependent_dofs;
+        find_dependent_dofs(dependent_dofs, end_effector);
+        // Intersect desired dofs with dependent dofs
+        remap_jacobian(J, dependent_dofs, desired_dofs);
     }
 
     void robot_jacobian_t::remap_jacobian(MatrixXd& J, 
