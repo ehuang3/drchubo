@@ -16,6 +16,9 @@
 #include <gazebo/common/Plugin.hh>
 #include <gazebo/common/Events.hh>
 
+// Simple PID control
+#include "controls/controlBundle.h"
+
 
 namespace gazebo {
 
@@ -32,6 +35,8 @@ namespace gazebo {
 	       sdf::ElementPtr _sdf );
 
     void SetHardCodedInitialPose();
+    void SetInitControl();
+
   private:
     void UpdateStates();
     void FixLink( physics::LinkPtr _link );
@@ -42,6 +47,16 @@ namespace gazebo {
     physics::JointPtr mJoint;
 
     boost::mutex mUpdate_Mutex;
+
+    // Control variables
+    int mNumActuatedJoints;
+    std::vector<std::string> mActuatedJointNames;
+    std::vector<physics::JointPtr> mActuatedJoints;
+
+    controlBundle mCb;
+
+    common::Time mLastUpdatedTime;
+
 
     // Pointer to the update event connection
     event::ConnectionPtr mUpdateConnection;
