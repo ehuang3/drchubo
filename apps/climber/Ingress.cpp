@@ -1,340 +1,252 @@
 /**
- * @file Climber.h
+ * @file Ingress.h
  */
 
-#include "Climber.h"
+#include "Ingress.h"
 
 #include <tf_conversions/tf_kdl.h>
 #include <atlas_msgs/WalkDemoGoal.h>
+
+// Useful constants
+const float Ingress::sKp_pos[28] = { 20.0, 4000.0, 2000.0, 20.0, 5.0, 100.0, 2000.0, 1000.0, 900.0, 300.0, 
+				     5.0, 100.0, 2000.0, 1000.0, 900.0, 300.0, 2000.0, 1000.0, 200.0, 200.0, 
+				     50.0, 100.0, 2000.0, 1000.0, 200.0, 200.0, 50.0, 100.0};
+
+const double Ingress::sInit_pos[28] = { 2.438504816382192e-05, 0.0015186156379058957, 9.983908967114985e-06, -0.0010675729718059301, 
+					-0.0003740221436601132, 0.06201673671603203, -0.2333149015903473, 0.5181407332420349, 
+					-0.27610817551612854, -0.062101610004901886, 0.00035181696875952184, -0.06218484416604042, 
+					-0.2332201600074768, 0.51811283826828, -0.2762000858783722, 0.06211360543966293, 
+					0.29983898997306824, -1.303462266921997, 2.0007927417755127, 0.49823325872421265, 
+					0.0003098883025813848, -0.0044272784143686295, 0.29982614517211914, 1.3034454584121704, 
+					2.000779867172241, -0.498238742351532, 0.0003156556049361825, 0.004448802210390568 };
 
 
 /**
  * @function init
  * @brief Initialize ROS stuff
  */
-void Climber::init() {
+void Ingress::init() {
+
   ros::spinOnce();
   mNode = new ros::NodeHandle();
-  mFrequency = 200;
-  mLoopRate = new ros::Rate( mFrequency );
 
   mNumJoints = 28;
   
   // Set up publishers / subscribers
-  //mAc_pub = mNode->advertise<atlas_msgs::AtlasCommand>( "atlas/atlas_command", 1, false );
-  //mAsic_pub = mNode->advertise<atlas_msgs::AtlasSimInterfaceCommand>("atlas/atlas_sim_interface_command", 1, false );
+  mAc_pub = mNode->advertise<atlas_msgs::AtlasCommand>( "atlas/atlas_command", 10, false );
+  mAsic_pub = mNode->advertise<atlas_msgs::AtlasSimInterfaceCommand>("atlas/atlas_sim_interface_command", 1, false );
 
-  mAsis_sub = mNode->subscribe("atlas/atlas_sim_interface_state", 1000, &Climber::state_cb, this );
-  mImu_sub = mNode->subscribe( "atlas/imu", 1000, &Climber::imu_cb, this );
+  mAsis_sub = mNode->subscribe("atlas/atlas_sim_interface_state", 1000, &Ingress::state_cb, this );
+  mAs_sub = mNode->subscribe("atlas/atlas_state", 1000, &Ingress::as_cb, this );
 
   // Wait for subscribers to hook up, lest they miss our commands
   ros::Duration(2.0).sleep();
   
-  // Create an client
-  mClient = new actionlib::SimpleActionClient<atlas_msgs::WalkDemoAction>( "atlas/bdi_control", true );
-  // Wait until the action erver has started
   ros::spinOnce();
-  mClient->waitForServer();
   
 }
 
 
 /**
- * @function blindWalk
- * @brief Hard-coded blind walk towards the car in VRC Task 1
+ * @function getToPose
  */
-void Climber::blindWalk() {
+void Ingress::getToPose( std::vector<double> _goalPose,
+			 double _time,
+			 int _frequency ) {
 
-  printf("Blind Walk with no perception \n");
+  // Pose variable
+  std::vector<double> dPose( mNumJoints );
 
-  // Initialize class
-  init();
+  // Message
+  atlas_msgs::AtlasCommand user_msg;
 
-  // Walk straight 8m
-  ros::spinOnce();
-  blindStraightWalk( 6.5, 0.3, 0.15 );
-  
-  if( mClient->getState() == actionlib::SimpleClientGoalState::ACTIVE ) {
-    printf("State is active! This should NOT happen \n");
+  // Message generic 
+  // Assign default Ks 
+  user_msg.velocity = std::vector<double>( mNumJoints, 0.0 );
+  user_msg.effort = std::vector<double>( mNumJoints, 0.0 );
+
+  user_msg.kp_position = std::vector<float>( mNumJoints, 0.0 );
+
+  for( int i = 0; i < mNumJoints; ++i ) {
+    user_msg.kp_position[i] = sKp_pos[i];
   }
-  else if( mClient->getState() == actionlib::SimpleClientGoalState::SUCCEEDED ) {
-    printf("State is succeeded! This DOES look good \n");
-  } else {
-    printf("Any other state \n");
-  }
-  mClient->cancelGoal();
-  mClient->stopTrackingGoal();
 
-  ros::Duration(0.5).sleep();
+  user_msg.ki_position = std::vector<float>( mNumJoints, 0.0 );
+  user_msg.kd_position = std::vector<float>( mNumJoints, 0.0 );
 
-  ros::spinOnce();
-  // Rotate 90 to the left (positive)
-  blindTurnPoint( 14, 0.5, 0.15 );
+  // Bump up kp_velocity to reduce the jerkiness of the transition
+  user_msg.kp_velocity = std::vector<float>( mNumJoints, 50.0 );
+  user_msg.i_effort_min = std::vector<float>( mNumJoints, 0.0 );
+  user_msg.i_effort_max = std::vector<float>( mNumJoints, 0.0 );
 
-  /*
-  // Walk straight 7m
-  blindStraightWalk( 7, 0.2, 0.15 );
-  // Rotate 90 to the left (positive)
-  blindTurnPoint( 14, 0.5, 0.15 );
-  // Walk straight 7m
-  blindStraightWalk( 7, 0.2, 0.15 );
-  // Rotate 90 to the rightt (negative) TO GET CLOSER TO THE CAR
-  blindTurnPoint( 14, -0.5, 0.15 );
-  // Walk straight 3m
-  blindStraightWalk( 3, 0.2, 0.15 );
-  // Rotate 90 to the rightt (negative) TO FACE THE CAR
-  blindTurnPoint( 14, -0.5, 0.15 );
-  */
-}
+  // Set k_effort = [1] to indicate that we want all joints under user control
+  user_msg.k_effort = std::vector<uint8_t>( mNumJoints, 255 );
 
-/**
- * @function blindTurnPoint
- */
-void Climber::blindTurnPoint( int _numSteps,
-			      double _turn,
-			      double _strideWidth ) {
 
-  printf("Blind turn point %d steps turn: %f \n", _numSteps, _turn );
-  double L = 0.4;
-  double R = 2.0;
-  double X = 0;
-  double Y = 0;
-  double forward = 1;
+  // Loop until you get to goalPose (I am not checking the final error)
+  double dt = 1.0 / (double) _frequency;
+  int steps = (int) ( _time / dt );
   
-  double dTheta; double theta;
+  // Spin to get current position in mAs_msg
+  ros::spinOnce();
+  std::vector<double> start(mNumJoints);
+  for( int i = 0; i < mNumJoints; ++i ) {
+    start[i] = mAs_msg.position[i];
+  }
 
-  // Create the steps
-  std::vector<atlas_msgs::AtlasBehaviorStepData> steps;
+  // Send messages
+  for( int i = 0; i < steps; ++i ) {
 
-  // First dummy step
-  steps.push_back( atlas_msgs::AtlasBehaviorStepData() );
-
-  // Create steps
-  dTheta = _turn * 2 * asin(L / (2 * (R + _strideWidth)));
-  printf("dTheta: %f \n", dTheta*180.0/3.1416 );
-  int is_left_foot; int is_right_foot;
-  int firstStep; int temp; int foot;
-  double R_foot;
-        
-  // First step 0 left 1 right
-  // If turn to left, start with right
-  if( _turn > 0 ) { firstStep = 0; }
-  else { firstStep = 1; }
-
-  // They will be switched at first
-  is_left_foot = firstStep;
-  is_right_foot = 1 - firstStep;
-        
-  // Builds the sequence of steps needed
-  theta = 0;
-  for( int i = 0; i < _numSteps + 1; ++i ) {
-
-    if( i == _numSteps ) { theta += 0; }
-    else { theta += dTheta; }
-    
-    temp = is_right_foot;
-    is_right_foot = is_left_foot;
-    is_left_foot = temp;
-
-    // left = 1, right = -1            
-    foot = 1 - 2 * is_right_foot;
-            
-    // Radius from point to foot (if turning)
-    // If turning to right, left radius will always be bigger
-    if( _turn < 0 ) {  R_foot = R + ( foot > 0 ) * _strideWidth; }
-    else { R_foot = R + ( foot < 0 ) * _strideWidth; }
-
-    
-    // turn > 0 for CCW, turn < 0 for CW
-    X = forward * _turn * R_foot * sin(theta);
-    Y = forward * _turn * (R - R_foot*cos(theta));
-                            
-    double xq, yq, zq, wq;
-    KDL::Rotation r = KDL::Rotation::RPY( 0, 0, theta );
-    r.GetQuaternion( xq, yq, zq, wq );
-
-    atlas_msgs::AtlasBehaviorStepData step;
-            
-    // One step already exists, so add one to index
-    step.step_index = i+1;
-            
-    // Alternate between feet, start with left
-    step.foot_index = is_right_foot;
-            
-    // Cheat values
-    step.duration = 0.63;
-    step.swing_height = 0.3;
-
-    // Pose
-    step.pose.position.x = X;
-    step.pose.position.y = Y;
-    step.pose.position.z = 0;
-      
-    step.pose.orientation.x = xq;
-    step.pose.orientation.y = yq;
-    step.pose.orientation.z = zq;
-    step.pose.orientation.w = wq;
-
-    // Transform to global frame
     ros::spinOnce();
-    KDL::Frame f1, f2, f;
-    tf::PoseMsgToKDL( step.pose, f1 );
-    f2 = KDL::Frame( KDL::Rotation::Quaternion( mImu_msg.orientation.x,
-						mImu_msg.orientation.y,
-						mImu_msg.orientation.z,
-						mImu_msg.orientation.w ),
-		     KDL::Vector( mAsis_msg.pos_est.position.x,
-				  mAsis_msg.pos_est.position.y,
-				  mAsis_msg.pos_est.position.z) );
-    f = f2 * f1;
-    
-    tf::PoseKDLToMsg( f, step.pose );
-    
-    // Add
-    steps.push_back(step);
-  }        
-
-  // Send steps
-  // Create a message with the steps created
-  atlas_msgs::WalkDemoGoal goal;
-  // Insert current time
-  goal.header.stamp = ros::Time::now();
-  // Behavior: Walk
-  goal.behavior = goal.WALK;
-  // Fill the steps
-  goal.steps = steps;
-
-  // BDI Control
-  goal.k_effort = std::vector<uint8_t>( mNumJoints, 0 );
-
-  // Send it
-  mClient->sendGoal( goal );
-
-  // Wait for result
-  mClient->waitForResult();
-
-  return;
-
-}
-
-/**
- * @function blindStraightWalk
- */
-void Climber::blindStraightWalk( double _dist,
-				 double _stepLength,
-				 double _stepDist ) {
-
-  // Calculate how many steps you need
-  int numSteps = floor( _dist / _stepLength );
-
-  // Create the steps
-  std::vector<atlas_msgs::AtlasBehaviorStepData> steps;
-  steps = takeNSteps( numSteps, _stepLength, _stepDist );
-
-  printf("Blind Straight walk %d steps with step dist: %f \n", numSteps, _stepDist );
-
-  // Create a message with the steps created
-  atlas_msgs::WalkDemoGoal goal;
-  // Insert current time
-  goal.header.stamp = ros::Time::now();
-  // Behavior: Walk
-  goal.behavior = goal.WALK;
-  // Fill the steps
-  goal.steps = steps;
-
-  // BDI Control
-  goal.k_effort = std::vector<uint8_t>( mNumJoints, 0 );
-
-  // Send it
-  mClient->sendGoal( goal );
-
-  // Wait for result
-  mClient->waitForResult();
-
-  return;
-}
-
-
-/**
- * @function takeNSteps
- */
-std::vector<atlas_msgs::AtlasBehaviorStepData> Climber::takeNSteps( int _numSteps,
-								    double _stepLength,
-								    double _stepDist ) {
-
-  std::vector<atlas_msgs::AtlasBehaviorStepData> steps;
-  
-  // Dummy first step
-  steps.push_back( atlas_msgs::AtlasBehaviorStepData() );
-
-  // Fill in some steps
-  for( int i = 0; i < _numSteps; ++i ) {
-
-    atlas_msgs::AtlasBehaviorStepData step;
-    
-    // Steps are indexed starting at 1
-    step.step_index = i+1;
-    // 0 = left, 1 = right (start with left here)
-    step.foot_index = i%2;
-    
-    // Default values (cheat, cheat!)
-    step.swing_height = 0.3;
-    step.duration = 0.63;
-    
-    // Specify steps in egocentric frame and then convert to global frame of robot
-    step.pose.position.x = (1+i)*_stepLength;
-    // Last to catch up and end up together
-    if( i == _numSteps - 1 ) {
-      step.pose.position.x = (i)*_stepLength;
+    double factor = ((double)i / (double)steps);
+    // Find the diff to cover in one timestep
+    for( int j = 0; j < _goalPose.size(); ++j ) {
+      dPose[j] = (_goalPose[j] - start[j])*factor + start[j];
     }
+
+    user_msg.header.stamp = ros::Time::now();
+    user_msg.position = dPose;
     
-    // Step stepDist to either side of center, alternating with feet
-    if( i % 2 == 0 ) { step.pose.position.y = _stepDist; } 
-    else { step.pose.position.y = -1*_stepDist; }
-    step.pose.position.z = 0.0;
-    
-    // Point those feet straight ahead
-    step.pose.orientation.x = 0.0;
-    step.pose.orientation.y = 0.0;
-    step.pose.orientation.z = 0.0;
-    step.pose.orientation.w = 1.0;
-    
-    // Transform to global frame
-    ros::spinOnce();
-    KDL::Frame f1, f2, f;
-    tf::PoseMsgToKDL( step.pose, f1 );
-    f2 = KDL::Frame( KDL::Rotation::Quaternion( mImu_msg.orientation.x,
-						mImu_msg.orientation.y,
-						mImu_msg.orientation.z,
-						mImu_msg.orientation.w ),
-		     KDL::Vector( mAsis_msg.pos_est.position.x,
-				  mAsis_msg.pos_est.position.y,
-				  mAsis_msg.pos_est.position.z) );
-    f = f2 * f1;
-    
-    tf::PoseKDLToMsg( f, step.pose );
-    // Store
-    steps.push_back( step );
-    
+    // Publish it
+    mAc_pub.publish( user_msg );
+
+    // Give it time to be executed
+    ros::Duration(dt).sleep();
   }
 
-  return steps;  
+  printf( "Done Get To Pose \n" );
+  ros::spinOnce();
+  ros::Duration(1.0).sleep();
+
+  for( int i = 0; i < mNumJoints; ++i ) {
+    printf("Start: %f Final joint: %f Goal was: %f \n", start[i], mAs_msg.position[i], _goalPose[i] );
+  }
+
+}
+
+/**
+ * @function switchToBdiStandMode
+ */
+void Ingress::switchToBdiStandMode() {
+
+  atlas_msgs::AtlasSimInterfaceCommand stand_msg;
+
+  // Always insert current time
+  stand_msg.header.stamp = ros::Time::now();
+
+  // Tell it to stand
+  stand_msg.behavior = stand_msg.STAND_PREP;
+  
+  // Set k_effort = [255] to indicate that we still want all joints under user
+  // control.  The stand behavior needs a few iterations before it start
+  // outputting force values.
+  stand_msg.k_effort = std::vector<uint8_t>( mNumJoints, 255 );
+  
+  // Publish and give time to take effect
+  printf( "[USER CONTROL] Warming up BDI stand...\n" );
+  mAsic_pub.publish( stand_msg );
+  ros::Duration(2.0).sleep();
+    
+  // Now switch to stand
+  stand_msg.behavior = stand_msg.STAND;
+
+  // Set k_effort = [0] to indicate that we want all joints under BDI control
+  stand_msg.k_effort = std::vector<uint8_t>( mNumJoints, 0 );
+
+  // Publish and give time to take effect
+  printf( "[BDI CONTROL] Standing... \n" );
+  mAsic_pub.publish( stand_msg );
+  ros::Duration(4.0).sleep();
+  printf("Done initialization of BDI Stand Mode \n");
+}
+
+
+/**
+ * @function as_cb
+ * @brief Atlas State callback. Store atlas status (joint state) info
+ */
+void Ingress::as_cb( const atlas_msgs::AtlasState& _as_msg ) {
+
+  mAs_msg = _as_msg;
 }
 
 /**
  * @function state_cb
  * @brief Callback
  */
-void Climber::state_cb( const atlas_msgs::AtlasSimInterfaceState& _asis_msg ) {
+void Ingress::state_cb( const atlas_msgs::AtlasSimInterfaceState& _asis_msg ) {
   mAsis_msg = _asis_msg;
 }
 
+
 /**
- * @function imu_cb
- * @brief Callback
+ * @function ingress_1
+ * @brief Hard-coded blind walk towards the car in VRC Task 1
  */
-void Climber::imu_cb( const sensor_msgs::Imu& _imu_msg ) {
-  mImu_msg = _imu_msg;
+void Ingress::ingress_1() {
+
+  std::vector<double> initPose( mNumJoints );
+
+  // **************************************************
+  // Step 1: Go to stand-prep pose under user control
+  // **************************************************
+  printf("Start PREP STAND \n");
+  for( int i = 0; i < mNumJoints; ++i ) {
+    initPose[i] = sInit_pos[i];
+    }
+  getToPose( initPose );
+  
+  // ***********************************
+  // Step 2: Request BDI stand mode
+  // ***********************************
+  printf("Switch to BDI Stand Mode \n");
+  switchToBdiStandMode();
+  
+  // *********************************************************************************
+  // Step 3: Bend knees a bit
+  // *********************************************************************************
+  atlas_msgs::AtlasCommand slight_movement_msg;
+  // Always insert current time
+  slight_movement_msg.header.stamp = ros::Time::now();
+  // Start with 0.0 and set values for the joints that we want to control
+  slight_movement_msg.position = std::vector<double>( mNumJoints, 0.0 );
+
+  slight_movement_msg.position[atlas_msgs::AtlasState::l_leg_kny] = 0.6;
+
+  slight_movement_msg.position[atlas_msgs::AtlasState::r_leg_lhy] = -0.5;
+  slight_movement_msg.position[atlas_msgs::AtlasState::r_leg_kny] = 0.6;
+  slight_movement_msg.position[atlas_msgs::AtlasState::r_leg_lax] = 0.5;
+
+  slight_movement_msg.kp_position = std::vector<float>( mNumJoints, 0.0 );
+  for( int i = 0; i < mNumJoints; ++i ) {
+    slight_movement_msg.kp_position[i] = sKp_pos[i];
+  }
+
+  // Make ankle stronger
+  slight_movement_msg.kp_position[atlas_msgs::AtlasState::r_leg_lax] = 2*sKp_pos[atlas_msgs::AtlasState::r_leg_lax];
+
+  slight_movement_msg.ki_position = std::vector<float>( mNumJoints, 0.0 );
+  slight_movement_msg.kd_position = std::vector<float>( mNumJoints, 0.0 );
+  // Bump up kp_velocity to reduce the jerkiness of the transition
+  slight_movement_msg.kp_velocity = std::vector<float>( mNumJoints, 50.0 );
+  slight_movement_msg.i_effort_min = std::vector<float>( mNumJoints, 0.0 );
+  slight_movement_msg.i_effort_max = std::vector<float>( mNumJoints, 0.0 ); 
+
+  // Set k_effort = [1] for the joints that we want to control.
+  // BDI has control of the other joints
+  slight_movement_msg.k_effort = std::vector<uint8_t>( mNumJoints, 0 );
+  slight_movement_msg.k_effort[atlas_msgs::AtlasState::l_leg_kny] = 255;
+
+  slight_movement_msg.k_effort[atlas_msgs::AtlasState::r_leg_lhy] = 255;
+  slight_movement_msg.k_effort[atlas_msgs::AtlasState::r_leg_kny] = 255;
+  slight_movement_msg.k_effort[atlas_msgs::AtlasState::r_leg_lax] = 255;
+
+  // Publish and give time to take effect
+  printf( "[USER/BDI] Command bending knees...\n" );
+  mAc_pub.publish(slight_movement_msg);
+  ros::Duration(3.0).sleep();
+  
+
 }
 
 
@@ -343,9 +255,16 @@ void Climber::imu_cb( const sensor_msgs::Imu& _imu_msg ) {
  * @function demo
  * @brief Tutorial code
  */
-void Climber::demo() {
+void Ingress::demo() {
 
   init();
+
+  ros::spinOnce();
+  std::vector<double> start(mNumJoints);
+  for( int i = 0; i < mNumJoints; ++i ) {
+    start[i] = mAs_msg.position[i];
+  }
+  
 
   // **********************************************
   // Step 0: Go to home pose under user control
@@ -381,6 +300,16 @@ void Climber::demo() {
   mAc_pub.publish( home_msg );
   ros::Duration(2.0).sleep();
   printf("Start step 1 \n");
+
+  printf( "Done Get To Pose DEMO, check errors \n" );
+  ros::spinOnce();
+  ros::Duration(1.0).sleep();
+
+  for( int i = 0; i < mNumJoints; ++i ) {
+    printf("Start: %f Final joint: %f Goal was: %f \n", start[i], mAs_msg.position[i],0.0 );
+  }
+
+
   
   // **************************************************
   // Step 1: Go to stand-prep pose under user control
@@ -539,10 +468,10 @@ void Climber::demo() {
     ros::spinOnce();
     KDL::Frame f1, f2, f;
     tf::PoseMsgToKDL( step_data.pose, f1 );
-    f2 = KDL::Frame( KDL::Rotation::Quaternion( mImu_msg.orientation.x,
-					        mImu_msg.orientation.y,
-						mImu_msg.orientation.z,
-						mImu_msg.orientation.w ),
+    f2 = KDL::Frame( KDL::Rotation::Quaternion( mAs_msg.orientation.x,
+					        mAs_msg.orientation.y,
+						mAs_msg.orientation.z,
+						mAs_msg.orientation.w ),
 		     KDL::Vector( mAsis_msg.pos_est.position.x,
 				  mAsis_msg.pos_est.position.y,
 				  mAsis_msg.pos_est.position.z) );
