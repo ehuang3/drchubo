@@ -178,6 +178,86 @@ void Ingress::state_cb( const atlas_msgs::AtlasSimInterfaceState& _asis_msg ) {
   mAsis_msg = _asis_msg;
 }
 
+/**
+ * @function ingress_1
+ * @brief Hard-coded blind walk towards the car in VRC Task 1
+ */
+void Ingress::looking_ahead() {
+
+  std::vector<double> initPose( mNumJoints );
+
+  printf("Start PREP STAND \n");
+  for( int i = 0; i < mNumJoints; ++i ) {
+    initPose[i] = sInit_pos[i];
+    }
+  getToPose( initPose );
+}
+
+
+/**
+ * @function ingress_1
+ * @brief Hard-coded blind walk towards the car in VRC Task 1
+ */
+void Ingress::grab_handle() {
+
+  std::vector<double> initPose( mNumJoints, 0 );
+  /*
+  printf("Look ahead \n");
+  for( int i = 0; i < mNumJoints; ++i ) {
+    initPose[i] = sInit_pos[i];
+    }
+  */
+  //   getToPose( initPose ); 
+ 
+  switchToBdiStandMode();
+ 
+  // *********************************************************************************
+  // Step 3: Grab handle
+  // *********************************************************************************
+  printf("Attempt grabbing handle \n");
+  atlas_msgs::AtlasCommand slight_movement_msg;
+  // Always insert current time
+  slight_movement_msg.header.stamp = ros::Time::now();
+  // Start with 0.0 and set values for the joints that we want to control
+  slight_movement_msg.position = std::vector<double>( mNumJoints, 0.0 );
+
+  // Shoulder
+  slight_movement_msg.position[atlas_msgs::AtlasState::l_arm_usy] = 0.8;
+  slight_movement_msg.position[atlas_msgs::AtlasState::r_arm_usy] = 0.8;
+  // Elbow
+  slight_movement_msg.position[atlas_msgs::AtlasState::l_arm_shx] = 0.0;
+  slight_movement_msg.position[atlas_msgs::AtlasState::r_arm_shx] = 1.7;
+
+
+  slight_movement_msg.kp_position = std::vector<float>( mNumJoints, 0.0 );
+  for( int i = 0; i < mNumJoints; ++i ) {
+    slight_movement_msg.kp_position[i] = sKp_pos[i];
+  }
+
+
+  slight_movement_msg.ki_position = std::vector<float>( mNumJoints, 0.0 );
+  slight_movement_msg.kd_position = std::vector<float>( mNumJoints, 0.0 );
+  // Bump up kp_velocity to reduce the jerkiness of the transition
+  slight_movement_msg.kp_velocity = std::vector<float>( mNumJoints, 50.0 );
+  slight_movement_msg.i_effort_min = std::vector<float>( mNumJoints, 0.0 );
+  slight_movement_msg.i_effort_max = std::vector<float>( mNumJoints, 0.0 ); 
+
+  // Set k_effort = [1] for the joints that we want to control.
+  // BDI has control of the other joints
+  slight_movement_msg.k_effort = std::vector<uint8_t>( mNumJoints, 0 );
+
+  slight_movement_msg.k_effort[atlas_msgs::AtlasState::l_arm_usy] = 255;
+  slight_movement_msg.k_effort[atlas_msgs::AtlasState::r_arm_usy] = 255;
+  slight_movement_msg.k_effort[atlas_msgs::AtlasState::l_arm_shx] = 255;
+  slight_movement_msg.k_effort[atlas_msgs::AtlasState::r_arm_shx] = 255;
+
+  // Publish and give time to take effect
+  printf( "[USER/BDI] Command moving arms forward...\n" );
+  mAc_pub.publish(slight_movement_msg);
+  ros::Duration(3.0).sleep();
+  
+}
+
 
 /**
  * @function ingress_1

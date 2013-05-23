@@ -14,6 +14,17 @@
   <depend package="osrf_msgs"/>
   <depend package="atlas_msgs"/>
   <depend package="actionlib" />
+
+  <!-- OpenCV -->
+  <depend package="sensor_msgs" />
+  <depend package="opencv2" />
+  <depend package="cv_bridge" />
+  <depend package="std_msgs" />
+  <depend package="image_transport" />
+  
+  <!-- PCL -->
+  <depend package="pcl" />
+  <depend package="pcl_ros" />
 </package>
 
 

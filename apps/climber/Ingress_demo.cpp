@@ -20,7 +20,8 @@ int main( int argc, char* argv[] ) {
   
   Ingress in;
   in.init();
-  in.ingress_1();
+  in.looking_ahead();
+  in.grab_handle();
   //in.demo();
 }
 
