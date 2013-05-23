@@ -17,16 +17,7 @@ namespace robot {
     
         virtual void init(kinematics::Skeleton *_robot) = 0;
         
-        void get_indexes(Eigen::MatrixXd& indexes, const std::string& base, 
-                         const std::vector<std::string>& end_effectors);
-        
-        void get_indexes(Eigen::VectorXd& indexes, ManipIndex mi);
-        /* void get_indexes(Eigen::VectorXd& indexes, BodyNode *end, BodyNode *base); */
-
-        std::string& name(ManipIndex mi) { return manip_node[mi]; }
-
-        void get_jacobian(Eigen::MatrixXd& J, const Eigen::MatrixXd& indexes, const Eigen::VectorXd& dofs);
-
+        // Please use the functions below.
         void manip_jacobian_ik(Eigen::Isometry3d& B, std::vector<int>& desired_dofs,
                                kinematics::BodyNode *end_effector, robot_state_t& state);
 

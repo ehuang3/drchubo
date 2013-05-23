@@ -137,7 +137,7 @@ namespace robot {
         return -1;
     }
 
-    void robot_state_t::set_d_body(const Isometry3d& Twb) {
+    void robot_state_t::set_body(const Matrix4d& Twb) {
         // you spin me right round, Talt-Bryan, Z1Y2X3
         double u1, u2, u3;
         double ZERO_TOL = 1e-9;
@@ -149,9 +149,28 @@ namespace robot {
             u1 = atan2( Twb(1,0)/cos(u2), Twb(0,0)/cos(u2) );
             u3 = atan2( Twb(2,1)/cos(u2), Twb(2,2)/cos(u2) );
         }
+        _dofs.block<3,1>(0,0) = Twb.block<3,1>(0,3);
         _dofs(3) = u1; // yaw
         _dofs(4) = u2; // pitch
         _dofs(5) = u3; // roll
+    }
+
+    void robot_state_t::get_body(Matrix4d& Twb) {
+        Isometry3d _Twb;
+        get_body(_Twb);
+        Twb = _Twb.matrix();
+    }
+
+    void robot_state_t::set_body(const Isometry3d& Twb) {
+        set_body(Twb.matrix());
+    }
+
+    void robot_state_t::get_body(Isometry3d& Twb) {
+        Twb = Matrix4d::Identity();
+        Twb.translate( _dofs.block<3,1>(0,0) );
+        Twb.rotate( AngleAxisd( _dofs(3), Vector3d::UnitZ()) );
+        Twb.rotate( AngleAxisd( _dofs(4), Vector3d::UnitY()) );
+        Twb.rotate( AngleAxisd( _dofs(5), Vector3d::UnitX()) );
     }
 
     void robot_state_t::set_manip(const VectorXd& q, int mi) 

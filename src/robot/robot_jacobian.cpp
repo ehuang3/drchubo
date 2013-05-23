@@ -24,26 +24,6 @@ namespace robot {
 
     robot_jacobian_t::~robot_jacobian_t() {}
 
-    void robot_jacobian_t::get_indexes(VectorXd& indexes, ManipIndex mi) {
-        DEBUG_PRINT("Getting indices ... \n");
-        indexes.resize(manip_joints[mi].size());
-        for(int i=0; i < manip_joints[mi].size(); i++) {
-            indexes(i) = robot->getJoint(manip_joints[mi][i].c_str())->getDof(0)->getSkelIndex();
-            DEBUG_PRINT("joint %s\n", robot->getDof(indexes(i))->getJoint()->getName());
-        }
-    }
-
-    void robot_jacobian_t::get_jacobian(MatrixXd& J, const MatrixXd& indexes, const VectorXd& dofs) {
-        // Set robot pose
-        robot->setPose(dofs);
-        // Resize J to correct r c
-        int rows = indexes.rows();
-        int cols = indexes.cols();
-        J.resize(rows*6, cols);
-        // 
-        
-    }
-
     void robot_jacobian_t::manip_jacobian_ik(Isometry3d& B, vector<int>& desired_dofs,
                                              BodyNode *end_effector, robot_state_t& state)
     {

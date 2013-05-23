@@ -15,8 +15,12 @@ namespace robot {
     public:
         virtual void init(kinematics::Skeleton *_robot) = 0;
 
-        void set_d_body(const Eigen::Isometry3d& Twb);
-        void get_d_body(Eigen::Isometry3d& Twb);
+        // Sets floating coordinates of DART dofs
+        // warning: assumes dof(0...6) are floating coordinates
+        void set_body(const Eigen::Matrix4d& Twb);
+        void get_body(Eigen::Matrix4d& Twb);
+        void set_body(const Eigen::Isometry3d& Twb);
+        void get_body(Eigen::Isometry3d& Twb);
 
         int num_links_head() { return g_d_limb[LIMB_HEAD].size(); }
         int num_links_torso() { return g_d_limb[LIMB_TORSO].size(); }
