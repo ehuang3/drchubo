@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
 	string robot_file = VRC_DATA_PATH;
 	robot_file = argv[1];
 	World *mWorld = dart_loader.parseWorld(robot_file.c_str());
-	SkeletonDynamics *robot = mWorld->getSkeleton("atlas");
+	SkeletonDynamics *robot = mWorld->getSkeleton(0);
 
     robot->setPose(robot->getPose().setZero(), true);
 

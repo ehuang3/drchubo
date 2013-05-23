@@ -1,0 +1,9 @@
+<world name="hubo_world_with_box">
+  <!-- include the models here by referenceing their URDFs -->
+  <include filename="robots/drchubo.golem.urdf" model_name="drchubo"/>
+
+  <entity model="drchubo" name="golem_hubo">
+    <origin xyz="0 0 0.988" rpy="0 0 0"/>
+  </entity>
+
+</world>
