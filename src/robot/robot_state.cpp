@@ -23,6 +23,7 @@ using namespace std;
 
 namespace robot {
     
+    // statics for tracking joint mappings
     string robot_state_t::g_ros_prefix;
     bool robot_state_t::g_init = false;
     
@@ -66,44 +67,58 @@ namespace robot {
         int found = r2s[0].find(name);
         g_ros_prefix = r2s[0].substr(0,found);
 
-        DEBUG_PRINT("g_ros_prefix %s\n", g_ros_prefix.c_str());
-        
         // Map limbs to indexes
         for(int i=0; i < NUM_LIMBS; i++) {
             limb_init(g_d_limb[i], "", l2s[i], g_s2d);
             limb_init(g_r_limb[i], g_ros_prefix, l2s[i], g_s2r);
         }
 
-        // Verify mapping
+        g_init = true;
+    }
+
+    void robot_state_t::print_mappings()
+    {
+        DEBUG_PRINT("g_ros_prefix %s\n", g_ros_prefix.c_str());
         // ROS map
+        int i = 0;
         for(auto iter = g_s2r.begin(); iter != g_s2r.end(); ++iter) {
-            DEBUG_PRINT("s2r %17s --> %d\n", iter->first.c_str(), iter->second);
+            DEBUG_PRINT("s2r %2d: %17s --> %d\n", i++, iter->first.c_str(), iter->second);
         }
+        i = 0;
         for(auto iter = g_r2s.begin(); iter != g_r2s.end(); ++iter) {
-            DEBUG_PRINT("r2s %17d --> %s\n", iter->first, iter->second.c_str());
+            DEBUG_PRINT("r2s %2d: %17d --> %s\n", i++, iter->first, iter->second.c_str());
         }
         // DART map
+        i = 0;
         for(auto iter = g_s2d.begin(); iter != g_s2d.end(); ++iter) {
-            DEBUG_PRINT("s2d %17s --> %d\n", iter->first.c_str(), iter->second);
+            DEBUG_PRINT("s2d %2d: %17s --> %d\n", i++, iter->first.c_str(), iter->second);
         }
+        i = 0;
         for(auto iter = g_d2s.begin(); iter != g_d2s.end(); ++iter) {
-            DEBUG_PRINT("d2s %17d --> %s\n", iter->first, iter->second.c_str());
+            DEBUG_PRINT("d2s %2d: %17d --> %s\n", i++, iter->first, iter->second.c_str());
+        }
+        // ROS-DART map
+        i = 0;
+        for(auto iter = g_r2d.begin(); iter != g_r2d.end(); ++iter) {
+            DEBUG_PRINT("r2d %2d: %17s --> %s\n", i++, g_r2s[iter->first].c_str(), g_d2s[iter->second].c_str());
+        }
+        i = 0;
+        for(auto iter = g_d2r.begin(); iter != g_d2r.end(); ++iter) {
+            DEBUG_PRINT("d2r %2d: %17s --> %s\n", i++, g_d2s[iter->first].c_str(), g_r2s[iter->second].c_str());
         }
         // LIMB maps
         for(int i=0; i < NUM_LIMBS; ++i) {
             DEBUG_PRINT("r limb %d\n", i);
             for(int j=0; j < g_r_limb[i].size(); ++j) {
-                DEBUG_PRINT("%2d <--> %s\n", g_r_limb[i][j], g_r2s[g_r_limb[i][j]].c_str());
+                DEBUG_PRINT("%d: %2d <--> %s\n", j, g_r_limb[i][j], g_r2s[g_r_limb[i][j]].c_str());
             }
         }
         for(int i=0; i < NUM_LIMBS; ++i) {
             DEBUG_PRINT("d limb %d\n", i);
             for(int j=0; j < g_d_limb[i].size(); ++j) {
-                DEBUG_PRINT("%2d <--> %s\n", g_d_limb[i][j], g_d2s[g_d_limb[i][j]].c_str());
+                DEBUG_PRINT("%d: %2d <--> %s\n", j, g_d_limb[i][j], g_d2s[g_d_limb[i][j]].c_str());
             }
         }
-        
-        g_init = true;
     }
     
     void robot_state_t::limb_init(vector<int>& limb, const string& prefix, 
@@ -122,4 +137,76 @@ namespace robot {
         return -1;
     }
 
+    void robot_state_t::set_d_body(const Isometry3d& Twb) {
+        // you spin me right round, Talt-Bryan, Z1Y2X3
+        double u1, u2, u3;
+        double ZERO_TOL = 1e-9;
+        u2 = atan2( -Twb(2,0), sqrt( Twb(0,0)*Twb(0,0) + Twb(1,0)*Twb(1,0) ) );
+        if( fabs( fabs( u2 ) - M_PI/2 ) < ZERO_TOL ) {
+            u1 = -atan2( Twb(0,1), Twb(0,2) );
+            u3 = 0;
+        } else {
+            u1 = atan2( Twb(1,0)/cos(u2), Twb(0,0)/cos(u2) );
+            u3 = atan2( Twb(2,1)/cos(u2), Twb(2,2)/cos(u2) );
+        }
+        _dofs(3) = u1; // yaw
+        _dofs(4) = u2; // pitch
+        _dofs(5) = u3; // roll
+    }
+
+    void robot_state_t::set_manip(const VectorXd& q, int mi) 
+    {
+        const vector<int>& mmap = g_d_limb[mi];
+        for(int i=0; i < mmap.size(); i++) {
+            _dofs(mmap[i]) = q(i);
+        }
+    }
+
+    void robot_state_t::get_manip(VectorXd& q, int mi)
+    {
+        const vector<int>& mmap = g_d_limb[mi];
+        for(int i=0; i < mmap.size(); ++i) {
+            q(i) = _dofs(mmap[i]);
+        }
+    }
+
+    void robot_state_t::set_r_pose(const Eigen::VectorXd& q)
+    {
+        for(auto iter = g_r2d.begin(); iter != g_r2d.end(); ++iter) {
+            _dofs(iter->second) = q(iter->first);
+        }
+    }
+
+    void robot_state_t::get_r_pose(VectorXd& q)
+    {
+        for(auto iter = g_r2d.begin(); iter != g_d2r.end(); ++iter) {
+            q(iter->first) = _dofs(iter->second);
+        }
+    }
+
+    void robot_state_t::get_manip_indexes(vector<int>& indexes, int mi)
+    {
+        indexes = g_d_limb[mi];
+    }
+
+    void robot_state_t::get_dofs(VectorXd& q, const vector<int>& indexes)
+    {
+        for(int i=0; i < indexes.size(); ++i) {
+            q(i) = _dofs(indexes[i]);
+        }
+    }
+
+    void robot_state_t::set_dofs(const VectorXd& q, const vector<int>& indexes)
+    {
+        for(int i=0; i < indexes.size(); ++i) {
+            _dofs(indexes[i]) = q(i);
+        }
+    }
+    
+    void robot_state_t::print_dofs(const vector<int>& indexes)
+    {
+        for(int i=0; i < indexes.size(); ++i) {
+            DEBUG_PRINT("%d %s\n", i, g_d2s[indexes[i]].c_str());
+        }
+    }
 }

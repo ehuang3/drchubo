@@ -13,47 +13,48 @@ namespace robot {
 
     class robot_state_t {
     public:
-
         virtual void init(kinematics::Skeleton *_robot) = 0;
 
-        void set_floating(const Eigen::Vector6d& q);
-        void get_floating(Eigen::Vector6d& q);
+        void set_d_body(const Eigen::Isometry3d& Twb);
+        void get_d_body(Eigen::Isometry3d& Twb);
 
-        void set_body(const Eigen::Isometry3d& Twb);
-        void get_body(Eigen::Isometry3d& Twb);
+        int num_links_head() { return g_d_limb[LIMB_HEAD].size(); }
+        int num_links_torso() { return g_d_limb[LIMB_TORSO].size(); }
+        int num_links_arm() { return g_d_limb[LIMB_L_ARM].size(); }
+        int num_links_leg() { return g_d_limb[LIMB_L_LEG].size(); }
         
-        void set_d_head(const Eigen::VectorXd& q);
-        void get_d_head(Eigen::VectorXd& q);
-        void set_r_head(const Eigen::VectorXd& q);
-        void get_r_head(Eigen::VectorXd& q);
-        int num_links_head();
+        // accepts both ManipIndex and LimbIndex
+        void set_manip(const Eigen::VectorXd& q, int mi);
+        void get_manip(Eigen::VectorXd& q, int mi);
 
-        void set_d_torso(const Eigen::VectorXd& q);
-        void get_d_torso(Eigen::VectorXd& q);
-        void set_r_torso(const Eigen::VectorXd& q);
-        void get_r_torso(Eigen::VectorXd& q);
-        int num_links_torso();
+        Eigen::VectorXd& d_pose() { return _dofs; }
+
+        void set_d_pose(const Eigen::VectorXd& q) { _dofs = q; }
+        void get_d_pose(Eigen::VectorXd& q) { q = _dofs; }
+
+        void set_r_pose(const Eigen::VectorXd& q);
+        void get_r_pose(Eigen::VectorXd& q);
         
-        void set_d_arm(const Eigen::VectorXd& q);
-        void get_d_arm(Eigen::VectorXd& q);
-        int num_links_arm();
+        // accepts both ManipIndex and LimbIndex
+        void get_manip_indexes(std::vector<int>& indexes, int mi);
 
-        void set_d_leg(const Eigen::Vector6d& q);
-        void get_d_leg(Eigen::Vector6d& q);
-        int num_links_leg();
+        void get_dofs(Eigen::VectorXd& q, const std::vector<int>& indexes);
+        void set_dofs(const Eigen::VectorXd& q, const std::vector<int>& indexes);
 
-        // std::vector<int> get_limb_index();
+        void print_dofs(const std::vector<int>& indexes);
 
-        Eigen::VectorXd& dart_pose();
-        Eigen::VectorXd& ros_pose();
+        double& dofs(int i) { return _dofs(i); }
+        Eigen::VectorXd& dofs() { return _dofs; }
 
-        void dart_pose(const Eigen::VectorXd& q);
-        void ros_pose(const Eigen::VectorXd& q);
+        kinematics::Skeleton* robot() { return _robot; }
+        
+
+        static void print_mappings(); //< prints out all mappings
 
     protected:
-        Eigen::VectorXd dofs; //< dofs in DART << perhaps no state.
-        kinematics::Skeleton *robot;
-        
+        Eigen::VectorXd _dofs; //< DART format
+        kinematics::Skeleton *_robot;
+
         static void static_init(kinematics::Skeleton *robot, std::map<int, std::string> ros2s,
                                 std::vector<std::string> l2s[NUM_LIMBS]);
 
@@ -63,7 +64,7 @@ namespace robot {
         static int find_d_name(std::string name, kinematics::Skeleton *robot);
 
         // Assume 1 robot type
-        // globals
+        // globals to avoid copying
         static bool g_init;
         static std::string g_ros_prefix;
         
