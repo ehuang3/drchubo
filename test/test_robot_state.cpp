@@ -16,7 +16,7 @@ TEST(STATE, TEST_INIT) {
     atlas_state_t::print_mappings();
 }
 /* ********************************************************************************************* */
-TEST(STATE, TEST_D_BODY) {
+TEST(STATE, TEST_BODY) {
     atlas_state_t as;
     as.init(PREPARE_ROBOT());
     Skeleton *robot = PREPARE_ROBOT();
@@ -26,6 +26,9 @@ TEST(STATE, TEST_D_BODY) {
 
     VectorXd dofs = robot->getPose();
     dofs.setZero();
+    dofs(0) = 10;
+    dofs(1) = 200;
+    dofs(2) = -12012;
     dofs(3) = 1;
     dofs(4) = M_PI/2;
     dofs(5) = 2;
@@ -33,10 +36,14 @@ TEST(STATE, TEST_D_BODY) {
 
     Twb = robot->getNode("pelvis")->getWorldTransform();
 
-    as.set_d_body(Twb);
-    robot->setPose(as.d_pose());
+    as.set_body(Twb);
+    Matrix4d Tnb;
+    as.get_body(Tnb);
 
-    ASSERT_MATRIX_EQ(Twb.matrix(), robot->getNode("pelvis")->getWorldTransform());
+    ASSERT_MATRIX_EQ(Twb.matrix(), Tnb);
+
+    // cout << "Twb\n" << Twb.matrix() << endl;
+    // cout << "Tnb\n" << Tnb << endl;
 }
 /* ********************************************************************************************* */
 int main(int argc, char* argv[]) {
