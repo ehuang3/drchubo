@@ -9,6 +9,7 @@ foreach(APPDIR
     #drcsim_joint_commands_tutorial
     quadruped
     climber
+    zmp_steps
     car_test
     )
     add_subdirectory(${APPDIR})

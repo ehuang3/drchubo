@@ -104,8 +104,9 @@ void trajTester::demo_1() {
   double theta;
   double x1, x2;
   
-  Eigen::VectorXd p(num);
+  Eigen::VectorXd p = Eigen::VectorXd::Zero( num );
   for( int i = 0; i < n; ++i ) { 
+	/*
       theta = 2*3.1416*0.05*i*dt;
       x1 = -0.5*sin(2*theta);
       x2 =  0.5*sin(1*theta);
@@ -114,7 +115,9 @@ void trajTester::demo_1() {
       p[10] = x2; p[11] = x1; p[12] = x2; p[13] = x1; p[14] = x1; p[15] = x2;
       p[16] = x2; p[17] = x1; p[18] = x1; p[19] = x1; p[20] = x2; p[21] = x2;
       p[22] = x2; p[23] = x1; p[24] = x1; p[25] = x2; p[26] = x1; p[27] = x1;
-
+*/
+      double factor = (double) i / (double) n ;
+      p[7] = 1.0*factor;	
       traj.push_back( p );
   }
 

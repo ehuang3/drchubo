@@ -7,3 +7,7 @@ set_target_properties( climber PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOUR
 rosbuild_add_executable( trajDemo trajTesterDemo.cpp trajTester.cpp )
 target_link_libraries( trajDemo vrc_golem ${DART_LIBRARIES} ${DARTExt_LIBRARIES} )
 set_target_properties( trajDemo PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
+
+rosbuild_add_executable( Ingress_demo Ingress_demo.cpp Ingress.cpp )
+target_link_libraries( Ingress_demo vrc_golem ${DART_LIBRARIES} ${DARTExt_LIBRARIES} )
+set_target_properties( Ingress_demo PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
