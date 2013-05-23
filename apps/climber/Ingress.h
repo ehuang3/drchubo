@@ -23,6 +23,8 @@ class Ingress {
  public:
   void init();
   void demo();
+ void looking_ahead();
+ void grab_handle();
   /**< Hard-coded walk to locate Atlas in front of car */
   void ingress_1();
 
