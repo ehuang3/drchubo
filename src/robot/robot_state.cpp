@@ -40,8 +40,11 @@ namespace robot {
 
     void robot_state_t::static_init(Skeleton *robot, map<int, string> r2s, vector<string> l2s[NUM_LIMBS]) 
     {
+        if(g_init)
+            return;
 
-        for(int i_r=0; i_r < r2s.size(); i_r++) {
+        for(auto iter = r2s.begin(); iter != r2s.end(); ++iter) {
+            int i_r = iter->first;
             
             // Find mapping from dart name to index
             vector<string> tokens; // remove ROS headers
@@ -61,12 +64,13 @@ namespace robot {
         }
 
         // ROS prefix
+        string ros_name = r2s.begin()->second;
         vector<string> tokens;
-        boost::split(tokens, r2s[0], boost::is_any_of(":"));
+        boost::split(tokens, ros_name, boost::is_any_of(":"));
         g_ros_prefix = "";
         string name = tokens.back();
-        int found = r2s[0].find(name);
-        g_ros_prefix = r2s[0].substr(0,found);
+        int found = ros_name.find(name);
+        g_ros_prefix = ros_name.substr(0,found);
 
         // Map limbs to indexes
         for(int i=0; i < NUM_LIMBS; i++) {
