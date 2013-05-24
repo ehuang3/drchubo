@@ -33,5 +33,6 @@ void MyWindow::drawSkels() {
 		glClear(GL_DEPTH_BUFFER_BIT);
 		r_viz.renderJoints(mWorld->getSkeleton(i), mRI);
 	}
+
 }
 

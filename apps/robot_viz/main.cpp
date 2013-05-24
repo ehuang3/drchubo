@@ -9,6 +9,9 @@
 #include <iostream>
 #include <string>
 
+#include "robot/robot.h"
+#include "hubo/hubo_state.h"
+#include "hubo/hubo_jacobian.h"
 
 using namespace Eigen;
 using namespace std;
@@ -31,6 +34,45 @@ int main(int argc, char* argv[])
 	SkeletonDynamics *robot = mWorld->getSkeleton(0);
 
     robot->setPose(robot->getPose().setZero(), true);
+
+    // Print out all dofs
+    // for(int i=0; i < robot->getNumJoints(); ++i) {
+    //     cout << "ros2s[" << i << "] = \"hubo::" << robot->getJoint(i)->getName() << "\";\n";
+    // }
+
+    // for(int i=0; i < robot->getNumNodes(); ++i) {
+    //     cout << "node " << robot->getNode(i)->getName() << endl;
+    // }
+
+    // Jacobian arm IK
+    hubo::hubo_state_t state;
+    hubo::hubo_jacobian_t rjac;
+    state.init(robot);
+    rjac.init(robot);
+
+    vector<int> desired;
+    state.get_manip_indexes(desired, robot::LIMB_L_ARM);
+    VectorXd q(desired.size());
+
+    for(int i=0; i < q.rows(); i++)
+        q(i) = 0.1 * i;
+
+    state.set_manip(q, robot::LIMB_L_ARM);
+    state.copy_into_robot();
+
+    BodyNode *left_hand = state.robot()->getNode("leftPalm");
+
+    Isometry3d B;
+    B = state.robot()->getNode("leftPalm")->getWorldTransform();
+
+    state.dofs().setZero();
+    state.copy_into_robot();
+
+    cout << "B = \n" << B.matrix() << endl;
+
+    rjac.manip_jacobian_ik(B, desired, left_hand, state);
+
+    state.copy_into_robot();
 
     // load a skeleton file
     FileInfoSkel<SkeletonDynamics> model;
