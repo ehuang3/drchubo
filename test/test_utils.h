@@ -23,7 +23,7 @@
 #include <dynamics/SkeletonDynamics.h>
 
 /* ********************************************************************************************* */
-//#define ATLAS
+#define ATLAS
 
 #ifdef ATLAS
 
@@ -47,6 +47,7 @@
 #define ROBOT_JACOBIAN_T atlas::atlas_jacobian_t
 #define ROBOT_STATE_T atlas::atlas_state_t
 #define ROBOT_KINEMATICS_T atlas::atlas_kinematics_t
+
 #else
 
 #include <hubo/hubo_state.h>
