@@ -135,7 +135,7 @@ TEST(JACOBIAN, TEST_MANIP_JACOBIAN) {
     
     aa_la_dls(J.rows(), J.cols(), 0.1, J.data(), x.data(), qdot.data());
 
-    rstat->d_pose() = dofs;
+    rstat->dart_pose() = dofs;
 }
 /* ********************************************************************************************* */
 TEST(JACOBIAN, TEST_ANGLE_AXIS) {
@@ -191,7 +191,7 @@ TEST(JACOBIAN, TEST_MANIP_IK) {
     
     robot->manip_jacobian_ik(B, desired_dofs, left_hand, *state);
 
-    state->print_dofs(desired_dofs);
+    state->print_joints(desired_dofs);
     
     cout << "ans = \n" << left_hand->getWorldTransform() << endl;
     

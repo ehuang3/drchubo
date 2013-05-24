@@ -4,10 +4,10 @@
 #include <map>
 #include <string>
 
-namespace kinematics { class Skeleton; }
+namespace kinematics { class Skeleton; class BodyNode; }
 
 namespace robot {
-    
+
     class robot_state_t;
     typedef robot_state_t robot_gains_t;
 
@@ -22,37 +22,66 @@ namespace robot {
         void set_body(const Eigen::Isometry3d& Twb);
         void get_body(Eigen::Isometry3d& Twb);
 
-        int num_links_head() { return g_d_limb[LIMB_HEAD].size(); }
-        int num_links_torso() { return g_d_limb[LIMB_TORSO].size(); }
-        int num_links_arm() { return g_d_limb[LIMB_L_ARM].size(); }
-        int num_links_leg() { return g_d_limb[LIMB_L_LEG].size(); }
-        
         // accepts both ManipIndex and LimbIndex
+        // returns the limb in g_d_limb (defined in init)
         void set_manip(const Eigen::VectorXd& q, int mi);
         void get_manip(Eigen::VectorXd& q, int mi);
 
-        Eigen::VectorXd& d_pose() { return _dofs; }
-
-        void set_d_pose(const Eigen::VectorXd& q) { _dofs = q; }
-        void get_d_pose(Eigen::VectorXd& q) { q = _dofs; }
-
-        void set_r_pose(const Eigen::VectorXd& q);
-        void get_r_pose(Eigen::VectorXd& q);
-        
-        // accepts both ManipIndex and LimbIndex
-        void get_manip_indexes(std::vector<int>& indexes, int mi);
-
         void get_dofs(Eigen::VectorXd& q, const std::vector<int>& indexes);
         void set_dofs(const Eigen::VectorXd& q, const std::vector<int>& indexes);
-
-        void print_dofs(const std::vector<int>& indexes);
-
         double& dofs(int i) { return _dofs(i); }
         Eigen::VectorXd& dofs() { return _dofs; }
 
+        //TODO: rename to _dart_, _ros_
+        void set_dart_pose(const Eigen::VectorXd& q) { _dofs = q; }
+        void get_dart_pose(Eigen::VectorXd& q) { q = _dofs; }
+        void set_ros_pose(const Eigen::VectorXd& q);
+        void get_ros_pose(Eigen::VectorXd& q);
+        Eigen::VectorXd& dart_pose() { return _dofs; }
+
+        // copies dofs into internal dart skeleton
+        void copy_robot_pose();
         kinematics::Skeleton* robot() { return _robot; }
         
+        // returns dart index of joint
+        int get_index(const std::string& joint);
+        // returns the joints initialized in g_d_limb
+        // note: accepts both ManipIndex and LimbIndex
+        void get_manip_indexes(std::vector<int>& indexes, int mi);
+        // returns chain from end effector to root (ala dart)
+        // warning: only returns joints mappable to ros (see init() of subclass)
+/***** FIXME: ROOT ON ATLAS MEANS PELVIS, KIND OF USELESS, BUILD CHAINS MANUALLY INSTEAD PLZ *****/
+        void get_branch_indexes(std::vector<int>& indexes, kinematics::BodyNode* end_effector);
+        // returns joints in chain from base to end effector
+        // warning: only returns joints mappable to ros (see init() of subclass)
+/***** FIXME: DOES NOT WORK AS EXPECTED B/C I'M NOT HANDLING NON-JOINT LINKS IN SKELETON *****/
+/***** PIECE TOGETHER CHAIN INDEXES MANUALLY *****/
+        void get_chain_indexes(std::vector<int>& indexes, kinematics::BodyNode* base,
+                               kinematics::BodyNode* end_effector);
+        // returns all joints w/ mapping to ros (see init() of subclass)
+        void get_full_indexes(std::vector<int>& indexes);
 
+        // wrappers to stl
+        std::vector<int> set_intersect(const std::vector<int>& a, const std::vector<int>& b);
+        std::vector<int> set_union(const std::vector<int>& a, const std::vector<int>& b);
+        
+        // true: if no joint exceed limits
+        bool check_limits(const std::vector<int>& indexes, double zero_tol = 1e-9);
+
+        // clamps joints to limits
+        // true: if no joints exceed limits
+        bool clamp_all(bool err_msg = true, double zero_tol = 1e-9); //< only clamps joints declared in init()
+        bool clamp_manip(int mi, bool err_msg = true, double zero_tol = 1e-9);
+        bool clamp_indexes(const std::vector<int>& indexes, bool err_msg = true, double zero_tol = 1e-9);
+        inline bool clamp_dof(int i, bool err_msy = true, double zero_tol = 1e-9);
+
+        std::map<int,int> get_d2r() { return g_d2r; }
+        std::map<int,int> get_r2d() { return g_r2d; }
+
+        void print_nodes(const std::vector<int>& indexes); //< nodes <--> links
+        void print_joints(const std::vector<int>& indexes); //< joints <--> dofs
+        void print_limits(const std::vector<int>& indexes);
+        void print_children(const std::vector<int>& indexes); //< child joints of links
         static void print_mappings(); //< prints out all mappings
 
     protected:
