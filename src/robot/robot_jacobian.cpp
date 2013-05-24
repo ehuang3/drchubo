@@ -49,15 +49,9 @@ namespace robot {
             end_effector->getSkel()->setPose(state.dofs());
 
             A = end_effector->getWorldTransform();
-            aa.fromRotationMatrix((A.inverse()*B).rotation());
-            
-            // DEBUG_STREAM << "axis = \n" << aa.axis() << endl;
-            
-            r = aa.axis() * aa.angle();
-            r = A.rotation()*r;
-            error.block<3,1>(0,0) = B.translation() - A.translation();        
-            error.block<3,1>(3,0) = r;
 
+            xform_error(error, B, A);
+            
             // ERROR_PRINT("%d error %.16f\n", i, error.norm());
 
             // DEBUG_PRINT("error norm %f\n", error.norm());
@@ -79,6 +73,16 @@ namespace robot {
             state.set_dofs(q, desired_dofs);
         }
         
+    }
+
+    void robot_jacobian_t::xform_error(Vector6d& error, const Isometry3d& B, const Isometry3d& A) {
+        AngleAxisd aa;
+        Vector3d r;
+        aa.fromRotationMatrix((A.inverse()*B).rotation());
+        r = aa.axis() * aa.angle();
+        r = A.rotation()*r;
+        error.block<3,1>(0,0) = B.translation() - A.translation();        
+        error.block<3,1>(3,0) = r;
     }
 
     void robot_jacobian_t::find_dependent_dofs(vector<int>& dependent_dofs, BodyNode *end_effector)
