@@ -28,8 +28,8 @@ TEST(JACOBIAN, TEST_INIT) {
 TEST(JACOBIAN, TEST_DART) {
     // Examine DART conventions for returning Jacobians
     Skeleton *robot = PREPARE_ROBOT();
-    PRINT_KINEMATIC_CHAIN(robot->getNode(LEFT_HAND));
-    BodyNode *end_effector = robot->getNode(LEFT_HAND);
+    PRINT_KINEMATIC_CHAIN(robot->getNode(ROBOT_LEFT_HAND));
+    BodyNode *end_effector = robot->getNode(ROBOT_LEFT_HAND);
     printf("dependent dofs:\n");
     for(int i=0; i < end_effector->getNumDependentDofs(); i++) {
         Dof *dof = robot->getDof(end_effector->getDependentDof(i));
@@ -61,7 +61,7 @@ TEST(JACOBIAN, TEST_MANIP_JACOBIAN) {
     MatrixXd J;
     vector<int> desired_dofs;
     rstat->get_manip_indexes(desired_dofs, LIMB_L_ARM);
-    BodyNode *l_arm = robot->getNode(LEFT_HAND);
+    BodyNode *l_arm = robot->getNode(ROBOT_LEFT_HAND);
     VectorXd dofs = robot->getPose();
     dofs.setZero();
 
@@ -116,7 +116,7 @@ TEST(JACOBIAN, TEST_MANIP_IK) {
     
     state->print_joints(desired_dofs);
 
-    BodyNode *left_hand = state->robot()->getNode(LEFT_HAND);
+    BodyNode *left_hand = state->robot()->getNode(ROBOT_LEFT_HAND);
     state->dofs().setZero();
 
     VectorXd q(desired_dofs.size());
@@ -154,7 +154,7 @@ TEST(JACOBIAN, TEST_MANIP_IK_BASE_FRAME) {
     BodyNode *end_effector;
 
     state->get_manip_indexes(desired, LIMB_L_ARM);
-    end_effector = state->robot()->getNode(LEFT_HAND);
+    end_effector = state->robot()->getNode(ROBOT_LEFT_HAND);
 
     robot->manip_jacobian(J, desired, end_effector, *state);
 
@@ -172,12 +172,12 @@ TEST(JACOBIAN, TEST_MANIP_IK_BASE_FRAME) {
 
     // ASSERT_MATRIX_EQ(J, K); //< meant to fail
 
-    BodyNode *head = state->robot()->getNode(HEAD);
+    BodyNode *head = state->robot()->getNode(ROBOT_HEAD);
     Isometry3d Twh;
     Twh = head->getWorldTransform();
 
     Isometry3d Twf;
-    BodyNode *l_foot = state->robot()->getNode(LEFT_FOOT);
+    BodyNode *l_foot = state->robot()->getNode(ROBOT_LEFT_FOOT);
     Twf = l_foot->getWorldTransform();
 
     state->get_manip_indexes(desired, LIMB_L_LEG);

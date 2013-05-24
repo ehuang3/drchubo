@@ -39,7 +39,7 @@ TEST(STATE, TEST_BODY) {
     dofs(5) = 2;
     robot->setPose(dofs);
 
-    Twb = robot->getNode(BODY_FRAME)->getWorldTransform();
+    Twb = robot->getNode(ROBOT_BODY)->getWorldTransform();
 
     rs->set_body(Twb);
     Matrix4d Tnb;
@@ -74,10 +74,10 @@ TEST(STATE, TEST_CHAIN_INDEXES) {
     robot_state_t *state = PREPARE_ROBOT_STATE();
     
     vector<int> chain;
-    state->get_chain_indexes(chain, robot->getNode(LEFT_HAND), robot->getNode(RIGHT_HAND));
+    state->get_chain_indexes(chain, robot->getNode(ROBOT_LEFT_HAND), robot->getNode(ROBOT_RIGHT_HAND));
     state->print_children(chain);
     
-    state->get_chain_indexes(chain, robot->getNode(LEFT_HAND), robot->getNode(RIGHT_FOOT));
+    state->get_chain_indexes(chain, robot->getNode(ROBOT_LEFT_HAND), robot->getNode(ROBOT_RIGHT_FOOT));
     state->print_children(chain);
 }
 /* ********************************************************************************************* */
