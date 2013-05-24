@@ -21,7 +21,7 @@ namespace gazebo
       printf("Loading animation \n");
 
       std::map<std::string, common::NumericAnimationPtr> anim;
-      double T = 5.0;
+      double T = 10.0;
 
       // Fill joint init
       for( int i = 0; i < gNumJoints; ++i ) {
@@ -31,9 +31,9 @@ namespace gazebo
 
       // Read file with trajectories
       float ang[gNumJoints]; int ind;
-      int numTrajPoints = 1;
+      int numTrajPoints = 900;
       FILE* pFile;
-      pFile = fopen("traj.txt", "r");
+      pFile = fopen("/home/ana/Research/drchubo/data/trajs/traj.txt", "r");
 
       if( pFile == NULL ) {
 	printf("Did not find file, exiting! \n");
@@ -47,8 +47,10 @@ namespace gazebo
       t = 0;
       for( int i = 0; i < numTrajPoints; ++i ) {
 
-	fscanf( pFile, "%d %f %f %f %f %f %f %f", &ind, &ang[0], &ang[1], &ang[2], &ang[3], &ang[4], &ang[5], &ang[6] );
-	fscanf( pFile, "%f %f %f %f %f %f %f", &ang[7], &ang[8], &ang[9], &ang[10], &ang[11], &ang[12], &ang[13] );
+	fscanf( pFile, "%d %f %f %f %f %f %f", &ind, &ang[0], &ang[1], &ang[2], &ang[3], &ang[4], &ang[5] ); 
+	ang[6] = 0.0;
+	fscanf( pFile, "%f %f %f %f %f %f", &ang[7], &ang[8], &ang[9], &ang[10], &ang[11], &ang[12] );
+	ang[13] = 0.0;
 	fscanf( pFile, "%f %f %f %f %f %f", &ang[14], &ang[15], &ang[16], &ang[17], &ang[18], &ang[19] );
 	fscanf( pFile, "%f %f %f %f %f %f \n", &ang[20], &ang[21], &ang[22], &ang[23], &ang[24], &ang[25] );
 
