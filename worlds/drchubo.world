@@ -31,7 +31,7 @@
     <include>
       <uri>model://drchubo</uri>
       <pose>0 0 0.8 0 0 0</pose>
-      <plugin filename="libdrchubo_Animation.so" name="basics"/>	
+      <plugin filename="libdrchubo_Basics.so" name="basics"/>	
     </include>
 
 

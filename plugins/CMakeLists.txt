@@ -6,7 +6,7 @@ include (FindPkgConfig)
 if (PKG_CONFIG_FOUND)
   pkg_check_modules(GAZEBO gazebo)
 endif()
-include_directories(${GAZEBO_INCLUDE_DIRS} . ) 
+include_directories(${GAZEBO_INCLUDE_DIRS} . drchubo_Basics ) # Last one for control 
 link_directories(${GAZEBO_LIBRARY_DIRS})
 
 set( control_srcs drchubo_Basics/controls/pid_controller.cpp drchubo_Basics/controls/controlBundle.cpp )
@@ -26,3 +26,12 @@ add_library( drchubo_Animation SHARED drchubo_Animation/drchubo_Animation.cpp )
 target_link_libraries( drchubo_Animation ${GAZEBO_LIBRARIES} )
 
 set_target_properties( drchubo_Animation PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib" ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib" )
+
+
+#########################
+# drchubo_Walk1
+#########################
+add_library( drchubo_Walk1 SHARED drchubo_Walk1/drchubo_Walk1.cpp ${control_srcs} ) 
+target_link_libraries( drchubo_Walk1 ${GAZEBO_LIBRARIES} )
+
+set_target_properties( drchubo_Walk1 PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib" ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib" )
