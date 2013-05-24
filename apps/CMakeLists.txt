@@ -7,11 +7,11 @@ foreach(APPDIR
     ros_ik
     robot_viz
     #drcsim_joint_commands_tutorial
-    quadruped
-    climber
+    #quadruped
+    #climber
     zmp_steps
-    car_test
-	perception
+    #car_test
+	#perception
     )
     add_subdirectory(${APPDIR})
 endforeach(APPDIR)
