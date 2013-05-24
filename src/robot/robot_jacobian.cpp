@@ -25,6 +25,73 @@ namespace robot {
     robot_jacobian_t::~robot_jacobian_t() {}
 
     void robot_jacobian_t::manip_jacobian_ik(Isometry3d& B, vector<int>& desired_dofs,
+                                             BodyNode *base_frame, BodyNode *end_effector,
+                                             robot_state_t& state)
+    {
+
+        // Avoid scenario where body node ptrs are from a different skeleton
+        if(state.robot() != base_frame->getSkel() || state.robot() != end_effector->getSkel()) {
+            ERROR_PRINT("Body node and state skeletons disagree (!=)!\n");
+            state.dofs() = base_frame->getSkel()->getPose();
+            base_frame = state.robot()->getNode(base_frame->getName());
+            end_effector = state.robot()->getNode(end_effector->getName());
+        }
+        state.copy_into_robot();
+
+        // Loop parameters
+        double tol = 1e-5;
+        double alpha = 1;
+        int max_iter = 1e3;
+        // Jacobian variables
+        MatrixXd J;
+        VectorXd q(desired_dofs.size());
+        state.get_dofs(q, desired_dofs);
+        VectorXd qdot(desired_dofs.size());
+        // Error variables
+        Vector6d error;
+        // wouidl like this const
+        Isometry3d Twf; //< xform world to foot (the "base" frame)
+        Isometry3d Tfw;
+        Twf = base_frame->getWorldTransform();
+        Isometry3d Tbf; //< xform B to foot
+        Tbf = B.inverse() * Twf;
+        Isometry3d Twe; //< xform world to end effector
+        Isometry3d Twr; //< xform world to root (body) frame for repositioning
+        // Main loop
+        int i=0;
+        while(i++ < max_iter) {
+            // DEBUG_PRINT("iter %d\n", i);
+
+            // Map error to foot frame
+            Twe = end_effector->getWorldTransform();
+            xform_error(error, Twe*Tbf, Twf);
+
+            if(error.norm() < tol) {
+                break;
+            }
+
+            error *= alpha;
+
+            manip_jacobian(J, desired_dofs, base_frame, state);
+
+            aa_la_dls(J.rows(), J.cols(), 0.05, J.data(), error.data(), qdot.data());
+
+            q += qdot;
+            state.set_dofs(q, desired_dofs);
+
+            // Reposition foot frame to original location
+            state.copy_into_robot(); // dofs into dart skeleton
+            Tfw = base_frame->getWorldTransform();
+            Tfw = Tfw.inverse();
+            state.get_body(Twr);
+            Twr = Twf * Tfw * Twr;
+            state.set_body(Twr);
+            state.copy_into_robot();
+        }
+        
+    }
+
+    void robot_jacobian_t::manip_jacobian_ik(Isometry3d& B, vector<int>& desired_dofs,
                                              BodyNode *end_effector, robot_state_t& state)
     {
 
@@ -39,8 +106,6 @@ namespace robot {
         // 
         Vector6d error;
         Isometry3d A;
-        AngleAxisd aa;
-        Vector3d r;
         //
         int i=0;
         while(i++ < max_iter) {

@@ -81,13 +81,13 @@ robot::robot_kinematics_t* PREPARE_ROBOT_KINEMATICS() {
 }
 /* ********************************************************************************************* */
 double _TOLERANCE_ = 1e-9;
-void ASSERT_MATRIX_EQ(Eigen::MatrixXd A, Eigen::MatrixXd B) 
+void ASSERT_MATRIX_EQ(Eigen::MatrixXd A, Eigen::MatrixXd B, double tol = 1e-9) 
 {
     ASSERT_EQ(A.rows(), B.rows());
     ASSERT_EQ(A.cols(), B.cols());
     for(int i=0; i < A.rows(); ++i) {
         for(int j=0; j < A.cols(); ++j) {
-            ASSERT_NEAR(A(i,j), B(i,j), _TOLERANCE_);
+            ASSERT_NEAR(A(i,j), B(i,j), tol);
         }
     }
 }

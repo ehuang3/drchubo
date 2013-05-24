@@ -40,7 +40,7 @@ namespace robot {
         Eigen::VectorXd& dart_pose() { return _dofs; }
 
         // copies dofs into internal dart skeleton
-        void copy_robot_pose();
+        void copy_into_robot();
         kinematics::Skeleton* robot() { return _robot; }
         
         // returns dart index of joint

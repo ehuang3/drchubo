@@ -174,7 +174,7 @@ namespace robot {
         Twb.rotate( AngleAxisd( _dofs(5), Vector3d::UnitX()) );
     }
 
-    void robot_state_t::copy_robot_pose()
+    void robot_state_t::copy_into_robot()
     {
         _robot->setPose(_dofs);
     }
