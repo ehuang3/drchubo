@@ -1,0 +1,39 @@
+<?xml version="1.0" ?>
+<gazebo version="1.2">
+  <world name="default">
+    <physics type="ode">
+      <!-- Gravity zero -->	
+      <gravity>0 0 0</gravity>
+      <update_rate>1000</update_rate>
+      <ode>
+        <solver>
+          <type>quick</type>
+          <dt>0.001</dt>
+          <iters>50</iters>
+          <sor>1.4</sor>
+        </solver>
+        <constraints>
+          <cfm>0.0</cfm>
+          <erp>0.2</erp>
+          <contact_max_correcting_vel>100.0</contact_max_correcting_vel>
+          <contact_surface_layer>0.0</contact_surface_layer>
+        </constraints>
+      </ode>
+    </physics>
+    <!-- A global light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+    <include>
+      <uri>model://drchubo</uri>
+      <pose>0 0 1.0 0 0 0</pose>
+      <plugin filename="libdrchubo_Animation.so" name="basics"/>	
+    </include>
+
+
+  </world>
+</gazebo>

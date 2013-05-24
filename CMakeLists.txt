@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.8)
 include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
-project (vrc-golem)
+project (drchubo)
 
 # ROS build setup - No!
 # set(ROSBUILD_DONT_REDEFINE_PROJECT True)
@@ -19,7 +19,7 @@ include_directories(${GAZEBO_INCLUDE_DIRS})
 link_directories(${GAZEBO_LIBRARY_DIRS})
 
 # VRC-GOLEM setup
-message(STATUS "Creating Makefile for vrc-golem")
+message(STATUS "Creating Makefile for drchubo")
 message(STATUS "CMAKE_SOURCE_DIR = ${CMAKE_SOURCE_DIR}")
 message(STATUS "CMAKE_BINARY_DIR = ${CMAKE_BINARY_DIR}")
 
@@ -79,11 +79,12 @@ link_directories(${DART_LIBRARY_DIRS})
 #link_directories(${GRIP_LIBRARY_DIRS})
 
 # Build source
-message(STATUS "Building VRC-GOLEM source")
+message(STATUS "Building drchubo source")
 include_directories(BEFORE src)
 link_directories(${CMAKE_SOURCE_DIR}/lib)
-add_subdirectory(src)
+#add_subdirectory(src)
 
 enable_testing()
-add_subdirectory(test)
-add_subdirectory(apps)
+#add_subdirectory(test)
+#add_subdirectory(apps)
+add_subdirectory( plugins )
