@@ -35,3 +35,11 @@ add_library( drchubo_Walk1 SHARED drchubo_Walk1/drchubo_Walk1.cpp ${control_srcs
 target_link_libraries( drchubo_Walk1 ${GAZEBO_LIBRARIES} )
 
 set_target_properties( drchubo_Walk1 PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib" ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib" )
+
+#########################
+# drchubo_AnimationPose
+#########################
+add_library( drchubo_AnimationPose SHARED drchubo_AnimationPose/drchubo_AnimationPose.cpp ) 
+target_link_libraries( drchubo_AnimationPose ${GAZEBO_LIBRARIES} )
+
+set_target_properties( drchubo_AnimationPose PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib" ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib" )
