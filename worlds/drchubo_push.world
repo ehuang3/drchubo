@@ -2,7 +2,7 @@
 <gazebo version="1.2">
   <world name="default">
     <physics type="ode">
-      <!-- Gravity-->	
+      <!-- Gravity -->	
       <gravity>0 0 -9.8</gravity>
       <update_rate>1000</update_rate>
       <ode>
@@ -24,6 +24,24 @@
     <include>
       <uri>model://sun</uri>
     </include>
+
+    <!-- Bowl -->	
+    <include>
+      <uri>model://bowl</uri>
+      <pose>2.0 1.0 0.3 0 0 0</pose>	
+    </include>
+
+    <!-- Beer -->	
+    <include>
+      <uri>model://beer</uri>
+      <pose>2.0 -1.0 0.3 0 0 0</pose>	
+    </include>
+
+    <!-- Table -->
+    <!--<include>
+      <uri>model://table</uri>	
+      <pose>1.2 0 0 0 0 0</pose>
+    </include>-->
 
     <include>
       <uri>model://ground_plane</uri>

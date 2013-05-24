@@ -1,0 +1,9 @@
+<launch>
+
+  <arg name="gzname" default="gazebo"/>
+  <arg name="gzworld" default="$(find drchubo)/worlds/drchubo_push.world"/>
+  <arg name="extra_gazebo_args" default="" />
+
+  <node name="gazebo" pkg="drchubo" type="run_$(arg gzname)" args="$(arg gzworld) $(arg extra_gazebo_args)" output="screen" />
+
+</launch>
