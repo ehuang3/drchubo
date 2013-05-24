@@ -29,8 +29,16 @@
 /* ********************************************************************************************* */
 #define ROBOT_URDF "models/atlas/atlas_world.urdf"
 #define ROBOT_NAME "atlas"
+#define HEAD "head"
 #define LEFT_HAND "l_hand"
 #define RIGHT_HAND "r_hand"
+#define LOWER_BACK "utorso"
+#define MID_BACK "mtorso"
+#define UPPER_BACK "utorso"
+#define LEFT_FOOT "l_foot"
+#define RIGHT_FOOT "r_foot"
+#define LEFT_KNEE "l_lleg"
+#define RIGHT_KNEE "r_lleg"
 #define ROBOT_JACOBIAN_T atlas::atlas_jacobian_t
 #define ROBOT_STATE_T atlas::atlas_state_t
 #define ROBOT_KINEMATICS_T atlas::atlas_kinematics_t
