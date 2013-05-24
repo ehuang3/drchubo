@@ -1,30 +1,5 @@
-#include <iostream>
-#include <stdio.h>
-#include <Eigen/Dense>
-#include <Eigen/Geometry>
-#include <gtest/gtest.h>
-
-#include <atlas/atlas_kinematics.h>
-#include <utils/math_utils.h>
-#include <utils/data_paths.h>
-#include <math/EigenHelper.h>
-
-#include <math.h>
-
-#include <robotics/parser/dart_parser/DartLoader.h>
-#include <simulation/World.h>
-#include <kinematics/Skeleton.h>
-#include <kinematics/Dof.h>
-#include <kinematics/BodyNode.h>
-#include <kinematics/Joint.h>
-#include <kinematics/Transformation.h>
-#include <dynamics/SkeletonDynamics.h>
-
+#include "test_utils.h"
 #include <amino.h>
-
-#include <atlas/atlas_jacobian.h>
-#include <robot/robot_state.h>
-#include <atlas/atlas_state.h>
 
 using namespace std;
 using namespace Eigen;
@@ -34,41 +9,6 @@ using namespace robot;
 using namespace kinematics;
 using namespace dynamics;
 using namespace simulation;
-/* ********************************************************************************************* */
-#define ROBOT_URDF "models/atlas/atlas_world.urdf"
-#define ROBOT_NAME "atlas"
-#define LEFT_HAND "l_hand"
-#define RIGHT_HAND "r_hand"
-#define ROBOT_JACOBIAN_T atlas::atlas_jacobian_t
-#define ROBOT_STATE_T atlas::atlas_state_t
-/* ********************************************************************************************* */
-kinematics::Skeleton* _robot_;
-Skeleton* PREPARE_ROBOT() {
-    if(_robot_ == 0) {
-        DartLoader dart_loader;
-		World *mWorld = dart_loader.parseWorld(VRC_DATA_PATH ROBOT_URDF);
-		_robot_ = mWorld->getSkeleton(ROBOT_NAME);
-    }
-    return _robot_;
-}
-/* ********************************************************************************************* */
-ROBOT_JACOBIAN_T* _rj_;
-robot_jacobian_t* PREPARE_ROBOT_JACOBIAN() {
-    if(_rj_ == 0) {
-        _rj_ = new ROBOT_JACOBIAN_T;
-        _rj_->init(PREPARE_ROBOT());
-    }
-    return _rj_;
-}
-/* ********************************************************************************************* */
-robot_state_t* _rs_;
-robot_state_t* PREPARE_ROBOT_STATE() {
-    if(_rs_ == 0) {
-        _rs_ = new ROBOT_STATE_T;
-        _rs_->init(PREPARE_ROBOT());
-    }
-    return _rs_;
-}
 /* ********************************************************************************************* */
 void PRINT_KINEMATIC_CHAIN(BodyNode *end_effector) {
     printf("%s kinematic chain:\n", end_effector->getName());
@@ -194,6 +134,55 @@ TEST(JACOBIAN, TEST_MANIP_IK) {
     state->print_joints(desired_dofs);
     
     cout << "ans = \n" << left_hand->getWorldTransform() << endl;
+    
+}
+/* ********************************************************************************************* */
+TEST(JACOBIAN, TEST_MANIP_IK_BASE_FRAME) {
+    robot_jacobian_t *robot = PREPARE_ROBOT_JACOBIAN();
+    robot_state_t *state = PREPARE_ROBOT_STATE();
+
+    state->dofs().setZero();
+    state->copy_into_robot();
+
+    MatrixXd J;
+    vector<int> desired;
+    BodyNode *end_effector;
+
+    state->get_manip_indexes(desired, LIMB_L_ARM);
+    end_effector = state->robot()->getNode(LEFT_HAND);
+
+    robot->manip_jacobian(J, desired, end_effector, *state);
+
+    MatrixXd K;
+    Isometry3d Twb;
+    Twb = Matrix4d::Identity();
+
+    Twb.rotate(AngleAxisd(M_PI/2, Vector3d::UnitZ()));
+    state->set_body(Twb);
+
+    robot->manip_jacobian(K, desired, end_effector, *state);
+
+    // cout << "J=\n" << J << endl;
+    // cout << "K=\n" << K << endl;
+
+    // ASSERT_MATRIX_EQ(J, K); //< meant to fail
+
+    BodyNode *head = state->robot()->getNode(HEAD);
+    Isometry3d Twh;
+    Twh = head->getWorldTransform();
+
+    Isometry3d Twf;
+    BodyNode *l_foot = state->robot()->getNode(LEFT_FOOT);
+    Twf = l_foot->getWorldTransform();
+
+    state->get_manip_indexes(desired, LIMB_L_LEG);
+
+    Twh(1,3) -= 0.1;
+
+    robot->manip_jacobian_ik(Twh, desired, l_foot, head, *state);
+
+    ASSERT_MATRIX_EQ(Twh.matrix(), head->getWorldTransform(), 1e-5);
+    ASSERT_MATRIX_EQ(Twf.matrix(), l_foot->getWorldTransform(), 1e-5);
     
 }
 /* ********************************************************************************************* */
