@@ -223,44 +223,9 @@ namespace gazebo {
     
     // Set PID initial values
     for( int i = 0; i < mNumReadJoints; ++i ) {
-      mCb.initPID( i, mKp_def[i], mKi_def[i], mKd_def[i], 0, 0, mKp_def[i], -1*mKp_def[i] );
+      //mCb.initPID( i, mKp_def[i], mKi_def[i], mKd_def[i], 0, 0, mKp_def[i], -1*mKp_def[i] );
+      mCb.initPID( i, mKp_atlas[i], mKi_atlas[i], mKd_atlas[i], 0, 0, mKp_atlas[i], -1*mKp_atlas[i] );
     }
-
-    /*   
-    // Left Arm
-    mCb.initPID( 0, 50, 0, 0, 0, 0, 50, -50 );
-    mCb.initPID( 1, 50, 0, 0, 0, 0, 50, -50 );
-    mCb.initPID( 2, 50, 0, 0, 0, 0, 50, -50 );
-    mCb.initPID( 3, 50, 0, 0, 0, 0, 50, -50 );
-    mCb.initPID( 4, 50, 0, 0, 0, 0, 50, -50 );
-    mCb.initPID( 5, 50, 0, 0, 0, 0, 50, -50 );
-    mCb.initPID( 6, 50, 0, 0, 0, 0, 50, -50 );
-
-    // Right Arm
-    mCb.initPID( 7, 50, 0, 0, 0, 0, 50, -50 );
-    mCb.initPID( 8, 50, 0, 0, 0, 0, 50, -50 );
-    mCb.initPID( 9, 50, 0, 0, 0, 0, 50, -50 );
-    mCb.initPID( 10, 50, 0, 0, 0, 0, 50, -50 );
-    mCb.initPID( 11, 50, 0, 0, 0, 0, 50, -50 );
-    mCb.initPID( 12, 50, 0, 0, 0, 0, 50, -50 );
-    mCb.initPID( 13, 50, 0, 0, 0, 0, 50, -50 );
-
-    // Left Leg
-    mCb.initPID( 14, 50, 0, 5, 0, 0, 50, -50 );
-    mCb.initPID( 15, 50, 0, 5, 0, 0, 50, -50 );
-    mCb.initPID( 16, 50, 0, 5, 0, 0, 50, -50 );
-    mCb.initPID( 17, 1000, 0, 5, 0, 0, 1000, -1000 ); // LKP
-    mCb.initPID( 18, 200, 0, 10, 0, 0, 200, -200 ); // LAP
-    mCb.initPID( 19, 50, 0, 5, 0, 0, 50, -50 );
-
-    // Right Leg
-    mCb.initPID( 20, 50, 0, 5, 0, 0, 50, -50 );
-    mCb.initPID( 21, 50, 0, 5, 0, 0, 50, -50 );
-    mCb.initPID( 22, 50, 0, 5, 0, 0, 50, -50 );
-    mCb.initPID( 23, 1000, 0, 5, 0, 0, 1000, -1000 ); // RKP
-    mCb.initPID( 24, 200, 0, 10, 0, 0, 200, -200 ); // RAP
-    mCb.initPID( 25, 50, 0, 5, 0, 0, 50, -50 );
-    */
 
     // Torso and neck
     mCb.initPID( 26, 50, 0, 0, 0, 0, 50, -50 );
@@ -330,7 +295,12 @@ namespace gazebo {
     mUpdateCounter++;
     
     if( mUpdateCounter % 5 == 0 ) {
+      mUpdateCounter = 0;
       mTrajCounter++;
+      if( mTrajCounter > mTrajPoints.size() - 1 ) {
+	mTrajCounter = 0;
+	printf("Reseting traj counter \n");
+      }
     }
     
     // Set Targets
@@ -356,18 +326,55 @@ namespace gazebo {
    */
   void drchubo_Walk1::setControlGains( int _mode ) {
     
-    if( mTrajStance[mTrajCounter] == DOUBLE_LEFT || 
-	mTrajStance[mTrajCounter] == DOUBLE_RIGHT ) {
-      printf("DOUBLE STANCE \n");
+    double strong = 2.0;
+    double weak = 0.5;
+    double common = 1.0;
+
+    if( _mode == DOUBLE_LEFT || 
+	_mode == DOUBLE_RIGHT ) {
+
+    // Set PID values
+      // Set Right Leg back to common default 20-25
+      for( int i = 20; i <= 25; ++i ) { 
+	mCb.initPID( i, common*mKp_atlas[i], common*mKi_atlas[i], common*mKd_atlas[i], 0, 0, common*mKp_atlas[i], -1*common*mKp_atlas[i] );
+      }
+      
+      // Set Left leg weaker 14-19
+      for( int i = 14; i <= 19; ++i ) {
+	mCb.initPID( i, common*mKp_atlas[i], common*mKi_atlas[i], common*mKd_atlas[i], 0, 0, common*mKp_atlas[i], -1*common*mKp_atlas[i] );
+      }   
+
+
     }
-    else if( mTrajStance[mTrajCounter] == SINGLE_LEFT ) {
-      printf("SINGLE LEFT \n");
+    else if( _mode == SINGLE_LEFT ) {
+    // Set PID values
+      // Set Right Leg weak 20-25
+      for( int i = 20; i <= 25; ++i ) { 
+	mCb.initPID( i, weak*mKp_atlas[i], weak*mKi_atlas[i], weak*mKd_atlas[i], 0, 0, weak*mKp_atlas[i], -1*weak*mKp_atlas[i] );
+      }
+      
+      // Set Left leg weaker 14-19
+      for( int i = 14; i <= 19; ++i ) {
+	mCb.initPID( i, strong*mKp_atlas[i], strong*mKi_atlas[i], strong*mKd_atlas[i], 0, 0, strong*mKp_atlas[i], -1*strong*mKp_atlas[i] );
+      }   
+
     }
-    else if( mTrajStance[mTrajCounter] == SINGLE_RIGHT ) {
-      printf("SINGLE RIGHT \n");
+    else if( _mode == SINGLE_RIGHT ) {
+
+    // Set PID values
+      // Set Right Leg stronger 20-25
+      for( int i = 20; i <= 25; ++i ) { 
+	mCb.initPID( i, strong*mKp_atlas[i], strong*mKi_atlas[i], strong*mKd_atlas[i], 0, 0, strong*mKp_atlas[i], -1*strong*mKp_atlas[i] );
+      }
+      
+      // Set Left leg weaker 14-19
+      for( int i = 14; i <= 19; ++i ) {
+	mCb.initPID( i, weak*mKp_atlas[i], weak*mKi_atlas[i], weak*mKd_atlas[i], 0, 0, weak*mKp_atlas[i], -1*weak*mKp_atlas[i] );
+      }      
     }
 
   }
+
 
   /**
    * @function FixLink
