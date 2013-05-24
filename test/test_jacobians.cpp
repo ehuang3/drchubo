@@ -113,12 +113,17 @@ TEST(JACOBIAN, TEST_MANIP_IK) {
 
     vector<int> desired_dofs;
     state->get_manip_indexes(desired_dofs, LIMB_L_ARM);
+    
+    state->print_joints(desired_dofs);
 
     BodyNode *left_hand = state->robot()->getNode(LEFT_HAND);
     state->dofs().setZero();
 
-    VectorXd q(6);
-    q << 0.1, 0.2, 0.3, 0.4, 0.5, 0.5;
+    VectorXd q(desired_dofs.size());
+
+    for(int i=0; i < desired_dofs.size(); i++) {
+        q(i) = 0.1 * i;
+    }
     // q << 0, 0, 0.5, 0, 0, 0;o
     state->set_manip(q, LIMB_L_ARM);
 

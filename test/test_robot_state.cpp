@@ -11,17 +11,19 @@ using namespace robot;
 using namespace atlas;
 /* ********************************************************************************************* */
 TEST(STATE, TEST_INIT) {
-    atlas_state_t as;
-    as.init(PREPARE_ROBOT());
-    atlas_state_t::print_mappings();
+    robot_state_t *rs = PREPARE_ROBOT_STATE();
+
+    rs->init(PREPARE_ROBOT());
+    robot_state_t::print_mappings();
+
     vector<int> full_body;
-    as.get_full_indexes(full_body);
-    as.print_nodes(full_body);
+    rs->get_full_indexes(full_body);
+    rs->print_nodes(full_body);
 }
 /* ********************************************************************************************* */
 TEST(STATE, TEST_BODY) {
-    atlas_state_t as;
-    as.init(PREPARE_ROBOT());
+    robot_state_t * rs = PREPARE_ROBOT_STATE();
+    rs->init(PREPARE_ROBOT());
     Skeleton *robot = PREPARE_ROBOT();
 
     Isometry3d Twb;
@@ -37,11 +39,11 @@ TEST(STATE, TEST_BODY) {
     dofs(5) = 2;
     robot->setPose(dofs);
 
-    Twb = robot->getNode("pelvis")->getWorldTransform();
+    Twb = robot->getNode(BODY_FRAME)->getWorldTransform();
 
-    as.set_body(Twb);
+    rs->set_body(Twb);
     Matrix4d Tnb;
-    as.get_body(Tnb);
+    rs->get_body(Tnb);
 
     ASSERT_MATRIX_EQ(Twb.matrix(), Tnb);
 
