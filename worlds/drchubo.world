@@ -29,11 +29,9 @@
       <uri>model://ground_plane</uri>
     </include>
     <include>
-      <!--<uri>model://drchubo</uri>-->
-      <uri>model://drchubo-master</uri>
-      <pose>0 0 0.75 0 0 0</pose>
-      <!-- Remember to set GAZEBO_PLUGIN_PATH to the location of this filename -->
-      <plugin filename="libdrchubo_Animation.so" name="huboAnimation" />
+      <uri>model://drchubo</uri>
+      <pose>0 0 0.8 0 0 0</pose>
+      <plugin filename="libdrchubo_Basics.so" name="basics"/>	
     </include>
 
 
