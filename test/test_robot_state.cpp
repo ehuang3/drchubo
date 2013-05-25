@@ -75,10 +75,19 @@ TEST(STATE, TEST_CHAIN_INDEXES) {
     
     vector<int> chain;
     state->get_chain_indexes(chain, robot->getNode(ROBOT_LEFT_HAND), robot->getNode(ROBOT_RIGHT_HAND));
-    state->print_children(chain);
+//    state->print_children(chain);
     
     state->get_chain_indexes(chain, robot->getNode(ROBOT_LEFT_HAND), robot->getNode(ROBOT_RIGHT_FOOT));
-    state->print_children(chain);
+//    state->print_children(chain);
+
+    vector<int> full_body;
+    state->get_full_indexes(full_body);
+    for(int i=0; i < full_body.size(); i++) {
+        state->print_backchain(full_body[i]);
+        cout << endl;
+        state->print_dependent_dofs(full_body[i]);
+        cout << endl << endl;
+    }
 }
 /* ********************************************************************************************* */
 int main(int argc, char* argv[]) {

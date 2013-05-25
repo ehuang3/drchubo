@@ -209,8 +209,7 @@ namespace robot {
 
     void robot_state_t::get_ros_pose(VectorXd& q)
     {
-        q.resize(g_r2d.size());
-        for(auto iter = g_r2d.begin(); iter != g_r2d.end(); ++iter) {
+        for(auto iter = g_r2d.begin(); iter != g_d2r.end(); ++iter) {
             q(iter->first) = _dofs(iter->second);
         }
     }
@@ -275,6 +274,40 @@ namespace robot {
                             node->getChildJoint(j)->getChildNode()->getName());
             }
         }
+    }
+
+    void robot_state_t::print_backchain(int i)
+    {
+        int index = i;
+        Joint *joint = robot()->getDof(index)->getJoint();
+        DEBUG_PRINT("Backchain of %s\n\t", joint->getName());
+        while(joint) {
+            BodyNode *node = joint->getParentNode();
+            if(node) {
+                printf("%s>(%s)>", joint->getName(), node->getName());
+                joint = node->getParentJoint();
+            } else {
+                printf("end of chain");
+                joint = 0;
+            }
+        }
+        printf("\n");
+    }
+
+    void robot_state_t::print_dependent_dofs(int i)
+    {
+        int index = i;
+        Joint *joint = robot()->getDof(index)->getJoint();
+        BodyNode *node = joint->getChildNode();
+        DEBUG_PRINT("Dependent dofs of (%s)>%s\n\t", node->getName(), joint->getName());
+        for(int i=node->getNumDependentDofs()-1; i > 0; i--) {
+            if(g_d2s.count(node->getDependentDof(i)))
+                printf("%s>", g_d2s[node->getDependentDof(i)].c_str());
+            else {
+                printf("??%s", robot()->getDof(node->getDependentDof(i))->getJoint()->getName());
+            }
+        }
+        printf("\n");
     }
 
     bool robot_state_t::check_limits(const vector<int>& indexes, double zero_tol)

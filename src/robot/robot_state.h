@@ -82,6 +82,8 @@ namespace robot {
         void print_joints(const std::vector<int>& indexes); //< joints <--> dofs
         void print_limits(const std::vector<int>& indexes);
         void print_children(const std::vector<int>& indexes); //< child joints of links
+        void print_backchain(int i); //< index of dof
+        void print_dependent_dofs(int i); //< index of dof
         static void print_mappings(); //< prints out all mappings
 
     protected:
