@@ -10,6 +10,13 @@
 #include <math.h>
 #include <complex>
 
+#include "robot_state.h"
+#include "utils/robot_configs.h"
+#include "robot_jacobian.h"
+#define DEBUG
+#define MODULE_NAME "robot-kinematics"
+#include "utils/debug_utils.h"
+
 using namespace Eigen;
 using namespace kinematics;
 using namespace std;
@@ -22,16 +29,119 @@ robot_kinematics_t::robot_kinematics_t() {
 robot_kinematics_t::~robot_kinematics_t() {
 }
 
-void robot_kinematics_t::dart_armFK(Isometry3d &B, const Vector6d &q, int side) {
-    int manip_index = side == SIDE_LEFT ? MANIP_L_HAND : MANIP_R_HAND;
-    VectorXd dofs = robot->getPose();
-    for(int i=0; i < 6; i++) {
-        dofs(dart_dof_ind[manip_index][i]) = q(i);
-    }
-    robot->setPose(dofs, true);
-    B = robot->getNode(side == SIDE_LEFT ? "l_hand" : "r_hand")->getWorldTransform();
-}
+// 5/24 new functions
+    void robot_kinematics_t::com_ik(const Eigen::Vector3d& world_com,
+                                    const Eigen::Isometry3d end_effectors[NUM_MANIPULATORS],
+                                    robot::IK_Mode ik_mode[NUM_MANIPULATORS],
+                                    robot_state_t& state)
+    {
+        int COM_ITERS = 1000;
+        double COM_TOL = 1e-3;
+        double alpha = 0.5;
+        for(int i=0; i < COM_ITERS; ++i)
+        {
+            stance_ik(end_effectors, ik_mode, state);
+            
+            Vector3d com = state.robot()->getWorldCOM();
+            Vector3d com_error = world_com - com;
 
+            if(com_error.norm() < COM_TOL)
+                break;
+            
+            Isometry3d Twb;
+            state.get_body(Twb);
+            Twb.translation() += alpha * com_error;
+            state.set_body(Twb);
+        }
+    }
+
+    void robot_kinematics_t::stance_ik(const Isometry3d end_effector[NUM_MANIPULATORS],
+                                       robot::IK_Mode mode[NUM_MANIPULATORS], robot_state_t& state)
+    {
+        manip_ik(end_effector, mode, state);
+    }
+
+    void robot_kinematics_t::manip_ik(const Isometry3d end_effectors[NUM_MANIPULATORS],
+                                      robot::IK_Mode mode[NUM_MANIPULATORS], robot_state_t& state)
+    {
+        bool ok;
+        state.copy_into_robot();
+        for(int mi = 0; mi < NUM_MANIPULATORS; ++mi) {
+            Isometry3d B;
+            Isometry3d Twb;
+            B = end_effectors[mi];
+            switch (mode[mi]) {
+            case IK_MODE_BODY:
+                // Translate to global
+                state.get_body(Twb);
+                B = Twb*B;
+            case IK_MODE_SUPPORT:
+            case IK_MODE_WORLD:
+                // Do ik
+                switch(mi) {
+                case MANIP_L_FOOT:
+                    leg_ik(B, true, state);
+                    break;
+                case MANIP_R_FOOT:
+                    leg_ik(B, false, state);
+                    break;
+                case MANIP_L_HAND:
+                    arm_ik(B, true, state);
+                    break;
+                case MANIP_R_HAND:
+                    arm_ik(B, false, state);
+                    break;
+                default:
+                    break;
+                }
+                break;
+            case IK_MODE_FIXED:
+            case IK_MODE_FREE:
+            default:
+                break;
+            }
+        }
+        state.copy_into_robot();
+    }
+
+    void robot_kinematics_t::arm_ik(const Isometry3d& B, bool left, robot_state_t& state)
+    {
+        ROBOT_JACOBIAN_T rj;
+        vector<int> desired;
+        state.get_manip_indexes(desired, left ? MANIP_L_HAND : MANIP_R_HAND);
+        BodyNode *hand = state.robot()->getNode(left ? ROBOT_LEFT_HAND : ROBOT_RIGHT_HAND);
+        Isometry3d BB = B;
+        rj.manip_jacobian_ik(BB, desired, hand, state);
+    }
+    
+    void robot_kinematics_t::leg_ik(const Isometry3d& B, bool left, robot_state_t& state)
+    {
+        // relative to body
+        Matrix4d Twb = state.robot()->getNode(ROBOT_BODY)->getWorldTransform();
+        Matrix4d Tbe = Twb.inverse() * B.matrix(); // body -> end effector
+
+        // solve ik
+        VectorXd q(6); //FIXME: ugh
+        state.get_manip(q, left ? MANIP_L_FOOT : MANIP_R_FOOT);
+        Vector6d qq = q.block<6,1>(0,0);
+        legIK(leg_world_to_dh(Tbe), left, qq, qq);
+        q = qq;
+        state.set_manip(q, left ? MANIP_L_FOOT : MANIP_R_FOOT);
+    }
+
+    // misnamed
+    Matrix4d robot_kinematics_t::leg_world_to_dh(const Matrix4d& B)
+    {
+        Matrix3d R;
+        R <<0, 0, 1,
+            0, 1, 0,
+            -1, 0, 0;
+        Matrix4d Tf = B.matrix();
+        Tf.block<3,3>(0,0) *= R;
+        return Tf;
+    }
+
+// old functions
 Matrix4d robot_kinematics_t::legT(int _frame, double _u) {
 	return _legT(_frame, _u + leg_u_off[_frame-1]);
 }

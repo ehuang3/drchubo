@@ -12,6 +12,7 @@ foreach(APPDIR
     zmp_steps
     #car_test
 	#perception
+    spnav_teleop
     )
     add_subdirectory(${APPDIR})
 endforeach(APPDIR)

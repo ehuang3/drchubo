@@ -23,48 +23,8 @@
 #include <dynamics/SkeletonDynamics.h>
 
 /* ********************************************************************************************* */
-//#define ATLAS
-
-#ifdef ATLAS
-
-#include <atlas/atlas_jacobian.h>
-#include <robot/robot_state.h>
-#include <atlas/atlas_state.h>
-
-#define ROBOT_URDF "models/atlas/atlas_world.urdf"
-#define ROBOT_NAME "atlas"
-#define HEAD "head"
-#define BODY_FRAME "pelvis"
-#define LEFT_HAND "l_hand"
-#define RIGHT_HAND "r_hand"
-//#define LOWER_BACK "utorso"
-//#define MID_BACK "mtorso"
-//#define UPPER_BACK "utorso"
-#define LEFT_FOOT "l_foot"
-#define RIGHT_FOOT "r_foot"
-//#define LEFT_KNEE "l_lleg"
-//#define RIGHT_KNEE "r_lleg"
-#define ROBOT_JACOBIAN_T atlas::atlas_jacobian_t
-#define ROBOT_STATE_T atlas::atlas_state_t
-#define ROBOT_KINEMATICS_T atlas::atlas_kinematics_t
-#else
-
-#include <hubo/hubo_state.h>
-#include <hubo/hubo_jacobian.h>
-#include <hubo/hubo_kinematics.h>
-
-#define ROBOT_URDF "models/drchubo-master/hubo_world.urdf"
-#define ROBOT_NAME "golem_hubo"
-#define HEAD "Body_NKP"
-#define BODY_FRAME "Body_Hip"
-#define LEFT_HAND "leftPalm"
-#define RIGHT_HAND "rightPalm"
-#define LEFT_FOOT "leftFoot"
-#define RIGHT_FOOT "rightFoot"
-#define ROBOT_JACOBIAN_T hubo::hubo_jacobian_t
-#define ROBOT_STATE_T hubo::hubo_state_t
-#define ROBOT_KINEMATICS_T hubo::hubo_kinematics_t
-#endif
+// Loads in parameters for switching between atlas and hubo
+#include "utils/robot_configs.h"
 /* ********************************************************************************************* */
 kinematics::Skeleton* _robot_;
 kinematics::Skeleton* PREPARE_ROBOT() {

@@ -16,6 +16,8 @@
 #include <kinematics/BodyNode.h>
 #include <dynamics/SkeletonDynamics.h>
 
+#include "test_utils.h"
+
 using namespace std;
 using namespace Eigen;
 using namespace atlas;
@@ -235,15 +237,15 @@ TEST(KINEMATICS, COM_IK) {
 	Matrix4d Twl = AK->legFK(Vector6d::Zero(), true);
 	Matrix4d Twr = AK->legFK(Vector6d::Zero(), false);
 
-	Matrix4d Tm[robot_kinematics_t::NUM_MANIPULATORS];
-	Tm[robot_kinematics_t::MANIP_L_FOOT] = Twl;
-	Tm[robot_kinematics_t::MANIP_R_FOOT] = Twr;
+	Matrix4d Tm[robot::NUM_MANIPULATORS];
+	Tm[robot::MANIP_L_FOOT] = Twl;
+	Tm[robot::MANIP_R_FOOT] = Twr;
 
-	robot_kinematics_t::IK_Mode mode[robot_kinematics_t::NUM_MANIPULATORS];
-	mode[robot_kinematics_t::MANIP_L_FOOT] = robot_kinematics_t::IK_MODE_SUPPORT;
-	mode[robot_kinematics_t::MANIP_R_FOOT] = robot_kinematics_t::IK_MODE_WORLD;
-	mode[robot_kinematics_t::MANIP_L_HAND] = robot_kinematics_t::IK_MODE_FIXED;
-	mode[robot_kinematics_t::MANIP_R_HAND] = robot_kinematics_t::IK_MODE_FIXED;
+    robot_kinematics_t::IK_Mode mode[robot::NUM_MANIPULATORS];
+	mode[robot::MANIP_L_FOOT] = robot_kinematics_t::IK_MODE_SUPPORT;
+	mode[robot::MANIP_R_FOOT] = robot_kinematics_t::IK_MODE_WORLD;
+	mode[robot::MANIP_L_HAND] = robot_kinematics_t::IK_MODE_FIXED;
+	mode[robot::MANIP_R_HAND] = robot_kinematics_t::IK_MODE_FIXED;
 
 	VectorXd dofs = _atlas->getPose();
 	dofs.setZero();

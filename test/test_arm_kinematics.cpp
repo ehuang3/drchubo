@@ -248,7 +248,7 @@ TEST(ARM_KINEMATICS, FK_CMP_DART) {
 
     q << 0, M_PI/2, 0, 0, 0, 0;
     ak->_armFK(B, q, atlas_kinematics_t::SIDE_LEFT);
-    ak->dart_armFK(Tmsy_hand, q, robot_kinematics_t::SIDE_LEFT);
+//    ak->dart_armFK(Tmsy_hand, q, robot_kinematics_t::SIDE_LEFT);
     Tmsy_hand = Tw_msy.inverse() * Tmsy_hand;
     cout << "B = \n" << B.matrix() << endl;
     cout << "Tmsy_hand = \n" << Tmsy_hand.matrix() << endl;

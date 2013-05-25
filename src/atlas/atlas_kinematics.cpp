@@ -131,33 +131,33 @@ void atlas_kinematics_t::init(Skeleton *_atlas) {
 	leg_dh[6].a  = 0;
 
 	// index of joint angles in DART
-	dart_dof_ind[MANIP_L_FOOT][0] = 7;  //= l_leg_uhz
-	dart_dof_ind[MANIP_L_FOOT][1] = 10; //= l_leg_mhx
-	dart_dof_ind[MANIP_L_FOOT][2] = 13; //= l_leg_lhy
-	dart_dof_ind[MANIP_L_FOOT][3] = 18; //= l_leg_kny
-	dart_dof_ind[MANIP_L_FOOT][4] = 23; //= l_leg_uay
-	dart_dof_ind[MANIP_L_FOOT][5] = 27; //= l_leg_lax
+	dart_dof_ind[robot::MANIP_L_FOOT][0] = 7;  //= l_leg_uhz
+	dart_dof_ind[robot::MANIP_L_FOOT][1] = 10; //= l_leg_mhx
+	dart_dof_ind[robot::MANIP_L_FOOT][2] = 13; //= l_leg_lhy
+	dart_dof_ind[robot::MANIP_L_FOOT][3] = 18; //= l_leg_kny
+	dart_dof_ind[robot::MANIP_L_FOOT][4] = 23; //= l_leg_uay
+	dart_dof_ind[robot::MANIP_L_FOOT][5] = 27; //= l_leg_lax
 
-	dart_dof_ind[MANIP_R_FOOT][0] = 8;  //= r_leg_uhz
-	dart_dof_ind[MANIP_R_FOOT][1] = 11; //= r_leg_mhx
-	dart_dof_ind[MANIP_R_FOOT][2] = 14; //= r_leg_lhy
-	dart_dof_ind[MANIP_R_FOOT][3] = 19; //= r_leg_kny
-	dart_dof_ind[MANIP_R_FOOT][4] = 24; //= r_leg_uay
-	dart_dof_ind[MANIP_R_FOOT][5] = 28; //= r_leg_lax
+	dart_dof_ind[robot::MANIP_R_FOOT][0] = 8;  //= r_leg_uhz
+	dart_dof_ind[robot::MANIP_R_FOOT][1] = 11; //= r_leg_mhx
+	dart_dof_ind[robot::MANIP_R_FOOT][2] = 14; //= r_leg_lhy
+	dart_dof_ind[robot::MANIP_R_FOOT][3] = 19; //= r_leg_kny
+	dart_dof_ind[robot::MANIP_R_FOOT][4] = 24; //= r_leg_uay
+	dart_dof_ind[robot::MANIP_R_FOOT][5] = 28; //= r_leg_lax
 
-	dart_dof_ind[MANIP_L_HAND][0] = 15; //= l_arm_usy
-	dart_dof_ind[MANIP_L_HAND][1] = 20; //= l_arm_shx
-	dart_dof_ind[MANIP_L_HAND][2] = 25; //= l_arm_ely
-	dart_dof_ind[MANIP_L_HAND][3] = 29; //= l_arm_elx
-	dart_dof_ind[MANIP_L_HAND][4] = 31; //= l_arm_uwy
-	dart_dof_ind[MANIP_L_HAND][5] = 33; //= l_arm_mwx
+	dart_dof_ind[robot::MANIP_L_HAND][0] = 15; //= l_arm_usy
+	dart_dof_ind[robot::MANIP_L_HAND][1] = 20; //= l_arm_shx
+	dart_dof_ind[robot::MANIP_L_HAND][2] = 25; //= l_arm_ely
+	dart_dof_ind[robot::MANIP_L_HAND][3] = 29; //= l_arm_elx
+	dart_dof_ind[robot::MANIP_L_HAND][4] = 31; //= l_arm_uwy
+	dart_dof_ind[robot::MANIP_L_HAND][5] = 33; //= l_arm_mwx
 
-	dart_dof_ind[MANIP_R_HAND][0] = 17; //= r_arm_usy
-	dart_dof_ind[MANIP_R_HAND][1] = 22; //= r_arm_shx
-	dart_dof_ind[MANIP_R_HAND][2] = 26; //= r_arm_ely
-	dart_dof_ind[MANIP_R_HAND][3] = 30; //= r_arm_elx
-	dart_dof_ind[MANIP_R_HAND][4] = 32; //= r_arm_uwy
-	dart_dof_ind[MANIP_R_HAND][5] = 34; //= r_arm_mwx
+	dart_dof_ind[robot::MANIP_R_HAND][0] = 17; //= r_arm_usy
+	dart_dof_ind[robot::MANIP_R_HAND][1] = 22; //= r_arm_shx
+	dart_dof_ind[robot::MANIP_R_HAND][2] = 26; //= r_arm_ely
+	dart_dof_ind[robot::MANIP_R_HAND][3] = 30; //= r_arm_elx
+	dart_dof_ind[robot::MANIP_R_HAND][4] = 32; //= r_arm_uwy
+	dart_dof_ind[robot::MANIP_R_HAND][5] = 34; //= r_arm_mwx
 
 	// ARM
 	//	BodyNode *LSP = _atlas->getNode("Body_LSP");
@@ -167,12 +167,12 @@ void atlas_kinematics_t::init(Skeleton *_atlas) {
 	//	BodyNode *LWY = _atlas->getNode("Body_LWY");
 	//	BodyNode *LWP = _atlas->getNode("Body_LWP");
 
-	Joint *arm_usy = _atlas->getDof(dart_dof_ind[MANIP_L_HAND][0])->getJoint();
-	Joint *arm_shx = _atlas->getDof(dart_dof_ind[MANIP_L_HAND][1])->getJoint();
-	Joint *arm_ely = _atlas->getDof(dart_dof_ind[MANIP_L_HAND][2])->getJoint();
-	Joint *arm_elx = _atlas->getDof(dart_dof_ind[MANIP_L_HAND][3])->getJoint();
-	Joint *arm_uwy = _atlas->getDof(dart_dof_ind[MANIP_L_HAND][4])->getJoint();
-	Joint *arm_mwx = _atlas->getDof(dart_dof_ind[MANIP_L_HAND][5])->getJoint();
+	Joint *arm_usy = _atlas->getDof(dart_dof_ind[robot::MANIP_L_HAND][0])->getJoint();
+	Joint *arm_shx = _atlas->getDof(dart_dof_ind[robot::MANIP_L_HAND][1])->getJoint();
+	Joint *arm_ely = _atlas->getDof(dart_dof_ind[robot::MANIP_L_HAND][2])->getJoint();
+	Joint *arm_elx = _atlas->getDof(dart_dof_ind[robot::MANIP_L_HAND][3])->getJoint();
+	Joint *arm_uwy = _atlas->getDof(dart_dof_ind[robot::MANIP_L_HAND][4])->getJoint();
+	Joint *arm_mwx = _atlas->getDof(dart_dof_ind[robot::MANIP_L_HAND][5])->getJoint();
 
 	Matrix4d usy = arm_usy->getTransform(0)->getTransform();
 	Matrix4d shx = arm_shx->getTransform(0)->getTransform();
@@ -208,8 +208,8 @@ void atlas_kinematics_t::init(Skeleton *_atlas) {
     //             kc.arm_nsy, kc.arm_ssz, kc.arm_sez, kc.arm_ewz);
     
     for(int i=0; i < 6; i++) {
-        kc.arm_limits(i,0) = _atlas->getDof(dart_dof_ind[MANIP_L_HAND][i])->getMin();
-        kc.arm_limits(i,1) = _atlas->getDof(dart_dof_ind[MANIP_L_HAND][i])->getMax();
+        kc.arm_limits(i,0) = _atlas->getDof(dart_dof_ind[robot::MANIP_L_HAND][i])->getMin();
+        kc.arm_limits(i,1) = _atlas->getDof(dart_dof_ind[robot::MANIP_L_HAND][i])->getMax();
     }
     
     // Joint offsets for zeroing into DH configuration
@@ -224,7 +224,7 @@ void atlas_kinematics_t::init(Skeleton *_atlas) {
     kc.arm_mirror.push_back(4);
 
     // Print out information about DART mappings
-    int manip_index[2] = { MANIP_L_HAND, MANIP_R_HAND };
+    int manip_index[2] = { robot::MANIP_L_HAND, robot::MANIP_R_HAND };
     for(int i=0; i < 2; i++) {
         // Print out limit information
         for(int j=0; j < 6; j++) {
