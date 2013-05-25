@@ -209,7 +209,8 @@ namespace robot {
 
     void robot_state_t::get_ros_pose(VectorXd& q)
     {
-        for(auto iter = g_r2d.begin(); iter != g_d2r.end(); ++iter) {
+        q.resize(g_r2d.size());
+        for(auto iter = g_r2d.begin(); iter != g_r2d.end(); ++iter) {
             q(iter->first) = _dofs(iter->second);
         }
     }
