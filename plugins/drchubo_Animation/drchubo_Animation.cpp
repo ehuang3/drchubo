@@ -20,7 +20,7 @@ namespace gazebo
     public: void Load(physics::ModelPtr _model, sdf::ElementPtr /*_sdf*/)
     {
       printf("Loading animation \n");
-
+      _model->SetGravityMode( false );
       std::map<std::string, common::NumericAnimationPtr> anim;
       double T = 10.0;
 
@@ -97,7 +97,7 @@ namespace gazebo
       /////////////////////////////////
       // WORLD ANIMATION  		
       gazebo::common::PoseAnimationPtr anim2(
-          new gazebo::common::PoseAnimation("test", 1000.0, true));
+          new gazebo::common::PoseAnimation("test", T, true));
 
       gazebo::common::PoseKeyFrame *key2;
 
@@ -114,7 +114,7 @@ namespace gazebo
            xdist += dt;
           }
 
-            key2->SetTranslation(math::Vector3( xdist, 0, 1.0));
+            key2->SetTranslation(math::Vector3( 0*xdist, 0, 1.0));
             key2->SetRotation(math::Quaternion(0, 0, 0.0));
 
 	// Advance one time step
