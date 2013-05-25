@@ -216,7 +216,7 @@ int main(int argc, char** argv) {
 
     // initialize our ros node and block until we connect to the ROS
     // master
-    ros::init(argc, argv, "trajectory_executor");
+    ros::init(argc, argv, "spacenav_teloperator");
     rosnode = new ros::NodeHandle();
     ros::Time last_ros_time_;
     bool wait = true;
