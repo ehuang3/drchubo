@@ -151,7 +151,7 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         movement[0] = movespeed * _j->axes[1] / dT.toSec(); // translate +x
         movement[1] = movespeed * _j->axes[0] / dT.toSec(); // translate +y
         movement[2] = movespeed * _j->axes[2] / dT.toSec(); // translate +z
-        movement[3] = -1 * movespeed * _j->axes[4] / dT.toSec(); // rotate + around x
+        movement[3] = movespeed * _j->axes[4] / dT.toSec(); // rotate + around x
         movement[4] = movespeed * _j->axes[3] / dT.toSec(); // rotate + around y
         movement[5] = movespeed * _j->axes[5] / dT.toSec(); // rotate + around z
         
