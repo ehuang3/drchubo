@@ -32,48 +32,37 @@
       <pose>0.75 0.0 0.0 0 0 1.57</pose>	
     </include> 
 
-    <!-- Bowl pile -->	
+    <!-- Beer pile -->	
     <include>
-      <uri>model://bowl2</uri>
-      <name>bowl_a</name>	
-      <pose>0.53 0.15 0.78 0 0 0</pose>	
+      <uri>model://beer</uri>
+      <name>beer_a</name>	
+      <pose>0.55 0.15 0.78 0 0 0</pose>	
     </include> 
 	
     <include>
-      <uri>model://bowl2</uri>
-      <name>bowl_b</name>	
-      <pose>0.53 0.15 0.82 0 0 0</pose>	
+      <uri>model://beer</uri>
+      <name>beer_b</name>	
+      <pose>0.55 0.15 1.02 0 0 0</pose>	
     </include> 
 
     <include>
-      <uri>model://bowl2</uri>
-      <name>bowl_c</name>	
-      <pose>0.53 0.15 0.86 0 0 0</pose>	
+      <uri>model://beer</uri>
+      <name>beer_c</name>	
+      <pose>0.55 0.02 0.78 0 0 0</pose>	
     </include> 
 
     <include>
-      <uri>model://bowl2</uri>
-      <name>bowl_d</name>	
-      <pose>0.53 0.15 0.90 0 0 0</pose>	
+      <uri>model://beer</uri>
+      <name>beer_d</name>	
+      <pose>0.55 0.02 1.02 0 0 0</pose>	
     </include> 
 
     <include>
-      <uri>model://bowl2</uri>
-      <name>bowl_e</name>	
-      <pose>0.53 0.15 0.94 0 0 0</pose>	
+      <uri>model://beer</uri>
+      <name>beer_e</name>	
+      <pose>0.55 0.08 1.26 0 0 0</pose>	
     </include> 
 
-    <include>
-      <uri>model://bowl2</uri>
-      <name>bowl_f</name>	
-      <pose>0.53 0.15 0.98 0 0 0</pose>	
-    </include> 
-
-    <include>
-      <uri>model://bowl2</uri>
-      <name>bowl_g</name>	
-      <pose>0.53 0.15 1.02 0 0 0</pose>	
-    </include>
 
     <!-- Beer 2-->	
     <!--<include>
@@ -85,8 +74,8 @@
     <!-- Beer -->	
     <include>
       <uri>model://beer</uri>
-      <name>beer_a</name>	
-      <pose>0.6 -0.25 0.78 0 0 0</pose>	
+      <name>beer_set</name>	
+      <pose>0.53 -0.25 0.78 0 0 0</pose>	
     </include> 
 
     <!-- Saucepan -->	
