@@ -128,50 +128,64 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
     ros::Time currentTime = ros::Time::now();
     ros::Duration dT = currentTime - lastTime;
 
-    std::cout << _j->buttons[0] << ", " << !lastButtons[0] << std::endl;
+    robot::LimbIndex targetLimb = robot::LIMB_L_ARM;
+    std::vector<int> desired_dofs; // which dofs to run the jacobian on
+    kinematics::BodyNode* end_effector; // the bodynode on the end of our limb
+    atlasStateTarget.get_manip_indexes(desired_dofs, targetLimb);
+    end_effector = atlasSkel->getNode("l_hand");
 
     if (_j->buttons[0] && !lastButtons[0]) {
-        targetPoseInited = true;
-        std::cout << "Resetting target pose" << std::endl;
+        std::cout << "Setting target pose." << std::endl;
         Eigen::VectorXd temp;
-        atlasStateCurrent.get_dart_pose(temp);
-        atlasStateTarget.set_dart_pose(temp);
-    }
-    if (!targetPoseInited) { return; }
-
-    Eigen::VectorXd movement(6); // the desired end effector velocity in worldspace
-    for (unsigned int i = 0; i < 6; i++)
-        movement[i] = .00005 * _j->axes[i] / dT.toSec();
-
-    std::vector<int> desired_dofs; // which dofs to run the jacobian on
-    Eigen::MatrixXd J;             // the forward jacobian
-    kinematics::BodyNode* end_effector; // the bodynode on the end of our limb
-    Eigen::VectorXd dofs;               // the configuration of the limb in jointspace
-    Eigen::VectorXd qdot;               // the necessary jointspace velocity of the limb
-
-    // compute the jacobian
-    end_effector = atlasSkel->getNode("l_hand");
-    atlasStateTarget.get_manip_indexes(desired_dofs, robot::LIMB_L_ARM);
-    atlasJac.manip_jacobian(J, desired_dofs, end_effector, atlasStateTarget);
-
-    // use the jacobian to get the jointspace velocity
-    qdot = Eigen::VectorXd::Zero(J.cols());
-    aa_la_dls(J.rows(), J.cols(), 0.1, J.data(), movement.data(), qdot.data());
-
-    // use the jointspace velocity to update the target position
-    dofs.resize(desired_dofs.size());
-    atlasStateTarget.get_dofs(dofs, desired_dofs);
-    atlasStateTarget.set_dofs(dofs + qdot, desired_dofs);
-
-    // send the new target position to ROS
-    Eigen::VectorXd rospose;
-    atlasStateTarget.get_ros_pose(rospose);
-    for(unsigned int i = 0; i < rospose.size(); i++) {
-        jointCommand.position[i] = rospose[i];
+        atlasStateCurrent.get_ros_pose(temp);
+        atlasStateTarget.set_ros_pose(temp);
+        targetPoseInited = true;
     }
     
-    jointCommand.header.stamp = ros::Time::now();
-    topic_pub_joint_commands.publish(jointCommand);
+    if (!targetPoseInited) {
+        std::cout << "Please init target pose first - hit the left button on the spacenav base." << std::endl;
+    }
+    if (targetPoseInited && !_j->buttons[0]) {
+        double movespeed = .00005;
+        Eigen::VectorXd movement(6); // the desired end effector velocity in worldspace
+        movement[0] = movespeed * _j->axes[1] / dT.toSec(); // translate +x
+        movement[1] = movespeed * _j->axes[0] / dT.toSec(); // translate +y
+        movement[2] = movespeed * _j->axes[2] / dT.toSec(); // translate +z
+        movement[3] = -1 * movespeed * _j->axes[4] / dT.toSec(); // rotate + around x
+        movement[4] = movespeed * _j->axes[3] / dT.toSec(); // rotate + around y
+        movement[5] = movespeed * _j->axes[5] / dT.toSec(); // rotate + around z
+        
+        // for (unsigned int i = 0; i < 6; i++)
+        //     movement[i] = .0001 * _j->axes[i] / dT.toSec();
+        // for (unsigned int i = 0; i < 6; i++)
+        //     if (i != 0) movement[i] = 0.0;
+
+        Eigen::MatrixXd J;             // the forward jacobian
+        Eigen::VectorXd dofs;               // the configuration of the limb in jointspace
+        Eigen::VectorXd qdot;               // the necessary jointspace velocity of the limb
+
+        // compute the jacobian
+        atlasJac.manip_jacobian(J, desired_dofs, end_effector, atlasStateTarget);
+
+        // use the jacobian to get the jointspace velocity
+        qdot = Eigen::VectorXd::Zero(J.cols());
+        aa_la_dls(J.rows(), J.cols(), 0.1, J.data(), movement.data(), qdot.data());
+
+        // use the jointspace velocity to update the target position
+        dofs.resize(desired_dofs.size());
+        atlasStateTarget.get_dofs(dofs, desired_dofs);
+        atlasStateTarget.set_dofs(dofs + qdot, desired_dofs);
+
+        // send the new target position to ROS
+        Eigen::VectorXd rospose;
+        atlasStateTarget.get_ros_pose(rospose);
+        for(unsigned int i = 0; i < rospose.size(); i++) {
+            jointCommand.position[i] = rospose[i];
+        }
+    
+        jointCommand.header.stamp = ros::Time::now();
+        topic_pub_joint_commands.publish(jointCommand);
+    }
 
     lastTime = currentTime;
     lastButtons = _j->buttons;
