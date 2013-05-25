@@ -124,8 +124,8 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
     static std::vector<float> lastAxes = _j->axes;
     static bool targetPoseInited = false;
 
-    static ros::Time lastTime = ros::Time::now();
-    ros::Time currentTime = ros::Time::now();
+    static ros::Time lastTime = _j->header.stamp;
+    ros::Time currentTime = _j->header.stamp;
     ros::Duration dT = currentTime - lastTime;
 
     robot::LimbIndex targetLimb = robot::LIMB_L_ARM;
@@ -183,7 +183,7 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
             jointCommand.position[i] = rospose[i];
         }
     
-        jointCommand.header.stamp = ros::Time::now();
+        jointCommand.header.stamp = _j->header.stamp;
         topic_pub_joint_commands.publish(jointCommand);
     }
 
