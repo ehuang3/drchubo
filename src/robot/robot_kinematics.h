@@ -103,7 +103,7 @@ namespace robot
         bool arm_ik(const Eigen::Isometry3d& B, bool left, robot_state_t& state);
         
         // Analytic arm IK with additional jacobian ik to resolve inexact errors
-        void arm_jac_ik(const Eigen::Isometry3d& B, bool left, robot_state_t& state);
+        bool arm_jac_ik(const Eigen::Isometry3d& B, bool left, robot_state_t& state);
 
         // calculates transform from world to dsy (DH shoulder origin)
         // used to convert from world to HUBO's DH convention

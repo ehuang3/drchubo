@@ -181,9 +181,9 @@ robot_kinematics_t::~robot_kinematics_t() {
         return ok;
     }
     
-    void robot_kinematics_t::arm_jac_ik(const Isometry3d& B, bool left, robot_state_t& state)
+    bool robot_kinematics_t::arm_jac_ik(const Isometry3d& B, bool left, robot_state_t& state)
     {
-        arm_ik(B, left, state);
+        bool ok = arm_ik(B, left, state);
         robot_jacobian_t rj;
         rj.init(state.robot());
         BodyNode *hand = state.robot()->getNode(left ? ROBOT_LEFT_HAND : ROBOT_RIGHT_HAND);
@@ -191,6 +191,7 @@ robot_kinematics_t::~robot_kinematics_t() {
         state.get_manip_indexes(arm, left ? MANIP_L_HAND : MANIP_R_HAND);
         Isometry3d BB = B;
         rj.manip_jacobian_ik(BB, arm, hand, state);
+        return ok;
     }
 
     void robot_kinematics_t::DH2HG(Isometry3d &B, double t, double f, double r, double d) {
