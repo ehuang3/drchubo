@@ -79,3 +79,17 @@ void ASSERT_MATRIX_EQ(Eigen::Isometry3d A, Eigen::Isometry3d B, double tol = 1e-
 {
     ASSERT_MATRIX_EQ(A.matrix(), B.matrix(), tol);
 }
+/* ********************************************************************************************* */
+Eigen::Matrix4d ZERO_MATRIX(Eigen::Isometry3d B, double tol = 1e-7)
+{
+    for(int i=0; i < 4; i++)
+        for(int j=0; j < 4; j++)
+            if(fabs(B(i,j)) < tol)
+                B(i,j) = 0;
+    return B.matrix();
+}
+/* ********************************************************************************************* */
+void PRINT_MATRIX(Eigen::Matrix4d A)
+{
+    
+}
