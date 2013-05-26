@@ -362,25 +362,56 @@ void drchubo_MattCode::generateZMPGait() {
     
     mMzJointTraj[i] = waypoint;
   }
+
+  // Store root position
+  // Create a DART Skeleton
+
+  for( int i = 0; i < walker.traj.size(); ++i ) {
+    // Get stance foot
+    Eigen::Matrix4d endT;
+
+    if( walker.ref[i].stance == SINGLE_LEFT || walker.ref[i].stance == DOUBLE_LEFT ) {
+      endT = tf2Mx( walker.ref[i].feet[0] );
+    } else {
+      endT = tf2Mx( walker.ref[i].feet[1] );
+    }
+    
+
+  }
     
   std::cout << "Done and ready to step back and forth!" << std::endl;
 }
+ 
+  /**
+   * @function tf2Mx
+   */
+  Eigen::Matrix4d drchubo_MattCode::tf2Mx( Transform3 _tf ) {
 
+    Eigen::Matrix4d T4;
+    mat4 m = _tf.matrix();
+    for( int i = 0; i < 4; ++i ) {
+      for( int j = 0; j < 4; ++j ) {
+	T4(i, j) = m(i,j);
+      }
+    }
+    
+    return T4;
+  }
 
 /**
  * @function getdouble
  * @brief Helper to get a double value from a string
  */
-double drchubo_MattCode::getdouble(const char* str) {
-  char* endptr;
-  double d = strtod(str, &endptr);
-  if (!endptr || *endptr) {
-    std::cerr << "Error parsing number on command line!\n\n";
-    exit(1);
+  double drchubo_MattCode::getdouble(const char* str) {
+    char* endptr;
+    double d = strtod(str, &endptr);
+    if (!endptr || *endptr) {
+      std::cerr << "Error parsing number on command line!\n\n";
+      exit(1);
+    }
+    return d;
   }
-  return d;
-}
-
+  
 /**
  * @function getlong
  * @brief Helper to get a long value from a string

@@ -56,6 +56,7 @@ namespace gazebo
     long getlong(const char* str);
     walktype getwalktype(const std::string& s); 
     ZMPWalkGenerator::ik_error_sensitivity getiksense(const std::string& s);
+    Eigen::Matrix4d tf2Mx( Transform3 _tf );
     ///////////////////////////////////////
 
   private:
