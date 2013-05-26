@@ -7,11 +7,12 @@
 #include "physics/physics.hh"
 #include "../../src/utils/data_paths.h"
 
-std::string gJointNames[26] = {"drchubo::LSP", "drchubo::LSR", "drchubo::LSY", "drchubo::LEP", "drchubo::LWY", "drchubo::LWP", "drchubo::LWR",
+std::string gJointNames[28] = {"drchubo::LSP", "drchubo::LSR", "drchubo::LSY", "drchubo::LEP", "drchubo::LWY", "drchubo::LWP", "drchubo::LWR",
 			       "drchubo::RSP", "drchubo::RSR", "drchubo::RSY", "drchubo::REP", "drchubo::RWY", "drchubo::RWP", "drchubo::RWR",
 			       "drchubo::LHY", "drchubo::LHR", "drchubo::LHP", "drchubo::LKP", "drchubo::LAP", "drchubo::LAR",
-			       "drchubo::RHY", "drchubo::RHR", "drchubo::RHP", "drchubo::RKP", "drchubo::RAP", "drchubo::RAR"};
-int gNumJoints = 26;
+			       "drchubo::RHY", "drchubo::RHR", "drchubo::RHP", "drchubo::RKP", "drchubo::RAP", "drchubo::RAR",
+			       "drchubo::NKY", "drchubo::NKP"};
+int gNumJoints = 28;
 
 namespace gazebo
 {
@@ -30,7 +31,7 @@ namespace gazebo
       common::NumericKeyFrame *joint_key;
 
       // Fill joint initialization
-      double T = 10.0;
+      double T = 25.0;
       for( int i = 0; i < gNumJoints; ++i ) {
 	joint_anim[ gJointNames[i] ].reset( new common::NumericAnimation( "anim", T, true) );
       }
@@ -39,7 +40,7 @@ namespace gazebo
       // Read file with trajectories
       //**********************************
       float ang[gNumJoints]; int ind;
-      int numTrajPoints = 900;
+      int numTrajPoints = 4900;
       FILE* pFile;
 
       pFile = fopen(VRC_DATA_PATH "trajs/traj.txt", "r");
@@ -71,6 +72,8 @@ namespace gazebo
 	t+=dt;
       }
 
+      fclose( pFile );
+
       // Attach the animation to the model
       _model->SetJointAnimation( joint_anim );
       printf("End loading Joint animation \n");
@@ -82,18 +85,25 @@ namespace gazebo
       gazebo::common::PoseKeyFrame *pose_key;
 
       t = 0;
+      float posx, posy, posz;
+
+
+      pFile = fopen(VRC_DATA_PATH "trajs/com.txt", "r");
 
       for( int i = 0; i < numTrajPoints; ++i ) {
 
+        fscanf( pFile, "%f %f %f \n", &posx, &posy, &posz );  
 	pose_key = pose_anim->CreateKeyFrame(t);
-
-	pose_key->SetTranslation(math::Vector3( t, 0, 1.0));
+        std::cout<<"xyz["<<i<<"] : "<<posx<<","<<posy<<","<<posz << std::endl;
+	pose_key->SetTranslation(math::Vector3( posx, posy, posz + 0.39));
 	pose_key->SetRotation(math::Quaternion(0, 0, 0.0));
 
 	// Advance one time step
 	t+=dt;
       }
       
+      fclose( pFile );
+
       _model->SetAnimation( pose_anim );      
       printf( "** End loading Pose animation **\n" );
     }
