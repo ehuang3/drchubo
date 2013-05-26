@@ -146,48 +146,46 @@ robot_kinematics_t::~robot_kinematics_t() {
     double zeroSize = 1e-9;
     void robot_kinematics_t::arm_fk(Isometry3d& B, bool left, robot_state_t& state, bool use_hubo_fk)
     {
-        // if(use_hubo_fk) {
-        //     VectorXd q(6);
-        //     Vector6d q6;
-        //     state.get_manip(q, left ? MANIP_L_HAND : MANIP_R_HAND);
-        //     q6 = q.block<6,1>(0,0);
-        //     armFK(B, q6, left ? SIDE_LEFT : SIDE_RIGHT);
-        //     // xform into world coordinates
-        //     Isometry3d Tw_dsy, Tdh_wrist;
-        //     xform_w_dsy(Tw_dsy, left, state);
-        //     xform_dh_wrist(Tdh_wrist);
-        //     B = Tw_dsy*B*Tdh_wrist; //< inaccurate!
-        // } else {
-        //     state.copy_into_robot();
-        //     B = state.robot()->getNode(left ? ROBOT_LEFT_HAND : ROBOT_RIGHT_HAND)->getWorldTransform();
-        // }
+        if(use_hubo_fk)
+        {
+            VectorXd q(6);
+            Vector6d q6;
+            state.get_manip(q, left ? MANIP_L_HAND : MANIP_R_HAND);
+            q6 = q.block<6,1>(0,0);
+            armFK(B, q6, left ? SIDE_LEFT : SIDE_RIGHT);
+            Isometry3d Tw_dsy, Tdh_wrist;
+            xform_w_dsy(Tw_dsy, left, state);
+            xform_dh_wrist(Tdh_wrist, left);
+            B = Tw_dsy*B*Tdh_wrist; //< inaccurate!
+        }
+        else
+        {
+            state.copy_into_robot();
+            B = state.robot()->getNode(left ? ROBOT_LEFT_HAND : ROBOT_RIGHT_HAND)->getWorldTransform();
+        }
     }
 
     bool robot_kinematics_t::arm_ik(const Isometry3d& B, bool left, robot_state_t& state)
     {
-        // VectorXd q(6);
-        // Vector6d q6, qPrev;
-        // state.get_manip(q, left ? MANIP_L_HAND : MANIP_R_HAND);
-        // q6 = q;
-        // // Convert to DH convention
-        // q6(2) *= -1;
-        // q6(4) *= -1;
-        // // Copy for IK nearest selection
-        // qPrev = q6;
-        // // xform B to DH frame
-        // Isometry3d Tw_dsy, Tdh_wrist; //< world 2 dh shoulder y, dh wrist convention
-        // xform_w_dsy(Tw_dsy, left, state);
-        // xform_dh_wrist(Tdh_wrist);
-        // Isometry3d B_dh = Tw_dsy.inverse() * B * Tdh_wrist.inverse();
-        // // HUBO IK
-        // rak.armIK(q6, B_dh, qPrev, left ? SIDE_LEFT : SIDE_RIGHT);
-        // // Convert back to dart conventions
-        // q6(2) *= -1;
-        // q6(4) *= -1;
-        // // Save into state
-        // q = q6;
-        // state.set_manip(q, left ? MANIP_L_HAND : MANIP_R_HAND); //< save into dof
-        // state.copy_into_robot(); //< save into skeleton
+        // get prev joints
+        VectorXd q(6);
+        Vector6d q6, qPrev;
+        state.get_manip(q, left ? MANIP_L_HAND : MANIP_R_HAND);
+        q6 = q.block<6,1>(0,0);
+        qPrev = q6;
+        // xform B to DH
+        Isometry3d Tw_dsy, Tdh_wrist;
+        xform_w_dsy(Tw_dsy, left, state);
+        xform_dh_wrist(Tdh_wrist, left);
+        Isometry3d B_dh = Tw_dsy.inverse()*B*Tdh_wrist.inverse();
+        // IK
+        bool ok = armIK(q6, B_dh, qPrev, left ? SIDE_LEFT : SIDE_RIGHT);
+        // Save into state
+        q = q6;
+        state.set_manip(q, left ? MANIP_L_HAND : MANIP_R_HAND); //< save into dof
+        state.copy_into_robot(); //< save into skeleton
+        // Return
+        return ok;
     }
 
 
@@ -253,17 +251,17 @@ robot_kinematics_t::~robot_kinematics_t() {
 
     }
 
-    void robot_kinematics_t::armIK(Vector6d &q, const Isometry3d& B, const Vector6d& qPrev, int side) const {
+    bool robot_kinematics_t::armIK(Vector6d &q, const Isometry3d& B, const Vector6d& qPrev, int side) const {
         // Hand
         Isometry3d hand;
         hand(0,0) =  1; hand(0,1) =  0; hand(0,2) = 0; hand(0,3) =   0;
         hand(1,0) =  0; hand(1,1) =  0; hand(1,2) =-1; hand(1,3) =   0;
         hand(2,0) =  0; hand(2,1) =  1; hand(2,2) = 0; hand(2,3) =   0;
         hand(3,0) =  0; hand(3,1) =  0; hand(3,2) = 0; hand(3,3) =   1;
-        armIK(q, B, qPrev, side, hand);
+        return armIK(q, B, qPrev, side, hand);
     }
 
-    void robot_kinematics_t::armIK(Vector6d &q, const Isometry3d& B, const Vector6d& qPrev, int side,
+    bool robot_kinematics_t::armIK(Vector6d &q, const Isometry3d& B, const Vector6d& qPrev, int side,
                                        const Isometry3d &endEffector) const {
 
         Eigen::ArrayXXd qAll(6,8);
@@ -558,6 +556,7 @@ robot_kinematics_t::~robot_kinematics_t() {
 
         //q = q.cwiseMin(limits.col(1)); //TODO: Put these back
         //q = q.cwiseMax(limits.col(0));
+        return anyWithin;
     }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -117,9 +117,9 @@ namespace robot
         void armFK(Eigen::Isometry3d &B, const Eigen::Vector6d &q, int side) const;
         void armFK(Eigen::Isometry3d &B, const Eigen::Vector6d &q, int side,
                    const Eigen::Isometry3d &endEffector) const;
-        void armIK(Eigen::Vector6d &q, const Eigen::Isometry3d& B,
+        bool armIK(Eigen::Vector6d &q, const Eigen::Isometry3d& B,
                    const Eigen::Vector6d& qPrev, int side) const;
-        void armIK(Eigen::Vector6d &q, const Eigen::Isometry3d& B,
+        bool armIK(Eigen::Vector6d &q, const Eigen::Isometry3d& B,
                    const Eigen::Vector6d& qPrev, int side,
                    const Eigen::Isometry3d &endEffector) const;
 
