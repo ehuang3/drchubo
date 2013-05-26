@@ -15,13 +15,13 @@ namespace robot {
         robot_jacobian_t();
         virtual ~robot_jacobian_t();
     
-        virtual void init(kinematics::Skeleton *_robot) = 0;
-        
+        virtual void init(kinematics::Skeleton *_robot) { robot = _robot; }
 
         // void solve_dls(Eigen::MatrixXd& J, Eigen::VectorXd& err, Eigen::VectorXd& qdot);
 
         // Please use the functions below.
-
+        
+        // 
         void manip_jacobian_ik(Eigen::Isometry3d& B, std::vector<int>& desired_dofs,
                                kinematics::BodyNode *base_frame, kinematics::BodyNode *end_effector,
                                robot_state_t& state);
@@ -52,8 +52,6 @@ namespace robot {
 
     protected:
         kinematics::Skeleton *robot;
-        std::string manip_node[NUM_MANIPULATORS];
-        std::vector<std::string> manip_joints[NUM_MANIPULATORS];
     };
 
 }

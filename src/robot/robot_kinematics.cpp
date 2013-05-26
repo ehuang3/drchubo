@@ -109,16 +109,16 @@ robot_kinematics_t::~robot_kinematics_t() {
                 // Do ik
                 switch(mi) {
                 case MANIP_L_FOOT:
-                    leg_ik(B, true, state);
+                    leg_ik(B, SIDE_LEFT, state);
                     break;
                 case MANIP_R_FOOT:
-                    leg_ik(B, false, state);
+                    leg_ik(B, SIDE_RIGHT, state);
                     break;
                 case MANIP_L_HAND:
-                    arm_ik(B, true, state);
+                    arm_ik(B, SIDE_LEFT, state);
                     break;
                 case MANIP_R_HAND:
-                    arm_ik(B, false, state);
+                    arm_ik(B, SIDE_RIGHT, state);
                     break;
                 default:
                     break;
@@ -132,13 +132,6 @@ robot_kinematics_t::~robot_kinematics_t() {
         }
         state.copy_into_robot();
     }
-
-
-
-
-
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 /// ARM FK/IK SOLVER
@@ -187,7 +180,18 @@ robot_kinematics_t::~robot_kinematics_t() {
         // Return
         return ok;
     }
-
+    
+    void robot_kinematics_t::arm_jac_ik(const Isometry3d& B, bool left, robot_state_t& state)
+    {
+        arm_ik(B, left, state);
+        robot_jacobian_t rj;
+        rj.init(state.robot());
+        BodyNode *hand = state.robot()->getNode(left ? ROBOT_LEFT_HAND : ROBOT_RIGHT_HAND);
+        vector<int> arm;
+        state.get_manip_indexes(arm, left ? MANIP_L_HAND : MANIP_R_HAND);
+        Isometry3d BB = B;
+        rj.manip_jacobian_ik(BB, arm, hand, state);
+    }
 
     void robot_kinematics_t::DH2HG(Isometry3d &B, double t, double f, double r, double d) {
         // Convert DH parameters (standard convention) to Homogenuous transformation matrix.

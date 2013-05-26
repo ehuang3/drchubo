@@ -490,9 +490,8 @@ TEST(ATLAS_ARM, TEST_RIGHT_IK)
     q.setZero();
 
     //q6 << M_PI/2, 0, M_PI/2, M_PI/2, 0, 0;
-    // q6 << 0.14, 1, 0.153, 1.231, -0.44, 0.5;
+    q6 << 1.14, 1, 0.153, -1.231, -0.44, -1.5;
 
-    q6 << 0, 0, 0, 0, 0, 0;
     q = q6;
 
     // Setup world xform + joint angles
@@ -511,9 +510,65 @@ TEST(ATLAS_ARM, TEST_RIGHT_IK)
     state->get_manip(q, MANIP_R_HAND);
     
     // print
-    // cout << "q6 = \n" << q6 << endl;
+    cout << "q6 = \n" << q6 << endl;
+    cout << "qsol = \n" << q << endl;
 
-    // cout << "qsol = \n" << q << endl;
+    state->copy_into_robot();
+    Isometry3d B;
+    B = state->robot()->getNode(ROBOT_RIGHT_HAND)->getWorldTransform();
+    
+    printf("Tw_hand=\n");
+    cout << ZERO_MATRIX(Tw_hand) << endl;
+    printf("B=\n");
+    cout << ZERO_MATRIX(B) << endl;
+}
+/* ********************************************************************************************* */
+TEST(ATLAS_ARM, TEST_RIGHT_JAC_IK)
+{
+    robot_state_t *state = PREPARE_ROBOT_STATE();
+    robot_kinematics_t *kin = PREPARE_ROBOT_KINEMATICS();
+    
+    vector<int> arm;
+    state->get_manip_indexes(arm, MANIP_R_HAND);
+
+    // Setup joint angles
+    VectorXd q(6);
+    Vector6d q6;
+    q6.setZero();
+    q.setZero();
+
+    //q6 << M_PI/2, 0, M_PI/2, M_PI/2, 0, 0;
+    q6 << 1.14, 1, 0.153, -1.231, -0.44, -1.5;
+
+    q = q6;
+
+    // Setup world xform + joint angles
+    state->set_dofs(q, arm);
+    state->copy_into_robot();
+
+    // q -> Dart hand
+    Isometry3d Tw_hand;
+    Tw_hand = state->robot()->getNode(ROBOT_RIGHT_HAND)->getWorldTransform();
+
+    // arm ik
+    state->dofs().setZero();
+    kin->arm_jac_ik(Tw_hand, false, *state);
+    
+    // get solution
+    state->get_manip(q, MANIP_R_HAND);
+    
+    // print
+    cout << "q6 = \n" << q6 << endl;
+    cout << "qsol = \n" << q << endl;
+
+    state->copy_into_robot();
+    Isometry3d B;
+    B = state->robot()->getNode(ROBOT_RIGHT_HAND)->getWorldTransform();
+    
+    printf("Tw_hand=\n");
+    cout << ZERO_MATRIX(Tw_hand) << endl;
+    printf("B=\n");
+    cout << ZERO_MATRIX(B) << endl;
 }
 /* ********************************************************************************************* */
 int main(int argc, char* argv[]) {
