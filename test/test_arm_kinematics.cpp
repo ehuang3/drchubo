@@ -37,7 +37,7 @@ kinematics::BodyNode *node_clav;
 // Isometry3d Tw_msy; // World to shoulder frame 0 mocked (for quick testing link lengths)
 /* ********************************************************************************************* */
 void DART_ZEROD_FK(Isometry3d& B, const Vector6d& q, int side) {
-    bool left = side == robot_kinematics_t::SIDE_LEFT;
+    bool left = side == robot::SIDE_LEFT;
     int manip_index = left ? robot_kinematics_t::MANIP_L_HAND : robot_kinematics_t::MANIP_R_HAND;
     VectorXd dofs = _atlas->getPose();
     for(int i=0; i < 6; i++) {
@@ -190,7 +190,7 @@ TEST(ARM_KINEMATICS, DART_JOINT_OFFSETS) {
     Vector6d q;
     q.setZero();
     Isometry3d Tw_mwx;
-    DART_ZEROD_FK(Tw_mwx, q, robot_kinematics_t::SIDE_LEFT);
+    DART_ZEROD_FK(Tw_mwx, q, robot::SIDE_LEFT);
     Isometry3d Tw_dsy;
     XFORM_W_DSY(Tw_dsy, TEST_LEFT);
     Isometry3d Tdsy_mwx = Tw_dsy.inverse() * Tw_mwx;
@@ -202,7 +202,7 @@ TEST(ARM_KINEMATICS, DART_JOINT_OFFSETS) {
     Isometry3d Tdsy_shx = Tw_dsy.inverse() * Tw_shx;
     // cout << "Joint offsets put LEFT Tdsy_shx at = \n" << Tdsy_shx.matrix() << endl;
     // Determine if joint offsets zero RIGHT side correctly
-    DART_ZEROD_FK(Tw_mwx, q, robot_kinematics_t::SIDE_RIGHT);
+    DART_ZEROD_FK(Tw_mwx, q, robot::SIDE_RIGHT);
     XFORM_W_DSY(Tw_dsy, TEST_RIGHT);
     Tdsy_mwx = Tw_dsy.inverse() * Tw_mwx;
     cout << "Joint offsets put RIGHT Tdsy_mwx at = \n" << Tdsy_mwx.matrix() << endl;
@@ -236,21 +236,21 @@ TEST(ARM_KINEMATICS, FK_CMP_DART) {
     Isometry3d Bdsy_mwx;
     
     // Compare 0 positions
-    q.setZero();
-    ak->_armFK(Bdsy_mwx, q, atlas_kinematics_t::SIDE_LEFT);
-    cout << "Bdsy_mwx = \n" << Bdsy_mwx.matrix() << endl;
+//     q.setZero();
+//     ak->_armFK(Bdsy_mwx, q, robot::SIDE_LEFT);
+//     cout << "Bdsy_mwx = \n" << Bdsy_mwx.matrix() << endl;
     
-    Isometry3d Tw_msy;
-    Isometry3d Tmsy_hand;
-    Tmsy_hand = Tw_msy.inverse() * node_hand->getWorldTransform();
-    cout << "Tmsy_hand = \n" << Tmsy_hand.matrix() << endl;
+//     Isometry3d Tw_msy;
+//     Isometry3d Tmsy_hand;
+//     Tmsy_hand = Tw_msy.inverse() * node_hand->getWorldTransform();
+//     cout << "Tmsy_hand = \n" << Tmsy_hand.matrix() << endl;
 
-    q << 0, M_PI/2, 0, 0, 0, 0;
-    ak->_armFK(B, q, atlas_kinematics_t::SIDE_LEFT);
-//    ak->dart_armFK(Tmsy_hand, q, robot_kinematics_t::SIDE_LEFT);
-    Tmsy_hand = Tw_msy.inverse() * Tmsy_hand;
-    cout << "B = \n" << B.matrix() << endl;
-    cout << "Tmsy_hand = \n" << Tmsy_hand.matrix() << endl;
+//     q << 0, M_PI/2, 0, 0, 0, 0;
+//     ak->_armFK(B, q, robot::SIDE_LEFT);
+// //    ak->dart_armFK(Tmsy_hand, q, robot_kinematics_t::SIDE_LEFT);
+//     Tmsy_hand = Tw_msy.inverse() * Tmsy_hand;
+//     cout << "B = \n" << B.matrix() << endl;
+//     cout << "Tmsy_hand = \n" << Tmsy_hand.matrix() << endl;
 }
 /* ********************************************************************************************* */
 TEST(ARM_KINEMATICS, DART_LOCS) {

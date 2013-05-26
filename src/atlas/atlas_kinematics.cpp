@@ -12,10 +12,12 @@
 #define DEBUG
 #define MODULE_NAME "ATLAS-KIN"
 #include "utils/debug_utils.h"
+#include "robot/robot_state.h"
 
 using namespace Eigen;
 using namespace kinematics;
 using namespace std;
+using namespace robot;
 
 namespace atlas {
 
@@ -24,6 +26,65 @@ atlas_kinematics_t::atlas_kinematics_t() {
 
 atlas_kinematics_t::~atlas_kinematics_t() {
 }
+
+    void atlas_kinematics_t::xform_dh_wrist(Isometry3d& R)
+    {
+        // from dh convention to atlas convention
+        R.matrix() << 
+            0, 1, 0, 0,
+            1, 0, 0, 0,
+            0, 0, -1, 0,
+            0, 0, 0, 1;
+    }
+
+    void atlas_kinematics_t::xform_w_dsy(Isometry3d& B, bool left, robot_state_t& state)
+    {
+        // Transform magic, I'd rather not explain unless I'm held down and threatened with a knife.
+        // Need to orient a frame from world to DH origin.
+        Skeleton *atlas = state.robot();
+        state.copy_into_robot();
+        Joint *arm_usy = atlas->getJoint(left?"l_arm_usy":"r_arm_usy");
+        Joint *arm_shx = atlas->getJoint(left?"l_arm_shx":"r_arm_shx");
+        Matrix4d shx = arm_shx->getTransform(0)->getTransform();
+        Vector3d usy_axis = arm_usy->getAxis(0);
+        Vector3d shx_disp = shx.block<3,1>(0,3);
+        // Offset to 0 arm at joint shx
+        double angle = -atan2(usy_axis(1), usy_axis(2)); //-30 angle
+        // Vector from usy to dsy
+        Vector3d usy_dsy = usy_axis;
+        usy_dsy *= usy_axis.dot(shx_disp);
+        // Vector dsy to shx
+        Vector3d dsy_shx = shx_disp - usy_dsy;
+        // Transform usy to dsy
+        Isometry3d Tusy_dsy;
+        Tusy_dsy = Matrix4d::Identity();
+        Tusy_dsy.rotate(AngleAxisd(angle, Vector3d::UnitX()));
+        Tusy_dsy.translation() += usy_dsy;
+        Tusy_dsy.translation() += dsy_shx; //FIXME: REMOVE!
+        // cout << "Tusy_dsy = \n" << Tusy_dsy.matrix() << endl;
+        // Transform w to dsy
+        Isometry3d Tw_usy;
+        Tw_usy = arm_usy->getChildNode()->getWorldTransform();
+        Isometry3d Tw_body;
+        state.get_body(Tw_body);
+        Isometry3d Tbody_usy = Tw_body.inverse() * Tw_usy;
+        // the angle of usy will induce a rotation on Tw_usy
+        // DH origin has no rotation, so we must kill the induced rotation
+        Tbody_usy.linear() = Matrix3d::Identity();
+        Isometry3d Tw_dsy = Tw_body * Tbody_usy * Tusy_dsy;
+        // Rotate axis to match DH
+        // The dsy I calculated above points its y axis down the arm and that's incorrect.
+        // The DH origin is oriented in the same as DARTs standard axes
+        // We convert w_dsy back into the standard axes
+        Matrix3d Rw_dh;
+        Rw_dh << 
+            1, 0, 0,
+            0, 0, -1,
+            0, 1, 0;
+        Tw_dsy.linear() = Tw_dsy.linear() * Rw_dh;
+        // Return
+        B = Tw_dsy;
+    }
 
 void atlas_kinematics_t::init(Skeleton *_atlas) {
 	robot = _atlas;
@@ -167,6 +228,9 @@ void atlas_kinematics_t::init(Skeleton *_atlas) {
 	//	BodyNode *LWY = _atlas->getNode("Body_LWY");
 	//	BodyNode *LWP = _atlas->getNode("Body_LWP");
 
+    ////////////////////////////////////////////////////////////////////////////
+    /// CALCULATE ARM CONSTANTS FOR HUBO SOLVER
+    ////////////////////////////////////////////////////////////////////////////
 	Joint *arm_usy = _atlas->getDof(dart_dof_ind[robot::MANIP_L_HAND][0])->getJoint();
 	Joint *arm_shx = _atlas->getDof(dart_dof_ind[robot::MANIP_L_HAND][1])->getJoint();
 	Joint *arm_ely = _atlas->getDof(dart_dof_ind[robot::MANIP_L_HAND][2])->getJoint();
@@ -194,47 +258,54 @@ void atlas_kinematics_t::init(Skeleton *_atlas) {
     Vector3d dsy_shx_disp = shx_disp - usy_dsy_off;
     double dsy_shx_norm = dsy_shx_disp.norm();
 
-    kc.arm_nsy = 0;
-    kc.arm_ssz = dsy_shx_norm;
-    kc.arm_sez = ely(1,3) + elx(1,3);
-    kc.arm_ewz = uwy(1,3) + mwx(1,3);
-    kc.arm_whz = 0;
+    robot_arm_constants_t rac;
 
-    // DEBUG_PRINT("\n"
-    //             "arm_nsy %f\n"
-    //             "arm_ssz %f\n"
-    //             "arm_sez %f\n"
-    //             "arm_ewz %f\n",
-    //             kc.arm_nsy, kc.arm_ssz, kc.arm_sez, kc.arm_ewz);
+    rac.arm_nsy = 0;
+    rac.arm_ssz = 0; //dsy_shx_norm; //FIXME: USE CORRECT VALUE
+    rac.arm_sez = fabs(ely(1,3) + elx(1,3));
+    rac.arm_ewz = fabs(uwy(1,3) + mwx(1,3));
+    rac.arm_whz = 0;
+
+    DEBUG_PRINT("\n"
+                "arm_nsy %f\n"
+                "arm_ssz %f\n"
+                "arm_sez %f\n"
+                "arm_ewz %f\n",
+                rac.arm_nsy, rac.arm_ssz, rac.arm_sez, rac.arm_ewz);
     
     for(int i=0; i < 6; i++) {
-        kc.arm_limits(i,0) = _atlas->getDof(dart_dof_ind[robot::MANIP_L_HAND][i])->getMin();
-        kc.arm_limits(i,1) = _atlas->getDof(dart_dof_ind[robot::MANIP_L_HAND][i])->getMax();
+        rac.arm_limits(i,0) = _atlas->getDof(dart_dof_ind[robot::MANIP_L_HAND][i])->getMin();
+        rac.arm_limits(i,1) = _atlas->getDof(dart_dof_ind[robot::MANIP_L_HAND][i])->getMax();
     }
     
-    // Joint offsets for zeroing into DH configuration
-    kc.arm_offset = Vector6d::Zero();
-    double shx_off = atan2(usy_axis(1), usy_axis(2)); //-30 angle
-    // double shx_off = -atan2(shx(1,3),shx(2,3));
+    // We need to offset joint angles to nominal zero positions that DART has
+    // Shoulder roll needs to be 30 away from the body and shoulder yaw needs to 
+    // turn his hand so that elbow and wrist pitches are such that positive angles
+    // (in HUBO DH world) drives the arm into the body.
+    rac.arm_offset = Vector6d::Zero();
+    // 30 degree angle between DH vertical axis and nominal zero arm position
+    double shx_off = atan2(usy_axis(1), usy_axis(2));
     DEBUG_PRINT("shx_off %f\n", shx_off);
-    kc.arm_offset(1) = shx_off;
+    // note that offsets turn the arm opposite of what a joint angle value does
+    rac.arm_offset(1) = -shx_off; //< this will turn left arm up by 30 degrees 
+    rac.arm_offset(2) = M_PI/2; //< rotate elbow to open upwards
 
-    kc.arm_mirror.push_back(1);
-    kc.arm_mirror.push_back(2);
-    kc.arm_mirror.push_back(4);
+    rac.arm_mirror.push_back(1);
+    rac.arm_mirror.push_back(3);
+    rac.arm_mirror.push_back(5);
 
-    // Print out information about DART mappings
-    int manip_index[2] = { robot::MANIP_L_HAND, robot::MANIP_R_HAND };
-    for(int i=0; i < 2; i++) {
-        // Print out limit information
-        for(int j=0; j < 6; j++) {
-            Dof *dof = _atlas->getDof(dart_dof_ind[manip_index[i]][j]);
-            Joint *joint = dof->getJoint();
-            BodyNode *node = joint->getChildNode();
-            DEBUG_PRINT("Joint: %s limits %f to %f\n",
-                        joint->getName(), dof->getMin(), dof->getMax());
+    // Dart to DH positive angle convention
+    int d2dh_map[] = { 1, 1, -1, 1, -1, 1 }; // 1 agrees w/ dart, -1 swap w/ dart
+    // flip limits to respect positive angle convention
+    for(int i=0; i < 6; i++) {
+        if(d2dh_map[i] == -1) {
+            std::swap(rac.arm_limits(i,0), rac.arm_limits(i,1));
+            rac.arm_limits(i,0) *= d2dh_map[i];
+            rac.arm_limits(i,1) *= d2dh_map[i];
         }
     }
+
+    rak.set_constants(rac);
 }
 
 }

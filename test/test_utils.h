@@ -75,3 +75,7 @@ void ASSERT_MATRIX_EQ(Eigen::MatrixXd A, Eigen::MatrixXd B, double tol = 1e-9)
     }
 }
 /* ********************************************************************************************* */
+void ASSERT_MATRIX_EQ(Eigen::Isometry3d A, Eigen::Isometry3d B, double tol = 1e-9)
+{
+    ASSERT_MATRIX_EQ(A.matrix(), B.matrix(), tol);
+}
