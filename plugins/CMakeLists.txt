@@ -43,3 +43,7 @@ target_link_libraries( drchubo_Walk1 ${GAZEBO_LIBRARIES} )
 
 set_target_properties( drchubo_Walk1 PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib" ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib" )
 
+#########################
+# drchubo_MattCode
+#########################
+add_subdirectory( drchubo_MattCode )
