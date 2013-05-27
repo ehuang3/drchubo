@@ -61,6 +61,10 @@ atlas::atlas_jacobian_t atlasJac;
 ros::Publisher topic_pub_joint_commands;
 atlas_msgs::AtlasCommand jointCommand;
 
+Eigen::Vector6d joy_thresh; //< static spacenav readings have noise
+int max_thresh_iters;
+int thresh_iters;
+
 //###########################################################
 //###########################################################
 //#### badly-written classes
@@ -142,25 +146,58 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         atlasStateCurrent.get_ros_pose(temp);
         atlasStateTarget.set_ros_pose(temp);
         targetPoseInited = true;
+        std::cout << "Joystick thresholds = " << joy_thresh.transpose() << std::endl;
+        std::cout << "Joystick normal = " << joy_thresh.norm() << std::endl;
     }
-    
     if (!targetPoseInited) {
         std::cout << "Please init target pose first - hit the left button on the spacenav base." << std::endl;
     }
-    if (targetPoseInited && !_j->buttons[0]) {
+    if (thresh_iters++ < max_thresh_iters) {
+        // 0. Update error. Don't touch the joystick!
+        for(int i=0; i < 6; i++)
+            if(fabs(_j->axes[i]) > joy_thresh(i))
+                joy_thresh(i) = fabs(_j->axes[i]);
+        if (thresh_iters == max_thresh_iters)
+            std::cout << "Joystick thresholds = " << joy_thresh.transpose() << std::endl;
+    }
+    for (; targetPoseInited && !_j->buttons[0] ;) {
+        // 0. Threshold the joystick values using norm
+        double thresh = 2*joy_thresh.norm(); // add some slack (on release, joysick will not bounce back to zero)
+        Eigen::VectorXd true_axes(6);
+        Eigen::VectorXd joy_axes(6);
+        joy_axes.setZero();
+        bool allBelow = true;
+        for(int i=0; i < 6; i++) {
+            true_axes(i) = _j->axes[i];
+            if( fabs(_j->axes[i]) <= thresh )
+                continue;
+            joy_axes[i] = _j->axes[i];
+            allBelow = false;
+        }
+        if (allBelow) {
+            break;
+        }
+        
+        // 2. Convert to move speeds 
         double movespeed = .00005;
         Eigen::VectorXd movement(6); // the desired end effector velocity in worldspace
-        movement[0] = movespeed * _j->axes[1] / dT.toSec(); // translate +x
-        movement[1] = movespeed * _j->axes[0] / dT.toSec(); // translate +y
-        movement[2] = movespeed * _j->axes[2] / dT.toSec(); // translate +z
-        movement[3] = movespeed * _j->axes[4] / dT.toSec(); // rotate + around x
-        movement[4] = movespeed * _j->axes[3] / dT.toSec(); // rotate + around y
-        movement[5] = movespeed * _j->axes[5] / dT.toSec(); // rotate + around z
-        // Sanity check
+        movement[0] = movespeed * joy_axes[1] / dT.toSec(); // translate +x
+        movement[1] = movespeed * joy_axes[0] / dT.toSec(); // translate +y
+        movement[2] = movespeed * joy_axes[2] / dT.toSec(); // translate +z
+        movement[3] = movespeed * joy_axes[4] / dT.toSec(); // rotate + around x
+        movement[4] = movespeed * joy_axes[3] / dT.toSec(); // rotate + around y
+        movement[5] = movespeed * joy_axes[5] / dT.toSec(); // rotate + around z
+        // -48. Sanity check
         bool invalid_input = dT.toSec() == 0;
         for(int i=0; i < 6; i++) {
             invalid_input |= isnan(movement[0]);
+            invalid_input |= isinf(movement[0]);
         }
+        if (invalid_input) {
+            std::cout << "invalid movement = " << movement.transpose() << std::endl;
+            break;
+        }
+
         // 0. Convert to movements to vectors
         Eigen::Vector3d off = Eigen::Vector3d(movement[0], movement[1], movement[2]);
         Eigen::Vector3d rot = Eigen::Vector3d(movement[3], movement[4], movement[5]);
@@ -220,7 +257,10 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         }
 
         // 7. Restore target pose
-        atlasStateTarget.set_dart_pose(pose_save);
+        // atlasStateTarget.set_dart_pose(pose_save);
+
+        // 99. We're in a for loop
+        break;
     }
 
     lastTime = currentTime;
@@ -261,6 +301,12 @@ int main(int argc, char** argv) {
     atlasStateCurrent.init(atlasSkel);        // init states
     atlasJac.init(atlasSkel);                 // init jacobians
     atlasKin.init(atlasSkel);                 // init kinematics
+
+    //###########################################################
+    //#### Joystick initialization
+    joy_thresh = Eigen::Vector6d::Zero();
+    max_thresh_iters = 100;
+    thresh_iters = 0;
 
     //###########################################################
     //#### ROS initialization
