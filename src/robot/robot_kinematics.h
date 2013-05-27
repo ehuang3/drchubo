@@ -66,16 +66,16 @@ namespace robot
         ////////////////////////////////////////////////////////////////////////
         /// SPECIAL IK METHODS
         ////////////////////////////////////////////////////////////////////////
-        void com_ik(const Eigen::Vector3d& desired_com, 
+        bool com_ik(const Eigen::Vector3d& desired_com, 
                     const Eigen::Isometry3d end_effectors[NUM_MANIPULATORS],
                     robot::IK_Mode ik_mode[NUM_MANIPULATORS], 
                     robot_state_t& state);
 
-        void stance_ik(const Eigen::Isometry3d end_effectors[NUM_MANIPULATORS],
+        bool stance_ik(const Eigen::Isometry3d end_effectors[NUM_MANIPULATORS],
                        robot::IK_Mode ik_mode[NUM_MANIPULATORS], 
                        robot_state_t& state);
 
-        void manip_ik(const Eigen::Isometry3d end_effectors[NUM_MANIPULATORS], 
+        bool manip_ik(const Eigen::Isometry3d end_effectors[NUM_MANIPULATORS], 
                       robot::IK_Mode mode[NUM_MANIPULATORS], 
                       robot_state_t& state);
 
@@ -84,7 +84,7 @@ namespace robot
         ////////////////////////////////////////////////////////////////////////
         // Global-frame FK/IK
         void leg_fk(Eigen::Isometry3d& B, bool left, robot_state_t& state);
-        void leg_ik(const Eigen::Isometry3d& B, bool left, robot_state_t& state);
+        bool leg_ik(const Eigen::Isometry3d& B, bool left, robot_state_t& state);
         
         // Helper function for transforming leg from world to DH frame
         Eigen::Matrix4d leg_world_to_dh(const Eigen::Matrix4d& B);
