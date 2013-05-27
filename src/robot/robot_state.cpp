@@ -178,11 +178,6 @@ namespace robot {
         Twb.rotate( AngleAxisd( _dofs(5), Vector3d::UnitX()) );
     }
 
-    void robot_state_t::copy_into_robot()
-    {
-        _robot->setPose(_dofs);
-    }
-
     void robot_state_t::set_manip(const VectorXd& q, int mi) 
     {
         const vector<int>& mmap = g_d_limb[mi];

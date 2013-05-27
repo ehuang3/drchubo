@@ -22,11 +22,11 @@ namespace robot {
         // Please use the functions below.
         
         // 
-        void manip_jacobian_ik(Eigen::Isometry3d& B, std::vector<int>& desired_dofs,
+        void manip_jacobian_ik(const Eigen::Isometry3d& B, std::vector<int>& desired_dofs,
                                kinematics::BodyNode *base_frame, kinematics::BodyNode *end_effector,
                                robot_state_t& state);
 
-        void manip_jacobian_ik(Eigen::Isometry3d& B, std::vector<int>& desired_dofs,
+        void manip_jacobian_ik(const Eigen::Isometry3d& B, std::vector<int>& desired_dofs,
                                kinematics::BodyNode *end_effector, robot_state_t& state);
 
         void manip_jacobian(Eigen::MatrixXd& J, std::vector<int>& desired_dofs,

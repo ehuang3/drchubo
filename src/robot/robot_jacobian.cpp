@@ -24,7 +24,7 @@ namespace robot {
 
     robot_jacobian_t::~robot_jacobian_t() {}
 
-    void robot_jacobian_t::manip_jacobian_ik(Isometry3d& B, vector<int>& desired_dofs,
+    void robot_jacobian_t::manip_jacobian_ik(const Isometry3d& B, vector<int>& desired_dofs,
                                              BodyNode *base_frame, BodyNode *end_effector,
                                              robot_state_t& state)
     {
@@ -36,7 +36,9 @@ namespace robot {
             base_frame = state.robot()->getNode(base_frame->getName());
             end_effector = state.robot()->getNode(end_effector->getName());
         }
-        state.copy_into_robot();
+        
+        Skeleton *robotSkel = state.robot();
+        robotSkel->setPose(state.dart_pose());
 
         // Loop parameters
         double tol = 1e-5;
@@ -80,18 +82,20 @@ namespace robot {
             state.set_dofs(q, desired_dofs);
 
             // Reposition foot frame to original location
-            state.copy_into_robot(); // dofs into dart skeleton
+            robotSkel->setPose(state.dart_pose());
+            
             Tfw = base_frame->getWorldTransform();
             Tfw = Tfw.inverse();
             state.get_body(Twr);
             Twr = Twf * Tfw * Twr;
             state.set_body(Twr);
-            state.copy_into_robot();
+            
+            robotSkel->setPose(state.dart_pose());
         }
         
     }
 
-    void robot_jacobian_t::manip_jacobian_ik(Isometry3d& B, vector<int>& desired_dofs,
+    void robot_jacobian_t::manip_jacobian_ik(const Isometry3d& B, vector<int>& desired_dofs,
                                              BodyNode *end_effector, robot_state_t& state)
     {
 

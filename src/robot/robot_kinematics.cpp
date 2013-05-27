@@ -93,8 +93,9 @@ robot_kinematics_t::~robot_kinematics_t() {
     void robot_kinematics_t::manip_ik(const Isometry3d end_effectors[NUM_MANIPULATORS],
                                       robot::IK_Mode mode[NUM_MANIPULATORS], robot_state_t& state)
     {
+        Skeleton *robotSkel = state.robot();
+        robotSkel->setPose(state.dart_pose());
         bool ok;
-        state.copy_into_robot();
         for(int mi = 0; mi < NUM_MANIPULATORS; ++mi) {
             Isometry3d B;
             Isometry3d Twb;
@@ -130,7 +131,7 @@ robot_kinematics_t::~robot_kinematics_t() {
                 break;
             }
         }
-        state.copy_into_robot();
+        robotSkel->setPose( state.dart_pose() );
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -153,44 +154,56 @@ robot_kinematics_t::~robot_kinematics_t() {
         }
         else
         {
-            state.copy_into_robot();
-            B = state.robot()->getNode(left ? ROBOT_LEFT_HAND : ROBOT_RIGHT_HAND)->getWorldTransform();
+            Skeleton *robotSkel = state.robot();
+            robotSkel->setPose(state.dart_pose());
+            B = robotSkel->getNode(left ? ROBOT_LEFT_HAND : ROBOT_RIGHT_HAND)->getWorldTransform();
         }
     }
 
     bool robot_kinematics_t::arm_ik(const Isometry3d& B, bool left, robot_state_t& state)
     {
-        // get prev joints
+        // Setup joint angles
         VectorXd q(6);
         Vector6d q6, qPrev;
         state.get_manip(q, left ? MANIP_L_HAND : MANIP_R_HAND);
         q6 = q.block<6,1>(0,0);
         qPrev = q6;
-        // xform B to DH
-        Isometry3d Tw_dsy, Tdh_wrist;
+        
+        // Transform B to DH coordinates
+        Isometry3d Tw_dsy, Tdh_wrist; //< world to DH shoulder yaw, DH wrist orientation
         xform_w_dsy(Tw_dsy, left, state);
         xform_dh_wrist(Tdh_wrist, left);
-        Isometry3d B_dh = Tw_dsy.inverse()*B*Tdh_wrist.inverse();
-        // IK
+        Isometry3d B_dh = Tw_dsy.inverse()*B*Tdh_wrist.inverse(); //< B in DH space
+
+        // Solve analytical IK
         bool ok = armIK(q6, B_dh, qPrev, left ? SIDE_LEFT : SIDE_RIGHT);
-        // Save into state
+
+        // Copy solution back into state
         q = q6;
-        state.set_manip(q, left ? MANIP_L_HAND : MANIP_R_HAND); //< save into dof
-        state.copy_into_robot(); //< save into skeleton
-        // Return
+        state.set_manip(q, left ? MANIP_L_HAND : MANIP_R_HAND);
+
         return ok;
     }
     
     bool robot_kinematics_t::arm_jac_ik(const Isometry3d& B, bool left, robot_state_t& state)
     {
+        // Get close with analytic IK
         bool ok = arm_ik(B, left, state);
-        robot_jacobian_t rj;
-        rj.init(state.robot());
-        BodyNode *hand = state.robot()->getNode(left ? ROBOT_LEFT_HAND : ROBOT_RIGHT_HAND);
+
+        // Finish it with jacobian IK
+        Skeleton *robotSkel = state.robot();
+        
+        robot_jacobian_t rj; //< jacobian ik solver
+        rj.init(robotSkel);
+        
+        // Init parameters
+        BodyNode *hand = robotSkel->getNode(left ? ROBOT_LEFT_HAND : ROBOT_RIGHT_HAND);
         vector<int> arm;
         state.get_manip_indexes(arm, left ? MANIP_L_HAND : MANIP_R_HAND);
-        Isometry3d BB = B;
-        rj.manip_jacobian_ik(BB, arm, hand, state);
+        
+        // Solve IK
+        rj.manip_jacobian_ik(B, arm, hand, state);
+        
         return ok;
     }
 
@@ -569,7 +582,7 @@ robot_kinematics_t::~robot_kinematics_t() {
 ////////////////////////////////////////////////////////////////////////////////
     void robot_kinematics_t::leg_ik(const Isometry3d& B, bool left, robot_state_t& state)
     {
-        // relative to body
+        // Find B relative to the body
         Matrix4d Twb = state.robot()->getNode(ROBOT_BODY)->getWorldTransform();
         Matrix4d Tbe = Twb.inverse() * B.matrix(); // body -> end effector
         // solve ik
@@ -579,7 +592,6 @@ robot_kinematics_t::~robot_kinematics_t() {
         legIK(leg_world_to_dh(Tbe), left, q6, q6);
         q = q6;
         state.set_manip(q, left ? MANIP_L_FOOT : MANIP_R_FOOT);
-        state.copy_into_robot();
     }
 
     // misnamed
