@@ -16,6 +16,14 @@
 // Print stuff
 #include <stdio.h>
 
+// Dart stuff
+#include <robotics/parser/dart_parser/DartLoader.h>
+#include <simulation/World.h>
+#include <kinematics/Skeleton.h>
+#include <kinematics/Dof.h>
+#include <kinematics/BodyNode.h>
+#include <dynamics/SkeletonDynamics.h>
+
 #include "drchubo_MattCode.h"
 
 using namespace fakerave;
@@ -121,13 +129,11 @@ namespace gazebo {
       gazebo::common::PoseKeyFrame *pose_key;
 
       t = 0;
-      float posx, posy, posz;
-
       for( int i = 0; i < numTrajPoints; ++i ) {
 
 	pose_key = pose_anim->CreateKeyFrame(t);
 
-	pose_key->SetTranslation(math::Vector3( posx, posy, posz + 1.25)); // 0.39
+	pose_key->SetTranslation(math::Vector3( mComX[i], mComY[i], mComZ[i] + 1.25)); // 0.39
 	pose_key->SetRotation(math::Quaternion(0, 0, 0.0));
 
 	// Advance one time step
@@ -152,13 +158,13 @@ void drchubo_MattCode::generateZMPGait() {
   double walk_circle_radius = 5.0;
   double walk_dist = 20;
 
-  double footsep_y = 0.085; // half of horizontal separation distance between feet
+  double footsep_y = 0.10;//0.0985; // half of horizontal separation distance between feet
   double foot_liftoff_z = 0.05; // foot liftoff height
 
   double step_length = 0.3;
   bool walk_sideways = false;
 
-  double com_height = 0.52; // height of COM above ANKLE
+  double com_height = 0.48; // 0.48// height of COM above ANKLE
   double com_ik_ascl = 0;
 
   double zmpoff_y = 0; // lateral displacement between zmp and ankle
@@ -210,7 +216,7 @@ void drchubo_MattCode::generateZMPGait() {
   double deg = M_PI/180; // for converting from degrees to radians
 
   // fill in the kstate
-  initContext.state.body_pos = vec3(0, 0, 0.85);
+  initContext.state.body_pos = vec3(0, 0, 0.7); //0.85
   initContext.state.body_rot = quat();
   initContext.state.jvalues.resize(kbody.joints.size(), 0.0);
   initContext.state.jvalues[jl("LSR")] =  15*deg;
@@ -364,19 +370,73 @@ void drchubo_MattCode::generateZMPGait() {
   }
 
   // Store root position
+
   // Create a DART Skeleton
+  kinematics::Skeleton *captain;
 
+  DartLoader dart_loader;
+  simulation::World *mWorld = dart_loader.parseWorld(VRC_DATA_PATH "models/drchubo-master/hubo_world.urdf");
+  
+  captain = mWorld->getSkeleton("drchubo");
+  if( captain == NULL ) {
+    captain = mWorld->getSkeleton("golem_hubo");
+    printf("Loaded skeleton under the name golem_hubo \n" );
+  } else {
+    printf("Loaded skeleton under the name drchubo \n" );
+  }
+
+  // Get the Dof indices for left arm, right arm, left leg, right leg
+  std::string mBodyDofNames[] = {"Body_LSP", "Body_LSR", "Body_LSY", "Body_LEP", "Body_LWY", "Body_LWP",
+				 "Body_RSP", "Body_RSR", "Body_RSY", "Body_REP", "Body_RWY", "Body_RWP",
+				 "Body_LHY", "Body_LHR", "Body_LHP", "Body_LKP", "Body_LAP", "Body_LAR",
+				 "Body_RHY", "Body_RHR", "Body_RHP", "Body_RKP", "Body_RAP", "Body_RAR"};
+  
+  // Store the indices for the Body Dofs
+  // To set the skeleton to that config
+  std::vector<int> mBodyDofs( mNumBodyDofs );
+  std::cout << "BodyDofs: " << std::endl;
+  for(int i = 0; i < mBodyDofs.size(); i++) {
+    mBodyDofs[i] = captain->getNode( mBodyDofNames[i].c_str())->getDof(0)->getSkelIndex();
+    std::cout << " " << mBodyDofs[i];
+  }
+  std::cout << std::endl;
+
+
+  mComX.resize(0);   mComY.resize(0);   mComZ.resize(0);
   for( int i = 0; i < walker.traj.size(); ++i ) {
+    // Set the joint configuration at this waypoint
+    captain->setConfig( mBodyDofs, mMzJointTraj[i] );
+  
     // Get stance foot
-    Eigen::Matrix4d endT;
-
-    if( walker.ref[i].stance == SINGLE_LEFT || walker.ref[i].stance == DOUBLE_LEFT ) {
-      endT = tf2Mx( walker.ref[i].feet[0] );
-    } else {
-      endT = tf2Mx( walker.ref[i].feet[1] );
+    Eigen::Matrix4d footT;
+    Eigen::Matrix4d jointTinv;
+    Eigen::Matrix4d rootT;
+    // Left
+    if( walker.ref[i].stance == SINGLE_LEFT ) {
+      footT = tf2Mx( walker.ref[i].feet[0] );
+      // Get the inverse of the foot transform
+      jointTinv = captain->getNode("Body_LAR")->getWorldInvTransform();
+    } else if( walker.ref[i].stance == DOUBLE_LEFT ) {
+      footT = tf2Mx( walker.ref[i].feet[0] );
+      footT(1,3) = footT(1,3) - 0.01;
+      // Get the inverse of the foot transform
+      jointTinv = captain->getNode("Body_LAR")->getWorldInvTransform();
+    } else if( walker.ref[i].stance == SINGLE_RIGHT ) {
+      footT = tf2Mx( walker.ref[i].feet[1] );
+      // Get the inverse of the foot transform
+      jointTinv = captain->getNode("Body_RAR")->getWorldInvTransform();
+    } else if( walker.ref[i].stance == DOUBLE_RIGHT ){
+      footT = tf2Mx( walker.ref[i].feet[1] );
+      // Get the inverse of the foot transform
+      jointTinv = captain->getNode("Body_RAR")->getWorldInvTransform();
     }
     
+    rootT = footT*jointTinv;
 
+
+    mComX.push_back( rootT(0,3) );
+    mComY.push_back( rootT(1,3) );
+    mComZ.push_back( rootT(2,3) );
   }
     
   std::cout << "Done and ready to step back and forth!" << std::endl;

@@ -57,6 +57,7 @@ namespace gazebo
     walktype getwalktype(const std::string& s); 
     ZMPWalkGenerator::ik_error_sensitivity getiksense(const std::string& s);
     Eigen::Matrix4d tf2Mx( Transform3 _tf );
+
     ///////////////////////////////////////
 
   private:
@@ -69,6 +70,9 @@ namespace gazebo
     static const int mNumJoints;
     static std::string mJointNames[];
     std::vector< Eigen::VectorXd > mMzJointTraj;
+    std::vector<double> mComX;
+    std::vector<double> mComY;
+    std::vector<double> mComZ;
     
     physics::WorldPtr mWorld;
     physics::ModelPtr mModel;
