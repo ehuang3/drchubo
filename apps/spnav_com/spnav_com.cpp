@@ -26,7 +26,7 @@
 #include <utils/robot_configs.h>
 #include <atlas/atlas_state.h>
 #include <atlas/atlas_jacobian.h>
-#include "spnav_teleop.h"
+#include "spnav_com.h"
 
 // DART stuff
 #include <robotics/parser/dart_parser/DartLoader.h>
@@ -57,7 +57,6 @@ atlas::atlas_kinematics_t atlasKin;
 atlas::atlas_state_rosified atlasStateTarget;
 atlas::atlas_state_rosified atlasStateCurrent;
 atlas::atlas_jacobian_t atlasJac;
-atlas::atlas_kinematics_t atlasKin;
 
 ros::Publisher topic_pub_joint_commands;
 atlas_msgs::AtlasCommand jointCommand;
@@ -162,72 +161,59 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
             invalid_input |= isnan(movement[0]);
         }
         // Convert to vectors
-        Vector3d off = Vector3d(movement[0], movement[1], movement[2]);
-        Vector3d rot = Vector3d(movement[3], movement[4], movement[5]);
-        double rot_angle = rot.norm();
-        Vector3d rot_axis = rot.normalize();
+        Eigen::Vector3d off = Eigen::Vector3d(movement[0], movement[1], movement[2]);
+        Eigen::Vector3d rot = Eigen::Vector3d(movement[3], movement[4], movement[5]);
 
         // Put world origin between atlas's feet (for meaningful comik)
         Eigen::Isometry3d Twlf, Twrf, Twb; //< xform world to: left foot, right foot, body
         Eigen::Isometry3d Two; //< world to new origin
+        atlasSkel->setPose( atlasStateCurrent.dart_pose() ); //< we want to orient this one
+
         Twlf = atlasSkel->getNode(ROBOT_LEFT_FOOT)->getWorldTransform();
         Twrf = atlasSkel->getNode(ROBOT_RIGHT_FOOT)->getWorldTransform();
         atlasStateCurrent.get_body(Twb); //< world position of body center (pelvis)
-        // Average feet locations
-        Two.linear() = (Twlf.rotation() * Twrf.rotation()).sqrt();
-        Two.translation() = (Twlf.translation() + Twrf.translation())/2;
-        Eigen::Isometry3d Tolf = Two.inverse() * Twlf; //< origin to left foot
-        Two.translation() = Vector3d::Zero();
-        Twb = Two * Tolf * Twlf.inverse() * Twb; //< current location of body (assuming feet on ground)
         
-        // Transform body frame by joy stick amount
-        Twb.translation() += Vector3d(movement[0]);
-        Twb.rotate(AngleAxisd(rot_angle, rot_axis));
+        // orient!
+        Eigen::Isometry3d Tlfb = Twlf.inverse() * Twb;
+        atlasStateTarget.set_dart_pose( atlasStateCurrent.dart_pose() ); //< be current
+        atlasStateTarget.set_body(Tlfb); // but orient ourselves
 
-        // Position body and keep COM in between feet
-        Vector3d com = Vector3d::Zero();
-        atlasStateCurrent.set_body(Twb);
-        atlasStateTarget.set_body(Twb);
-        // COM height will follow joystick
-        com(2) += off(2);
+        atlasSkel->setPose(atlasStateTarget.dart_pose()); //< save into skel so we can compute with it
 
-        // COM ik to 
-        bool ok = atlasKin.com_ik(
+        Eigen::Vector3d com = atlasSkel->getWorldCOM();
+        com += off;
 
-            if(!ok) {
-                // freak out
+        std::cout << "desired com = " << com.transpose() << std::endl;
+
+        // recalc b/c of frame shift
+        Twlf = atlasSkel->getNode(ROBOT_LEFT_FOOT)->getWorldTransform();
+        Twrf = atlasSkel->getNode(ROBOT_RIGHT_FOOT)->getWorldTransform();
+
+        Eigen::Isometry3d end_effectors[robot::NUM_MANIPULATORS];
+        end_effectors[robot::MANIP_L_FOOT] = Twlf;
+        end_effectors[robot::MANIP_R_FOOT] = Twrf;
+        
+        robot::IK_Mode mode[robot::NUM_MANIPULATORS];
+        mode[0] = robot::IK_MODE_SUPPORT;
+        mode[1] = robot::IK_MODE_WORLD;
+        mode[2] = robot::IK_MODE_FREE;
+        mode[3] = robot::IK_MODE_FREE;
+
+        bool ok = atlasKin.com_ik(com, end_effectors, mode, atlasStateTarget);
+        
+        if(!ok) {
+            std::cerr << "com ik failed\n" << std::endl;
+        } else {
+            // send the new target position to ROS
+            Eigen::VectorXd rospose;
+            atlasStateTarget.get_ros_pose(rospose);
+            for(unsigned int i = 0; i < rospose.size(); i++) {
+                jointCommand.position[i] = rospose[i];
             }
-        
-        // for (unsigned int i = 0; i < 6; i++)
-        //     movement[i] = .0001 * _j->axes[i] / dT.toSec();
-        // for (unsigned int i = 0; i < 6; i++)
-        //     if (i != 0) movement[i] = 0.0;
-
-        Eigen::MatrixXd J;             // the forward jacobian
-        Eigen::VectorXd dofs;               // the configuration of the limb in jointspace
-        Eigen::VectorXd qdot;               // the necessary jointspace velocity of the limb
-
-        // compute the jacobian
-        atlasJac.manip_jacobian(J, desired_dofs, end_effector, atlasStateTarget);
-
-        // use the jacobian to get the jointspace velocity
-        qdot = Eigen::VectorXd::Zero(J.cols());
-        aa_la_dls(J.rows(), J.cols(), 0.1, J.data(), movement.data(), qdot.data());
-
-        // use the jointspace velocity to update the target position
-        dofs.resize(desired_dofs.size());
-        atlasStateTarget.get_dofs(dofs, desired_dofs);
-        atlasStateTarget.set_dofs(dofs + qdot, desired_dofs);
-
-        // send the new target position to ROS
-        Eigen::VectorXd rospose;
-        atlasStateTarget.get_ros_pose(rospose);
-        for(unsigned int i = 0; i < rospose.size(); i++) {
-            jointCommand.position[i] = rospose[i];
+            
+            jointCommand.header.stamp = _j->header.stamp;
+            topic_pub_joint_commands.publish(jointCommand);
         }
-    
-        jointCommand.header.stamp = _j->header.stamp;
-        topic_pub_joint_commands.publish(jointCommand);
     }
 
     lastTime = currentTime;
@@ -298,7 +284,7 @@ int main(int argc, char** argv) {
     ros::Subscriber topic_sub_joint_states = rosnode->subscribe(topic_sub_joint_states_opts);
 
     ros::SubscribeOptions topic_sub_joystick_opts = ros::SubscribeOptions::create<sensor_msgs::Joy>(
-        "joy", 1, topic_sub_joystick_handler,
+        "/spacenav/joy", 1, topic_sub_joystick_handler,
         ros::VoidPtr(), rosnode->getCallbackQueue());
     topic_sub_joystick_opts.transport_hints = ros::TransportHints().unreliable();
     ros::Subscriber topic_sub_joystick = rosnode->subscribe(topic_sub_joystick_opts);    
