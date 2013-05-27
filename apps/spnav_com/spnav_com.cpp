@@ -134,7 +134,8 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
     kinematics::BodyNode* end_effector; // the bodynode on the end of our limb
     atlasStateTarget.get_manip_indexes(desired_dofs, targetLimb);
     end_effector = atlasSkel->getNode("l_hand");
-
+    
+    // Triggers on a left button click
     if (_j->buttons[0] && !lastButtons[0]) {
         std::cout << "Setting target pose." << std::endl;
         Eigen::VectorXd temp;
@@ -160,36 +161,38 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         for(int i=0; i < 6; i++) {
             invalid_input |= isnan(movement[0]);
         }
-        // Convert to vectors
+        // 0. Convert to movements to vectors
         Eigen::Vector3d off = Eigen::Vector3d(movement[0], movement[1], movement[2]);
         Eigen::Vector3d rot = Eigen::Vector3d(movement[3], movement[4], movement[5]);
 
-        // Put world origin between atlas's feet (for meaningful comik)
+        // 0.5. Save target state and do calculates on a copy
+        Eigen::VectorXd pose_save;
+        atlasStateTarget.get_dart_pose(pose_save);
+
+        // 1. Maintain a fixed target state. Send those joint commands to Atlas. Make observations.
+        atlasSkel->setPose( atlasStateTarget.dart_pose() );
+
+        // 2. Get left foot, right foot, and body xforms from target state
         Eigen::Isometry3d Twlf, Twrf, Twb; //< xform world to: left foot, right foot, body
         Eigen::Isometry3d Two; //< world to new origin
-        atlasSkel->setPose( atlasStateCurrent.dart_pose() ); //< we want to orient this one
-
         Twlf = atlasSkel->getNode(ROBOT_LEFT_FOOT)->getWorldTransform();
         Twrf = atlasSkel->getNode(ROBOT_RIGHT_FOOT)->getWorldTransform();
-        atlasStateCurrent.get_body(Twb); //< world position of body center (pelvis)
-        
-        // orient!
-        Eigen::Isometry3d Tlfb = Twlf.inverse() * Twb;
-        atlasStateTarget.set_dart_pose( atlasStateCurrent.dart_pose() ); //< be current
-        atlasStateTarget.set_body(Tlfb); // but orient ourselves
+        Twb = atlasSkel->getNode(ROBOT_BODY)->getWorldTransform();
 
+        // 3. Orient atlas's body around his left foot.
+        Eigen::Isometry3d Tlfb = Twlf.inverse() * Twb;
+        atlasStateTarget.set_body(Tlfb); // world origin at left foot
         atlasSkel->setPose(atlasStateTarget.dart_pose()); //< save into skel so we can compute with it
 
+        // 4. Grab the target state COM and offset by spacenav (might shake atlas around..)
         Eigen::Vector3d com = atlasSkel->getWorldCOM();
         com += off;
-
         std::cout << "desired com = " << com.transpose() << std::endl;
 
-        // recalc b/c of frame shift
+        // 5. Do IK to target state COM. (Should give the exact same joint angles)
+        Eigen::Isometry3d end_effectors[robot::NUM_MANIPULATORS];
         Twlf = atlasSkel->getNode(ROBOT_LEFT_FOOT)->getWorldTransform();
         Twrf = atlasSkel->getNode(ROBOT_RIGHT_FOOT)->getWorldTransform();
-
-        Eigen::Isometry3d end_effectors[robot::NUM_MANIPULATORS];
         end_effectors[robot::MANIP_L_FOOT] = Twlf;
         end_effectors[robot::MANIP_R_FOOT] = Twrf;
         
@@ -200,7 +203,8 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         mode[3] = robot::IK_MODE_FREE;
 
         bool ok = atlasKin.com_ik(com, end_effectors, mode, atlasStateTarget);
-        
+
+        // 6. Freak out or send commands
         if(!ok) {
             std::cerr << "com ik failed\n" << std::endl;
         } else {
@@ -214,6 +218,9 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
             jointCommand.header.stamp = _j->header.stamp;
             topic_pub_joint_commands.publish(jointCommand);
         }
+
+        // 7. Restore target pose
+        atlasStateTarget.set_dart_pose(pose_save);
     }
 
     lastTime = currentTime;
