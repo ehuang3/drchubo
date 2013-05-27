@@ -75,7 +75,7 @@ TEST(JACOBIAN, TEST_MANIP_JACOBIAN) {
     
     aa_la_dls(J.rows(), J.cols(), 0.1, J.data(), x.data(), qdot.data());
 
-    rstat->dart_pose() = dofs;
+    rstat->dofs() = dofs;
 }
 /* ********************************************************************************************* */
 TEST(JACOBIAN, TEST_ANGLE_AXIS) {
@@ -145,9 +145,10 @@ TEST(JACOBIAN, TEST_MANIP_IK) {
 TEST(JACOBIAN, TEST_MANIP_IK_BASE_FRAME) {
     robot_jacobian_t *robot = PREPARE_ROBOT_JACOBIAN();
     robot_state_t *state = PREPARE_ROBOT_STATE();
+    Skeleton* robotSkel = state->robot();
 
     state->dofs().setZero();
-    state->copy_into_robot();
+    robotSkel->setPose(state->dart_pose());
 
     MatrixXd J;
     vector<int> desired;
