@@ -199,6 +199,7 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
     for (; targetPoseInited && !_j->buttons[0] ;) {
         // 0. Threshold the joystick values using norm
         double thresh = 2*joy_thresh.norm(); // add some slack (on release, joysick will not bounce back to zero)
+        int max_scale = 2; // scale thresh to get max input caps
         Eigen::VectorXd true_axes(6);
         Eigen::VectorXd joy_axes(6);
         joy_axes.setZero();
@@ -208,6 +209,8 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
             if( fabs(_j->axes[i]) <= thresh )
                 continue;
             joy_axes[i] = _j->axes[i];
+            if( fabs(joy_axes[i]) > max_scale * thresh )
+                joy_axes[i] *= max_scale*thresh / fabs(joy_axes[i]);
             allBelow = false;
         }
         if (allBelow) {
