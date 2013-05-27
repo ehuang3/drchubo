@@ -52,10 +52,6 @@ namespace gazebo
     void generateZMPGait(); 
 
     // Helpers
-    double getdouble(const char* str);
-    long getlong(const char* str);
-    walktype getwalktype(const std::string& s); 
-    ZMPWalkGenerator::ik_error_sensitivity getiksense(const std::string& s);
     Eigen::Matrix4d tf2Mx( Transform3 _tf );
 
     ///////////////////////////////////////
@@ -70,9 +66,9 @@ namespace gazebo
     static const int mNumJoints;
     static std::string mJointNames[];
     std::vector< Eigen::VectorXd > mMzJointTraj;
-    std::vector<double> mComX;
-    std::vector<double> mComY;
-    std::vector<double> mComZ;
+    std::vector<double> mRootX;
+    std::vector<double> mRootY;
+    std::vector<double> mRootZ;
     
     physics::WorldPtr mWorld;
     physics::ModelPtr mModel;

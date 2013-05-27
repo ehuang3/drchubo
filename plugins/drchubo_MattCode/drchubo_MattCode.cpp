@@ -31,20 +31,19 @@ using namespace fakerave;
 namespace gazebo {
 
   const int drchubo_MattCode::mNumBodyDofs = 24; // Left Arm, Right Arm, Left Leg, Right Leg
-  const int drchubo_MattCode::mNumJoints = 28;
+  const int drchubo_MattCode::mNumJoints = 29;
   std::string drchubo_MattCode::mJointNames[] = {"drchubo::LSP", "drchubo::LSR", "drchubo::LSY", "drchubo::LEP", "drchubo::LWY", "drchubo::LWP", "drchubo::LWR",
-			       "drchubo::RSP", "drchubo::RSR", "drchubo::RSY", "drchubo::REP", "drchubo::RWY", "drchubo::RWP", "drchubo::RWR",
-			       "drchubo::LHY", "drchubo::LHR", "drchubo::LHP", "drchubo::LKP", "drchubo::LAP", "drchubo::LAR",
-			       "drchubo::RHY", "drchubo::RHR", "drchubo::RHP", "drchubo::RKP", "drchubo::RAP", "drchubo::RAR",
-			       "drchubo::NKY", "drchubo::NKP"};
+						 "drchubo::RSP", "drchubo::RSR", "drchubo::RSY", "drchubo::REP", "drchubo::RWY", "drchubo::RWP", "drchubo::RWR",
+						 "drchubo::LHY", "drchubo::LHR", "drchubo::LHP", "drchubo::LKP", "drchubo::LAP", "drchubo::LAR",
+						 "drchubo::RHY", "drchubo::RHR", "drchubo::RHP", "drchubo::RKP", "drchubo::RAP", "drchubo::RAR",
+						 "drchubo::TSY", "drchubo::NKY", "drchubo::NKP"};
   
   /**
    * @function drchubo_MattCode
    * @brief Constructor
    */
   drchubo_MattCode::drchubo_MattCode() {
-
-
+    // I cannot think if anything nide to put here
   }
 
   /**
@@ -52,13 +51,12 @@ namespace gazebo {
    * @brief Destructor
    */  
   drchubo_MattCode::~drchubo_MattCode() {
-
     event::Events::DisconnectWorldUpdateBegin( this->mUpdateConnection );     
   }
   
   /**
    * @function Load
-   * @brief
+   * @brief Code performed BEFORE play starts
    */
   void drchubo_MattCode::Load( physics::ModelPtr _model, 
 				sdf::ElementPtr _sdf ) {
@@ -71,7 +69,7 @@ namespace gazebo {
     common::NumericKeyFrame *joint_key;
     
     // Fill joint initialization
-    double T = 25.0;
+    double T = 20.0;
     for( int i = 0; i < mNumJoints; ++i ) {
       joint_anim[ mJointNames[i] ].reset( new common::NumericAnimation( "anim", T, true) );
     }
@@ -79,8 +77,17 @@ namespace gazebo {
     // Generate ZMP trajectories
     generateZMPGait();
 
+    // Set init pose as first trajectory point
+    std::map<std::string, double> joint_position_map;
+    for( int i = 0; i < 6; ++i ) { joint_position_map[ mJointNames[i] ] = mMzJointTraj[0](i); }
+    for( int i = 6; i < 12; ++i ) { joint_position_map[ mJointNames[i+1] ] = mMzJointTraj[0](i); }
+    for( int i = 12; i < 18; ++i ) { joint_position_map[ mJointNames[i+2] ] = mMzJointTraj[0](i); }
+    for( int i = 18; i < 24; ++i ) { joint_position_map[ mJointNames[i+2] ] = mMzJointTraj[0](i); }
+    _model->SetJointPositions( joint_position_map );
+
+
     //**********************************
-    // Read file with trajectories
+    // JOINT ANIMATION
     //**********************************
     int numTrajPoints = mMzJointTraj.size();
     
@@ -90,25 +97,20 @@ namespace gazebo {
     t = 0;
     for( int i = 0; i < numTrajPoints; ++i ) {
       
-      std::vector<double> vals(mNumJoints);
+      std::vector<double> vals(mNumJoints, 0.0);
       // Left Arm
       for( int j = 0; j <= 5; ++j ) {
 	vals[j] = mMzJointTraj[i](j);
       }
-      vals[6] = 0;
       // Right Arm
       for( int j = 7; j <= 12; ++j ) {
 	vals[j] = mMzJointTraj[i](j-1);
       }
-      vals[13] = 0;
-
       // Left and Right Legs
       for( int j = 14; j <= 25; ++j ) {
 	vals[j] = mMzJointTraj[i](j-2);
       }
-      vals[26] = 0;
-      vals[27] = 0;
-
+      // Set all joints
       for( int j = 0; j < mNumJoints; ++j ) {
 	joint_key = joint_anim[ mJointNames[j] ]->CreateKeyFrame(t);
 	joint_key->SetValue( vals[j] );
@@ -130,16 +132,14 @@ namespace gazebo {
 
       t = 0;
       for( int i = 0; i < numTrajPoints; ++i ) {
-
 	pose_key = pose_anim->CreateKeyFrame(t);
 
-	pose_key->SetTranslation(math::Vector3( mComX[i], mComY[i], mComZ[i] + 1.25)); // 0.39
+	pose_key->SetTranslation(math::Vector3( mRootX[i], mRootY[i], mRootZ[i] + 1.17)); // 0.39
 	pose_key->SetRotation(math::Quaternion(0, 0, 0.0));
 
 	// Advance one time step
 	t+=dt;
       }
-
       _model->SetAnimation( pose_anim );      
       printf( "** End loading Pose animation **\n" ); 
   }
@@ -148,6 +148,7 @@ namespace gazebo {
 
 /**
  * @function generateZMPGait
+ * @brief Executes Matt's code
  */
 void drchubo_MattCode::generateZMPGait() {
   printf(" Generate ZMP Gait \n");
@@ -394,49 +395,63 @@ void drchubo_MattCode::generateZMPGait() {
   // Store the indices for the Body Dofs
   // To set the skeleton to that config
   std::vector<int> mBodyDofs( mNumBodyDofs );
-  std::cout << "BodyDofs: " << std::endl;
   for(int i = 0; i < mBodyDofs.size(); i++) {
     mBodyDofs[i] = captain->getNode( mBodyDofNames[i].c_str())->getDof(0)->getSkelIndex();
-    std::cout << " " << mBodyDofs[i];
   }
-  std::cout << std::endl;
 
+  mRootX.resize(0);   mRootY.resize(0);   mRootZ.resize(0);
+  int stance;
 
-  mComX.resize(0);   mComY.resize(0);   mComZ.resize(0);
-  for( int i = 0; i < walker.traj.size(); ++i ) {
-    // Set the joint configuration at this waypoint
-    captain->setConfig( mBodyDofs, mMzJointTraj[i] );
+  Eigen::Matrix4d footT;
+  Eigen::Matrix4d jointTinv;
+  Eigen::Matrix4d rootT;
   
-    // Get stance foot
-    Eigen::Matrix4d footT;
-    Eigen::Matrix4d jointTinv;
-    Eigen::Matrix4d rootT;
-    // Left
-    if( walker.ref[i].stance == SINGLE_LEFT ) {
-      footT = tf2Mx( walker.ref[i].feet[0] );
-      // Get the inverse of the foot transform
+  // i = 0 - First value
+  stance = walker.ref[0].stance;
+
+  if( stance == SINGLE_LEFT || stance == DOUBLE_LEFT ) {
+    footT = tf2Mx( walker.ref[0].feet[0] );   
+    captain->setConfig( mBodyDofs, mMzJointTraj[0] );
+    jointTinv = captain->getNode("Body_LAR")->getWorldInvTransform();
+  } else {
+    footT = tf2Mx( walker.ref[0].feet[1] );   
+    captain->setConfig( mBodyDofs, mMzJointTraj[0] );
+    jointTinv = captain->getNode("Body_RAR")->getWorldInvTransform();
+  }
+
+    rootT = footT*jointTinv;
+        
+    mRootX.push_back( rootT(0,3) );
+    mRootY.push_back( rootT(1,3) );
+    mRootZ.push_back( rootT(2,3) );
+ 
+    printf("0 Location: %f %f %f \n", rootT(0,3), rootT(1,3), rootT(2,3) );
+
+    // Rest of values
+  for( int i = 1; i < walker.traj.size(); ++i ) {
+
+    stance = walker.ref[i].stance;
+  
+    if( stance == SINGLE_LEFT || stance == DOUBLE_LEFT ) {
+      if( stance == DOUBLE_LEFT ) {
+	footT = rootT*captain->getNode("Body_LAR")->getWorldTransform();
+      }
+      captain->setConfig( mBodyDofs, mMzJointTraj[i] );
       jointTinv = captain->getNode("Body_LAR")->getWorldInvTransform();
-    } else if( walker.ref[i].stance == DOUBLE_LEFT ) {
-      footT = tf2Mx( walker.ref[i].feet[0] );
-      footT(1,3) = footT(1,3) - 0.01;
-      // Get the inverse of the foot transform
-      jointTinv = captain->getNode("Body_LAR")->getWorldInvTransform();
-    } else if( walker.ref[i].stance == SINGLE_RIGHT ) {
-      footT = tf2Mx( walker.ref[i].feet[1] );
-      // Get the inverse of the foot transform
+    } else {
+      if( stance == DOUBLE_RIGHT ) {
+	footT = rootT*captain->getNode("Body_RAR")->getWorldTransform();
+      }
+      captain->setConfig( mBodyDofs, mMzJointTraj[i] );
       jointTinv = captain->getNode("Body_RAR")->getWorldInvTransform();
-    } else if( walker.ref[i].stance == DOUBLE_RIGHT ){
-      footT = tf2Mx( walker.ref[i].feet[1] );
-      // Get the inverse of the foot transform
-      jointTinv = captain->getNode("Body_RAR")->getWorldInvTransform();
+      
     }
     
     rootT = footT*jointTinv;
-
-
-    mComX.push_back( rootT(0,3) );
-    mComY.push_back( rootT(1,3) );
-    mComZ.push_back( rootT(2,3) );
+        
+    mRootX.push_back( rootT(0,3) );
+    mRootY.push_back( rootT(1,3) );
+    mRootZ.push_back( rootT(2,3) );
   }
     
   std::cout << "Done and ready to step back and forth!" << std::endl;
@@ -457,68 +472,6 @@ void drchubo_MattCode::generateZMPGait() {
     
     return T4;
   }
-
-/**
- * @function getdouble
- * @brief Helper to get a double value from a string
- */
-  double drchubo_MattCode::getdouble(const char* str) {
-    char* endptr;
-    double d = strtod(str, &endptr);
-    if (!endptr || *endptr) {
-      std::cerr << "Error parsing number on command line!\n\n";
-      exit(1);
-    }
-    return d;
-  }
-  
-/**
- * @function getlong
- * @brief Helper to get a long value from a string
- */
-long drchubo_MattCode::getlong(const char* str) {
-  char* endptr;
-  long d = strtol(str, &endptr, 10);
-  if (!endptr || *endptr) {
-    std::cerr << "Error parsing number on command line!\n\n";
-    exit(1);
-  }
-  return d;
-}
-
-/**
- * @function getwalktype
- * @brief Helper to get a walk type from a string
- */
-walktype drchubo_MattCode::getwalktype(const std::string& s) {
-  if (s == "canned") {
-    return walk_canned;
-  } else if (s == "line") {
-    return walk_line;
-  } else if (s == "circle") {
-    return walk_circle;
-  } else {
-    std::cerr << "bad walk type " << s << "\n";
-    exit(1);
-  }
-}
-
-/**
- * @function getiksense
- * @brief Helper to get ik from a string
- */
-ZMPWalkGenerator::ik_error_sensitivity drchubo_MattCode::getiksense(const std::string& s) {
-  if (s == "strict") {
-    return ZMPWalkGenerator::ik_strict;
-  } else if (s == "sloppy") {
-    return ZMPWalkGenerator::ik_sloppy;
-  } else if (s == "permissive") {
-    return ZMPWalkGenerator::ik_swing_permissive;
-  } else {
-    std::cerr << "bad ik error sensitivity " << s << "\n";
-    exit(1);
-  }
-}
 
 
   // Register this plugin with the simulator
