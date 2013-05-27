@@ -217,8 +217,8 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         // 2. Convert to move speeds 
         double movespeed = .00005;
         Eigen::VectorXd movement(6); // the desired end effector velocity in worldspace
-        movement[0] = movespeed * joy_axes[1] / dT.toSec(); // translate +x
-        movement[1] = movespeed * joy_axes[0] / dT.toSec(); // translate +y
+        movement[0] = movespeed * joy_axes[0] / dT.toSec(); // translate +x
+        movement[1] = movespeed * joy_axes[1] / dT.toSec(); // translate +y
         movement[2] = movespeed * joy_axes[2] / dT.toSec(); // translate +z
         movement[3] = movespeed * joy_axes[4] / dT.toSec(); // rotate + around x
         movement[4] = movespeed * joy_axes[3] / dT.toSec(); // rotate + around y
@@ -276,8 +276,12 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         }
         
         // 6.2 joint delta norm
-        double omega_norm = (lastCommand - atlasStateTarget.ros_pose()).norm();
-        std::cout << "joint delta norm = " << omega_norm << std::endl;
+        double motion_norm = (lastCommand - atlasStateTarget.ros_pose()).norm();
+        std::cout << "joint delta norm = " << motion_norm << std::endl;
+        
+        double error_norm = (atlasStateCurrent.ros_pose() - atlasStateTarget.ros_pose()).norm();
+        std::cout << "pid error norm = " << error_norm << std::endl;
+        
         
         // 7. Send commands over ROS
         Eigen::VectorXd rospose;
