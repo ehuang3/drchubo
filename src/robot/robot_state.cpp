@@ -202,12 +202,19 @@ namespace robot {
         }
     }
 
-    void robot_state_t::get_ros_pose(VectorXd& q)
+    void robot_state_t::get_ros_pose(VectorXd& q) const
     {
         q.resize(g_r2d.size());
         for(auto iter = g_r2d.begin(); iter != g_r2d.end(); ++iter) {
             q(iter->first) = _dofs(iter->second);
         }
+    }
+
+    const Eigen::VectorXd robot_state_t::ros_pose() const
+    {
+        VectorXd ros;
+        get_ros_pose(ros);
+        return ros;
     }
 
     void robot_state_t::get_manip_indexes(vector<int>& indexes, int mi)

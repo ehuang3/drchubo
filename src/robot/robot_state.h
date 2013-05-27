@@ -38,8 +38,9 @@ namespace robot {
         void set_dart_pose(const Eigen::VectorXd& q) { _dofs = q; }
         void get_dart_pose(Eigen::VectorXd& q) { q = _dofs; }
         void set_ros_pose(const Eigen::VectorXd& q);
-        void get_ros_pose(Eigen::VectorXd& q);
+        void get_ros_pose(Eigen::VectorXd& q) const;
         const Eigen::VectorXd& dart_pose() const { return _dofs; }
+        const Eigen::VectorXd ros_pose() const;
 
         // WARNING: Using this may cause hard to trace bugs
         // because this Skeleton* is globally shared and writen into.
