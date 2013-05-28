@@ -14,6 +14,8 @@
 
 #include <pthread.h>
 
+#include <yui/GLFuncs.h>
+
 using namespace Eigen;
 using namespace kinematics;
 using namespace dynamics;
@@ -138,6 +140,7 @@ void MyWindow::drawSkels() {
     // 2.5 Get ready to render robots
     robot::robot_graphics_t special_effects;
 
+    glClear(GL_DEPTH_BUFFER_BIT);
     // 3. Render the current state
     robotSkel->setPose( current_state->dart_pose() );
     robotSkel->draw(mRI, Vector4d(0.5, 0.5, 0.5, 0.5), false); // he's the grey one
@@ -152,7 +155,7 @@ void MyWindow::drawSkels() {
     // 5.1 Purple target COMs
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    glColor4d(1,0,1,1);
+    glColor4d(1,0,1,0.8);
     // The purple dot of com
     com = robotSkel->getWorldCOM();
     glPushMatrix();
@@ -166,7 +169,7 @@ void MyWindow::drawSkels() {
     glPopMatrix();
 
     // 5.2 Red current COMs
-    glColor4d(1,0,0,1);
+    glColor4d(1,0,0,0.8);
     glClear(GL_DEPTH_BUFFER_BIT);
     robotSkel->setPose( current_state->dart_pose() );
     // The red dot of com
@@ -179,6 +182,19 @@ void MyWindow::drawSkels() {
     glPushMatrix();
     glTranslated(com(0), com(1), foot2ground);
     gluDisk(quadObj, 0, radius, 16, 16);
+    glPopMatrix();
+
+    // 6. Render goal
+    Eigen::Isometry3d goalTarget = *goal;
+    glPushMatrix();
+    glMultMatrixd(goalTarget.data());
+    Eigen::Vector3d base = Eigen::Vector3d::Zero();
+    glColor4d(1,0,0,0.5);
+    yui::drawArrow3D(base, Eigen::Vector3d::UnitX(), 0.2, 0.01, 0.02);
+    glColor4d(0,1,0,0.5);
+    yui::drawArrow3D(base, Eigen::Vector3d::UnitY(), 0.2, 0.01, 0.02);
+    glColor4d(0,0,1,0.5);
+    yui::drawArrow3D(base, Eigen::Vector3d::UnitZ(), 0.2, 0.01, 0.02);
     glPopMatrix();
 
     // 99. Post up and go home

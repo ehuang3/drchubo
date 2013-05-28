@@ -32,6 +32,7 @@ public:
 	/// Move the joints with the {1,2,3} keys and '-' to change direction
 	//virtual void keyboard(unsigned char key, int x, int y);
 
+    void setTargetXform(Eigen::Isometry3d *target) { goal = target; }
     void setCurrentState(robot::robot_state_t* stateCurrent) { current_state = stateCurrent; }
     void setTargetState(robot::robot_state_t* stateTarget) { target_state = stateTarget; }
 
@@ -40,6 +41,7 @@ public:
 private:
     robot::robot_state_t * current_state;
     robot::robot_state_t * target_state;
+    Eigen::Isometry3d * goal;
 
     std::vector<robot::robot_state_t*> robotStates;
 };

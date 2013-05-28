@@ -79,6 +79,8 @@ int teleopMode;
 
 bool gazebo_sim; //< we are simulation in gazebo
 
+Eigen::Isometry3d xformTarget; //< Target transformation of teleoperation
+
 //###########################################################
 //###########################################################
 //#### badly-written classes
@@ -330,6 +332,10 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
 
             ok = atlasKin.com_ik(com, end_effectors, mode, atlasStateTarget);
 
+            // 5. Write xform target
+            xformTarget = Eigen::Matrix4d::Identity();
+            xformTarget.translation() += com;
+
             break;
         }
         case TELEOP_LEFT_ARM_JACOBIAN:
@@ -377,6 +383,8 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
             Twhand = Twhand * Tdelta;
             // 5. Run IK
             ok = atlasKin.arm_ik(Twhand, left, atlasStateTarget);
+            // 6. Write xform target
+            xformTarget = Twhand;
             break;
         }
         default:
@@ -462,8 +470,10 @@ int main(int argc, char** argv) {
 
     //###########################################################
     //#### GUI initialization
+    xformTarget = Eigen::Matrix4d::Identity();
     gui_window.setCurrentState(&atlasStateCurrent);
     gui_window.setTargetState(&atlasStateTarget);
+    gui_window.setTargetXform(&xformTarget);
     pthread_create(&gui_thread, NULL, MyWindow::start_routine, &gui_window);
 
     //###########################################################
