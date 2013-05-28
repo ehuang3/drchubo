@@ -474,6 +474,7 @@ int main(int argc, char** argv) {
         if(in == "--no-sim")
             gazebo_sim = false;
     }
+    std::cout << "gazebo sim = " << gazebo_sim << std::endl;
 
     //###########################################################
     //#### DART initialization
@@ -508,21 +509,7 @@ int main(int argc, char** argv) {
         if (last_ros_time_.toSec() > 0) wait = false;
     }
 
-    // set up publishing
-    if(gazebo_sim) {
-        // set up the joint command
-        atlasStateCurrent.fill_joint_command(&jointCommand, rosnode);
 
-        topic_pub_joint_commands = rosnode->advertise<atlas_msgs::AtlasCommand>(
-            "/atlas/atlas_command", 1, true);
-
-        // set up subscriptions
-        ros::SubscribeOptions topic_sub_joint_states_opts = ros::SubscribeOptions::create<sensor_msgs::JointState>(
-            "/atlas/joint_states", 1, topic_sub_joint_states_handler,
-            ros::VoidPtr(), rosnode->getCallbackQueue());
-        topic_sub_joint_states_opts.transport_hints = ros::TransportHints().unreliable();
-        ros::Subscriber topic_sub_joint_states = rosnode->subscribe(topic_sub_joint_states_opts);
-    }
 
     //###########################################################
     //#### Joystick initialization
@@ -540,6 +527,24 @@ int main(int argc, char** argv) {
 
     //###########################################################
     //#### OK GO
-    ros::spin();
+    // set up publishing
+    if(gazebo_sim) {
+        // set up the joint command
+        atlasStateCurrent.fill_joint_command(&jointCommand, rosnode);
+
+        topic_pub_joint_commands = rosnode->advertise<atlas_msgs::AtlasCommand>(
+            "/atlas/atlas_command", 1, true);
+
+        // set up subscriptions
+        ros::SubscribeOptions topic_sub_joint_states_opts = ros::SubscribeOptions::create<sensor_msgs::JointState>(
+            "/atlas/joint_states", 1, topic_sub_joint_states_handler,
+            ros::VoidPtr(), rosnode->getCallbackQueue());
+        topic_sub_joint_states_opts.transport_hints = ros::TransportHints().unreliable();
+        ros::Subscriber topic_sub_joint_states = rosnode->subscribe(topic_sub_joint_states_opts);
+
+        ros::spin();
+    } else {
+        ros::spin();
+    }
     return 0;
 }
