@@ -315,6 +315,9 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         switch (teleopMode) {
         case TELEOP_COM:
         {
+            // 1. Save dofs
+            Eigen::VectorXd dofs = atlasStateTarget.dart_pose();
+
             // 2. Orient Atlas about his feet
             move_origin_to_feet( atlasStateTarget );
             atlasSkel->setPose(atlasStateTarget.dart_pose()); //< save into skel so we can compute with it
@@ -343,6 +346,10 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
             // 5. Write xform target
             xformTarget = Eigen::Matrix4d::Identity();
             xformTarget.translation() += com;
+
+            // 6. Do not move if com ik failed
+            if(!ok)
+                atlasStateTarget.set_dart_pose(dofs);
 
             break;
         }
@@ -461,6 +468,7 @@ void topic_sub_joint_states_handler(const sensor_msgs::JointState::ConstPtr &_js
 int main(int argc, char** argv) {
     //###########################################################
     //#### Command line arguments
+    gazebo_sim = true;
     if (argc == 2) {
         std::string in(argv[1]);
         if(in == "--no-sim")
