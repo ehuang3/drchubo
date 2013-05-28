@@ -312,7 +312,7 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
             atlasSkel->setPose(atlasStateTarget.dart_pose()); //< save into skel so we can compute with it
 
             // 3. Grab the target state COM and offset by spacenav (might shake atlas around..)
-            com = atlasSkel->getWorldCOM();
+            // com = atlasSkel->getWorldCOM();
             com += off;
             std::cout << "desired com = " << com.transpose() << std::endl;
 
