@@ -17,6 +17,7 @@ foreach(APPDIR
     pelvis_tilt_demo
     spnav_com
     spnav_gl
+    spnav_all
     )
     add_subdirectory(${APPDIR})
 endforeach(APPDIR)
