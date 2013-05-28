@@ -97,6 +97,8 @@ namespace atlas {
         jc->kp_velocity.resize(n_joints);
         jc->i_effort_min.resize(n_joints);
         jc->i_effort_max.resize(n_joints);
+        
+        double gain_scale = 2;
 
         for(unsigned int i = 0; i < n_joints; i++) {
             std::vector<std::string> pieces;
@@ -105,13 +107,13 @@ namespace atlas {
             double temp;
             
             rosnode->getParam("atlas_controller/gains/" + ros_joint_name + "/p", temp);
-            jc->kp_position[i] = temp;
+            jc->kp_position[i] = gain_scale * temp;
 
             rosnode->getParam("atlas_controller/gains/" + ros_joint_name + "/i", temp);
-            jc->ki_position[i] = temp;
+            jc->ki_position[i] = gain_scale * temp;
 
             rosnode->getParam("atlas_controller/gains/" + ros_joint_name + "/d", temp);
-            jc->kd_position[i] = temp;
+            jc->kd_position[i] = gain_scale * temp;
 
             rosnode->getParam("atlas_controller/gains/" + ros_joint_name + "/i_clamp", temp);
             jc->i_effort_min[i] = temp;
