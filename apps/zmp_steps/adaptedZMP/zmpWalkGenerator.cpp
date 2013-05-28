@@ -289,7 +289,7 @@ void ZMPWalkGenerator::applyComIK( ZMPReferenceContext& _cur ) {
   Eigen::Vector3d desiredCom = Eigen::Vector3d( _cur.comX[0], 
 						_cur.comY[0], 
 						_cur.comZ[0] );
-  std::cout << "DESIRED COM: "<< desiredCom.transpose() << std::endl;
+
   // set mode for legs. Both arms are always fixed and invariant during walk
   _cur.ikMode[robot::robot_kinematics_t::MANIP_L_FOOT] = (_cur.stance == SINGLE_RIGHT) ? robot::robot_kinematics_t::IK_MODE_WORLD : robot::robot_kinematics_t::IK_MODE_SUPPORT;
   _cur.ikMode[robot::robot_kinematics_t::MANIP_R_FOOT] = (_cur.stance == SINGLE_LEFT) ? robot::robot_kinematics_t::IK_MODE_WORLD : robot::robot_kinematics_t::IK_MODE_SUPPORT;

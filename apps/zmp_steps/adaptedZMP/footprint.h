@@ -19,16 +19,19 @@
 class Footprint {
  public:
   Eigen::Matrix4d transform;
+  Eigen::Matrix4d transform_w;
   bool is_left;
 
   Footprint( Eigen::Matrix4d t, bool is_left );
   Footprint( double x, double y, double theta, bool is_left );
   Footprint();
 
+  // Give values in global frame w (transform NO transform DH)
   double x() const;
   double y() const;
   double theta() const;
 
+  // Get values in global frame w (transform, NO transform DH)
   Eigen::Matrix4d getTransform() const;
   Eigen::Matrix3d getRotMat() const;
   Eigen::Vector3d getTranslation() const;
