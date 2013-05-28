@@ -42,6 +42,10 @@
 #include <planning/PathFollowingTrajectory.h>
 #include <amino.h>
 
+// GUI stuff
+#include "MyWindow.h"
+#include <pthread.h>
+
 //###########################################################
 //###########################################################
 //#### variable declarations
@@ -67,6 +71,9 @@ Eigen::VectorXd lastCommand;
 Eigen::Vector6d joy_thresh; //< static spacenav readings have noise
 int max_thresh_iters;
 int thresh_iters;
+
+pthread_t gui_thread;
+MyWindow gui_window;
 
 //###########################################################
 //###########################################################
@@ -319,6 +326,7 @@ void topic_sub_joint_states_handler(const sensor_msgs::JointState::ConstPtr &_js
     for (unsigned int i = 0; i < _js->position.size(); i++)
         r_pose[i] = _js->position[i];
     atlasStateCurrent.set_ros_pose(r_pose);
+    move_origin_to_feet(atlasStateCurrent);
 }
 
 //###########################################################
@@ -345,6 +353,12 @@ int main(int argc, char** argv) {
     joy_thresh = Eigen::Vector6d::Zero();
     max_thresh_iters = 100;
     thresh_iters = 0;
+
+    //###########################################################
+    //#### GUI initialization
+    gui_window.setCurrentState(&atlasStateCurrent);
+    gui_window.setTargetState(&atlasStateTarget);
+    pthread_create(&gui_thread, NULL, MyWindow::start_routine, &gui_window);
 
     //###########################################################
     //#### ROS initialization
