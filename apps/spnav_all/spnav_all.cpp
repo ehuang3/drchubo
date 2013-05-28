@@ -77,6 +77,8 @@ MyWindow gui_window;
 
 int teleopMode;
 
+bool gazebo_sim; //< we are simulation in gazebo
+
 //###########################################################
 //###########################################################
 //#### badly-written classes
@@ -215,20 +217,24 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         teleopMode = (teleopMode + 1) % NUM_TELEOP_MODES;
         switch (teleopMode) {
         case TELEOP_COM: std::cout << "Teleop Mode: COM\n" << std::endl; break;
-        case TELEOP_LEFT_ARM: std::cout << "Teleop Mode: Left Arm\n" << std::endl; break;
-        case TELEOP_RIGHT_ARM: std::cout << "Teleop Mode: Right Arm\n" << std::endl; break;
+        case TELEOP_LEFT_ARM_JACOBIAN: std::cout << "Teleop Mode: Left Arm Jacobian\n" << std::endl; break;
+        case TELEOP_RIGHT_ARM_JACOBIAN: std::cout << "Teleop Mode: Right Arm Jacobian\n" << std::endl; break;
+        case TELEOP_LEFT_ARM_ANALYTIC: std::cout << "Teleop Mode: Left Arm Analytic\n" << std::endl; break;
+        case TELEOP_RIGHT_ARM_ANALYTIC: std::cout << "Teleop Mode: Right Arm Analytic\n" << std::endl; break;
         default: break;
         }
     }
     // 2. Setup parameters
     switch (teleopMode) {
-    case TELEOP_COM: 
-    case TELEOP_LEFT_ARM: 
+    case TELEOP_COM: break;
+    case TELEOP_LEFT_ARM_ANALYTIC:
+    case TELEOP_LEFT_ARM_JACOBIAN: 
         targetLimb = robot::LIMB_L_ARM;
         atlasStateTarget.get_manip_indexes(desired_dofs, targetLimb);
         end_effector = atlasSkel->getNode(ROBOT_LEFT_HAND);
         break;
-    case TELEOP_RIGHT_ARM: 
+    case TELEOP_RIGHT_ARM_ANALYTIC:
+    case TELEOP_RIGHT_ARM_JACOBIAN: 
         targetLimb = robot::LIMB_R_ARM;
         atlasStateTarget.get_manip_indexes(desired_dofs, targetLimb);
         end_effector = atlasSkel->getNode(ROBOT_RIGHT_HAND);
@@ -322,8 +328,8 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
 
             break;
         }
-        case TELEOP_LEFT_ARM:
-        case TELEOP_RIGHT_ARM:
+        case TELEOP_LEFT_ARM_JACOBIAN:
+        case TELEOP_RIGHT_ARM_JACOBIAN:
         {
             // 2. Swap rotation axes so they make sense for a teleoperator
             std::swap(movement[3], movement[4]);
@@ -365,12 +371,13 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         // 7. Send commands over ROS
         Eigen::VectorXd rospose;
         atlasStateTarget.get_ros_pose(rospose);
-        for(unsigned int i = 0; i < rospose.size(); i++) {
-            jointCommand.position[i] = rospose[i];
+        if (gazebo_sim) {
+            for(unsigned int i = 0; i < rospose.size(); i++) {
+                jointCommand.position[i] = rospose[i];
+            }
+            jointCommand.header.stamp = _j->header.stamp;
+            topic_pub_joint_commands.publish(jointCommand);
         }
-            
-        jointCommand.header.stamp = _j->header.stamp;
-        topic_pub_joint_commands.publish(jointCommand);
         lastCommand = rospose;
         
         // 99. We're in a for loop
@@ -407,6 +414,14 @@ void topic_sub_joint_states_handler(const sensor_msgs::JointState::ConstPtr &_js
 
 int main(int argc, char** argv) {
     //###########################################################
+    //#### Command line arguments
+    if (argc == 2) {
+        std::string in(argv[1]);
+        if(in == "--no-sim")
+            gazebo_sim = false;
+    }
+
+    //###########################################################
     //#### DART initialization
     DartLoader dart_loader;
     mWorld = dart_loader.parseWorld(VRC_DATA_PATH "models/atlas/atlas_world.urdf");
@@ -416,14 +431,6 @@ int main(int argc, char** argv) {
     atlasStateCurrent.init(atlasSkel);        // init states
     atlasJac.init(atlasSkel);                 // init jacobians
     atlasKin.init(atlasSkel);                 // init kinematics
-
-    //###########################################################
-    //#### Joystick initialization
-    joy_thresh = Eigen::Vector6d::Zero();
-    max_thresh_iters = 100;
-    thresh_iters = 0;
-
-    teleopMode = TELEOP_LEFT_ARM;
 
     //###########################################################
     //#### GUI initialization
@@ -445,25 +452,38 @@ int main(int argc, char** argv) {
         if (last_ros_time_.toSec() > 0) wait = false;
     }
 
-    // set up the joint command
-    atlasStateCurrent.fill_joint_command(&jointCommand, rosnode);
-    
     // set up publishing
-    topic_pub_joint_commands = rosnode->advertise<atlas_msgs::AtlasCommand>(
-        "/atlas/atlas_command", 1, true);
+    if(gazebo_sim) {
+        // set up the joint command
+        atlasStateCurrent.fill_joint_command(&jointCommand, rosnode);
 
-    // set up subscriptions
-    ros::SubscribeOptions topic_sub_joint_states_opts = ros::SubscribeOptions::create<sensor_msgs::JointState>(
-        "/atlas/joint_states", 1, topic_sub_joint_states_handler,
-        ros::VoidPtr(), rosnode->getCallbackQueue());
-    topic_sub_joint_states_opts.transport_hints = ros::TransportHints().unreliable();
-    ros::Subscriber topic_sub_joint_states = rosnode->subscribe(topic_sub_joint_states_opts);
+        topic_pub_joint_commands = rosnode->advertise<atlas_msgs::AtlasCommand>(
+            "/atlas/atlas_command", 1, true);
+
+        // set up subscriptions
+        ros::SubscribeOptions topic_sub_joint_states_opts = ros::SubscribeOptions::create<sensor_msgs::JointState>(
+            "/atlas/joint_states", 1, topic_sub_joint_states_handler,
+            ros::VoidPtr(), rosnode->getCallbackQueue());
+        topic_sub_joint_states_opts.transport_hints = ros::TransportHints().unreliable();
+        ros::Subscriber topic_sub_joint_states = rosnode->subscribe(topic_sub_joint_states_opts);
+    }
+
+    //###########################################################
+    //#### Joystick initialization
+    joy_thresh = Eigen::Vector6d::Zero();
+    max_thresh_iters = 100;
+    thresh_iters = 0;
+
+    teleopMode = TELEOP_LEFT_ARM_ANALYTIC;
 
     ros::SubscribeOptions topic_sub_joystick_opts = ros::SubscribeOptions::create<sensor_msgs::Joy>(
         "/spacenav/joy", 1, topic_sub_joystick_handler,
         ros::VoidPtr(), rosnode->getCallbackQueue());
     topic_sub_joystick_opts.transport_hints = ros::TransportHints().unreliable();
-    ros::Subscriber topic_sub_joystick = rosnode->subscribe(topic_sub_joystick_opts);    
+    ros::Subscriber topic_sub_joystick = rosnode->subscribe(topic_sub_joystick_opts);
+
+    //###########################################################
+    //#### OK GO
     ros::spin();
     return 0;
 }
