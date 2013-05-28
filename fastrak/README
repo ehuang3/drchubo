@@ -1,0 +1,15 @@
+
+COMM
+
+- The RS232 port on the FasTrak is a DTE port.  Connect it to a PC using a NULL
+  Modem (crossover) serial cable.
+
+QUIRKS
+
+- Device takes about ten seconds to initialize after switched on.  You
+  must wait this time before starting the daemon.
+
+- The sensor can only measure a positive displacement in X.  DO NOT
+  BREAK THE YZ PLANE!
+
+- The daemon does not use Euler angles, and you shouldn't either.

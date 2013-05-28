@@ -25,6 +25,12 @@ public:
   Matrix4f RA6;
   Matrix4f RA06;
 
+  Vector3f l_goalPosition;
+  Vector3f r_goalPosition;
+
+  Matrix3f l_goalRot;
+  Matrix3f r_goalRot;
+
   float l_closed_amount;
   float r_closed_amount;
   float twist;
@@ -52,6 +58,7 @@ public:
   void setJointStates();
   void joystick(const sensor_msgs::Joy::ConstPtr& joy);
   void joystick_J(const sensor_msgs::Joy::ConstPtr& joy);
+  void getError();
 
   void fastrakDifferential();
 };

@@ -5,6 +5,8 @@ import os
 import time
 import signal
 import sys
+import tty
+import termios
 
 os.system("clear")
 
@@ -24,17 +26,63 @@ print bcolors.OKBLUE+"""
      /____/                                          
 """ + bcolors.ENDC
 
-if not os.geteuid():
-	print ""
-	print bcolors.WARNING + "WARNING: It looks like you're running this as root. Make sure root has sourced /usr/share/drcsim/setup.sh" + bcolors.ENDC
+print bcolors.WARNING + "Permission needed to open ports for gloves. If prompted, please type your sudo password below." + bcolors.ENDC
+os.system("sudo chmod 777 /dev/ttyUSB0")
+os.system("sudo chmod 777 /dev/ttyUSB1")
 
 print ""
 print ""
 print ""
+
 def signal_handler(signal, frame):
     print '\nExiting...'
     sys.exit(0)
 signal.signal(signal.SIGINT, signal_handler)
+
+
+def main_loop():
+	while(1):
+		
+		######RIGHT SENSE#######
+		right_ser = serial.Serial(right_port, 115200, timeout=1)
+		right_ser.write("S") #begin streaming
+		right_s = ""
+		right_s = right_ser.read(48)
+		right_glove_value = right_s[38].encode('hex')
+		#print int(glove_value, 16)-open_avg
+		right_ser.write("\x03")
+		right_ser.close()
+		right_scaled_value = float((int(right_glove_value, 16)-float(right_open_avg))/(float(right_closed_avg)-float(right_open_avg)))
+		print "RIGHT scaled is "+str(right_scaled_value)
+		if right_scaled_value < 0:
+			right_scaled_value = 0
+		if right_scaled_value > 1.0:
+			right_scaled_value = 1.0
+		right_command = "rosservice call /sandia_hands/r_hand/simple_grasp ' { grasp: { name: \"cylindrical\", closed_amount: "+str(right_scaled_value)+"} }'"
+		#print command
+		os.system(right_command)
+
+		######LEFT SENSE########
+		left_ser = serial.Serial(left_port, 115200, timeout=1)
+		left_ser.write("S") #begin streaming
+		left_s = ""
+		left_s = left_ser.read(48)
+		left_glove_value = left_s[38].encode('hex')
+		#print int(glove_value, 16)-open_avg
+		left_ser.write("\x03")
+		left_ser.close()
+		left_scaled_value = float((int(left_glove_value, 16)-float(left_open_avg))/(float(left_closed_avg)-float(left_open_avg)))
+		print "left scaled is "+str(left_scaled_value)
+		if left_scaled_value < 0:
+			left_scaled_value = 0
+		if left_scaled_value > 1.0:
+			left_scaled_value = 1.0
+		left_command = "rosservice call /sandia_hands/l_hand/simple_grasp ' { grasp: { name: \"cylindrical\", closed_amount: "+str(left_scaled_value)+"} }'"
+		#print command
+		os.system(left_command)
+
+		#If performance sucks, uncomment the line below
+		#time.sleep(1) # one second delay so we don't kill the ros server with requests
 
 print "Let's identify each glove."
 print "Keep your left hand still and move your right hand to see if the numbers below change."
@@ -43,7 +91,7 @@ raw_input("Press enter when you're ready.")
 ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)
 ser.write("S") #command to start streaming data
 last_j = 0
-for i in xrange(200):
+for i in xrange(150):
 	s = ""
 	s = ser.read(48)        # read up to ten bytes (timeout)
 	value =  s[38].encode('hex') #39-1 since index starts at 0
@@ -70,7 +118,7 @@ print "Calibrating..."
 ser = serial.Serial(right_port, 115200, timeout=1)
 ser.write("S") #command to start streaming data
 open_avg = 0
-for i in xrange(200):
+for i in xrange(100):
 	s = ""
 	s = ser.read(48)        # read up to ten bytes (timeout)
 	#print "Read: "+s
@@ -90,7 +138,7 @@ print "Calibrating..."
 ser = serial.Serial(right_port, 115200, timeout=1)
 ser.write("S") #command to start streaming data
 closed_avg = 0
-for i in xrange(200):
+for i in xrange(100):
 	s = ""
 	s = ser.read(48)        # read up to ten bytes (timeout)
 	#print "Read: "+s
@@ -115,7 +163,7 @@ print "Calibrating..."
 ser = serial.Serial(left_port, 115200, timeout=1)
 ser.write("S") #command to start streaming data
 open_avg = 0
-for i in xrange(200):
+for i in xrange(100):
 	s = ""
 	s = ser.read(48)        # read up to ten bytes (timeout)
 	#print "Read: "+s
@@ -132,7 +180,7 @@ print "Calibrating..."
 ser = serial.Serial(left_port, 115200, timeout=1)
 ser.write("S") #command to start streaming data
 closed_avg = 0
-for i in xrange(200):
+for i in xrange(100):
 	s = ""
 	s = ser.read(48)        # read up to ten bytes (timeout)
 	#print "Read: "+s
@@ -150,44 +198,5 @@ print "Done!"
 #############################ROS PUBLISHER################################
 
 raw_input("Ready to begin publishing to ROS. Press enter to begin controlling Atlas.")
-while(1):
-	######RIGHT SENSE#######
-	right_ser = serial.Serial(right_port, 115200, timeout=1)
-	right_ser.write("S") #begin streaming
-	right_s = ""
-	right_s = right_ser.read(48)
-	right_glove_value = right_s[38].encode('hex')
-	#print int(glove_value, 16)-open_avg
-	right_ser.write("\x03")
-	right_ser.close()
-	right_scaled_value = float((int(right_glove_value, 16)-float(right_open_avg))/(float(right_closed_avg)-float(right_open_avg)))
-	print "RIGHT scaled is "+str(right_scaled_value)
-	if right_scaled_value < 0:
-		right_scaled_value = 0
-	if right_scaled_value > 1.0:
-		right_scaled_value = 1.0
-	right_command = "rosservice call /sandia_hands/r_hand/simple_grasp ' { grasp: { name: \"cylindrical\", closed_amount: "+str(right_scaled_value)+"} }'"
-	#print command
-	os.system(right_command)
 
-	######LEFT SENSE########
-	left_ser = serial.Serial(left_port, 115200, timeout=1)
-	left_ser.write("S") #begin streaming
-	left_s = ""
-	left_s = left_ser.read(48)
-	left_glove_value = left_s[38].encode('hex')
-	#print int(glove_value, 16)-open_avg
-	left_ser.write("\x03")
-	left_ser.close()
-	left_scaled_value = float((int(left_glove_value, 16)-float(left_open_avg))/(float(left_closed_avg)-float(left_open_avg)))
-	print "left scaled is "+str(left_scaled_value)
-	if left_scaled_value < 0:
-		left_scaled_value = 0
-	if left_scaled_value > 1.0:
-		left_scaled_value = 1.0
-	left_command = "rosservice call /sandia_hands/l_hand/simple_grasp ' { grasp: { name: \"cylindrical\", closed_amount: "+str(left_scaled_value)+"} }'"
-	#print command
-	os.system(left_command)
-
-	#If performance sucks, uncomment the line below
-	#time.sleep(1) # one second delay so we don't kill the ros server with requests
+main_loop()

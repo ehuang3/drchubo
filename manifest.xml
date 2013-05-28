@@ -10,9 +10,26 @@
   <url>http://ros.org/wiki/vrc_golem</url>
   <depend package="roscpp"/>
   <depend package="trajectory_msgs"/>
+  <depend package="std_msgs"/>
   <depend package="osrf_msgs"/>
   <depend package="atlas_msgs"/>
   <depend package="actionlib" />
+
+  <!-- OpenCV -->
+  <depend package="sensor_msgs" />
+  <depend package="opencv2" />
+  <depend package="cv_bridge" />
+  <depend package="std_msgs" />
+  <depend package="image_transport" />
+  
+  <!-- PCL -->
+  <depend package="pcl" />
+  <depend package="pcl_ros" />
+
+  <!-- Qt4 stuff -->	
+  <depend package="qt_build" />
+  <depend package="libqt4-dev" />
+  <depend package="qt4-qmake" />
 </package>
 
 

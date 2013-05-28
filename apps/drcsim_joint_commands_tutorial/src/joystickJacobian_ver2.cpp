@@ -20,18 +20,15 @@ ros::Publisher pub_joint_commands_;
 atlas_msgs::AtlasCommand jointcommands;//osrf_msgs::JointCommands jointcommands;
 ros::Publisher pub_hand_commands;
 sandia_hand_msgs::SimpleGrasp handcommands;
-//osrf_msgs::JointCommands handcommands;
+
 using namespace Eigen;
 using namespace std;
 
-atlasKin larm;
+atlasKin larm;//TODO shouldn't this be rarm
 
 
 void atlasKin::getJointStates(const sensor_msgs::JointState::ConstPtr &_js){
- // cout << "Current: ";
   for (int b = 16;b<28;b++)
-    //cout << _js->position[b] << " ";
-  //cout << endl << "Command: ";
   // Make a moving filter to smooth inputs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (current[0] == 4){// this is set to be four in advance, as a first time through flag
   cout << "First Time" <<endl;
@@ -63,6 +60,7 @@ void atlasKin::getJointStates(const sensor_msgs::JointState::ConstPtr &_js){
   l_diff << 0,0,0,0,0,0;
   r_diff << 0,0,0,0,0,0;
 }
+
 void atlasKin::setJointStates(){
   //cout << "setJointStates" << endl;
   //cout << "Actually is: ";
