@@ -197,6 +197,10 @@ robot_kinematics_t::~robot_kinematics_t() {
         // Get close with analytic IK
         bool ok = arm_ik(B, left, state);
 
+        // No need for jacobians here.
+        if (ok)
+            return ok;
+
         // Finish it with jacobian IK
         Skeleton *robotSkel = state.robot();
         
