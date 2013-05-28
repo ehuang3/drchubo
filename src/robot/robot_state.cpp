@@ -178,11 +178,6 @@ namespace robot {
         Twb.rotate( AngleAxisd( _dofs(5), Vector3d::UnitX()) );
     }
 
-    void robot_state_t::copy_into_robot()
-    {
-        _robot->setPose(_dofs);
-    }
-
     void robot_state_t::set_manip(const VectorXd& q, int mi) 
     {
         const vector<int>& mmap = g_d_limb[mi];
@@ -207,11 +202,19 @@ namespace robot {
         }
     }
 
-    void robot_state_t::get_ros_pose(VectorXd& q)
+    void robot_state_t::get_ros_pose(VectorXd& q) const
     {
-        for(auto iter = g_r2d.begin(); iter != g_d2r.end(); ++iter) {
+        q.resize(g_r2d.size());
+        for(auto iter = g_r2d.begin(); iter != g_r2d.end(); ++iter) {
             q(iter->first) = _dofs(iter->second);
         }
+    }
+
+    const Eigen::VectorXd robot_state_t::ros_pose() const
+    {
+        VectorXd ros;
+        get_ros_pose(ros);
+        return ros;
     }
 
     void robot_state_t::get_manip_indexes(vector<int>& indexes, int mi)

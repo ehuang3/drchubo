@@ -46,10 +46,11 @@ atlas_kinematics_t::~atlas_kinematics_t() {
 
     void atlas_kinematics_t::xform_w_dsy(Isometry3d& B, bool left, robot_state_t& state)
     {
-        // Transform magic, I'd rather not explain unless I'm held down and threatened with a knife.
+        // Transform magic stuffs.
         // Need to orient a frame from world to DH origin.
         Skeleton *atlas = state.robot();
-        state.copy_into_robot();
+        atlas->setPose(state.dart_pose());
+        //
         Joint *arm_usy = atlas->getJoint(left?"l_arm_usy":"r_arm_usy");
         Joint *arm_shx = atlas->getJoint(left?"l_arm_shx":"r_arm_shx");
         Matrix4d shx = arm_shx->getTransform(0)->getTransform();

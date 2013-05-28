@@ -4,6 +4,8 @@
 #include <map>
 #include <string>
 
+#include <kinematics/Skeleton.h>
+
 namespace kinematics { class Skeleton; class BodyNode; }
 
 namespace robot {
@@ -36,11 +38,17 @@ namespace robot {
         void set_dart_pose(const Eigen::VectorXd& q) { _dofs = q; }
         void get_dart_pose(Eigen::VectorXd& q) { q = _dofs; }
         void set_ros_pose(const Eigen::VectorXd& q);
-        void get_ros_pose(Eigen::VectorXd& q);
-        Eigen::VectorXd& dart_pose() { return _dofs; }
+        void get_ros_pose(Eigen::VectorXd& q) const;
+        const Eigen::VectorXd& dart_pose() const { return _dofs; }
+        const Eigen::VectorXd ros_pose() const;
 
-        // copies dofs into internal dart skeleton
-        void copy_into_robot();
+        // WARNING: Using this may cause hard to trace bugs
+        // because this Skeleton* is globally shared and writen into.
+        // If you do grab this ptr, make sure to do 
+        // 
+        //       robotSkel->setPose( state.dart_pose() );
+        //
+        // to avoid inconsistencies.
         kinematics::Skeleton* robot() { return _robot; }
         
         // returns dart index of joint

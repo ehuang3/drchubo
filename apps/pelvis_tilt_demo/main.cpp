@@ -58,8 +58,8 @@ int main(int argc, char* argv[])
     body_z += -foot->getWorldTransform()(2,3);
     VectorXd robot_dofs = robot->getPose();
     cout << "body_z = " << body_z << endl;
-    state.dofs()(2) = body_z;
-    state.copy_into_robot();
+    state.dofs(2) = body_z;
+    robot->setPose(state.dart_pose());
 
     cout << robot->getNode(ROBOT_BODY)->getWorldTransform() << endl;
 
@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
 
     kin.com_ik(world_com, end_effectors, mode, state);
 
-    state.copy_into_robot();
+    robot->setPose(state.dart_pose());
 
 	MyWindow window;
 	window.setWorld(mWorld);

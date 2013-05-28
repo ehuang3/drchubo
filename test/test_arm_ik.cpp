@@ -44,7 +44,8 @@ TEST(ATLAS_ARM, PROTO_LEFT_XFORM_W_DSY)
 
     // XFORM_W_DSY CODE
     Skeleton *atlas = state->robot();
-    state->copy_into_robot();
+    atlas->setPose( state->dart_pose() );
+
     Joint *arm_usy = atlas->getJoint(left?"l_arm_usy":"r_arm_usy");
     Joint *arm_shx = atlas->getJoint(left?"l_arm_shx":"r_arm_shx");
     Matrix4d shx = arm_shx->getTransform(0)->getTransform();
@@ -96,6 +97,7 @@ TEST(ATLAS_ARM, PROTO_LEFT_FK)
 {
     robot_state_t *state = PREPARE_ROBOT_STATE();
     robot_kinematics_t *kin = PREPARE_ROBOT_KINEMATICS();
+    Skeleton *robot = state->robot();
     
     vector<int> left_arm;
     state->get_manip_indexes(left_arm, MANIP_L_HAND);
@@ -113,7 +115,7 @@ TEST(ATLAS_ARM, PROTO_LEFT_FK)
     
     // world xform
     state->set_dofs(q, left_arm);
-    state->copy_into_robot();
+    robot->setPose(state->dart_pose());
 
     Isometry3d Tw_hand;
     Tw_hand = state->robot()->getNode(ROBOT_LEFT_HAND)->getWorldTransform();
@@ -152,6 +154,7 @@ TEST(ATLAS_ARM, PROTO_LEFT_IK)
 {
     robot_state_t *state = PREPARE_ROBOT_STATE();
     robot_kinematics_t *kin = PREPARE_ROBOT_KINEMATICS();
+    Skeleton *robot = state->robot();
     
     vector<int> left_arm;
     state->get_manip_indexes(left_arm, MANIP_L_HAND);
@@ -169,7 +172,7 @@ TEST(ATLAS_ARM, PROTO_LEFT_IK)
     
     // Setup world xform + joint angles
     state->set_dofs(q, left_arm);
-    state->copy_into_robot();
+    robot->setPose( state->dart_pose() );
 
     // Verify that HUBO FK/IK is setup consistently
     // xform to HUBOFK
@@ -223,7 +226,7 @@ TEST(ATLAS_ARM, PROTO_LEFT_IK)
     kin->armIK(qik, Bw, q6, SIDE_LEFT);
 
     state->set_dofs(qik, left_arm);
-    state->copy_into_robot();
+    robot->setPose(state->dart_pose());
 
     // print
     // printf("q6 =\n");
@@ -265,7 +268,8 @@ TEST(ATLAS_ARM, PROTO_RIGHT_XFORM_W_DSY)
 
     // XFORM_W_DSY CODE
     Skeleton *atlas = state->robot();
-    state->copy_into_robot();
+    atlas->setPose(state->dart_pose());
+
     Joint *arm_usy = atlas->getJoint(left?"l_arm_usy":"r_arm_usy");
     Joint *arm_shx = atlas->getJoint(left?"l_arm_shx":"r_arm_shx");
     Matrix4d shx = arm_shx->getTransform(0)->getTransform();
@@ -320,6 +324,7 @@ TEST(ATLAS_ARM, PROTO_RIGHT_FK)
 {
     robot_state_t *state = PREPARE_ROBOT_STATE();
     robot_kinematics_t *kin = PREPARE_ROBOT_KINEMATICS();
+    Skeleton *robot= state->robot();
     
     vector<int> right_arm;
     state->get_manip_indexes(right_arm, MANIP_R_HAND);
@@ -337,7 +342,7 @@ TEST(ATLAS_ARM, PROTO_RIGHT_FK)
     
     // world xform
     state->set_dofs(q, right_arm);
-    state->copy_into_robot();
+    robot->setPose(state->dart_pose());
 
     Isometry3d Tw_hand;
     Tw_hand = state->robot()->getNode(ROBOT_RIGHT_HAND)->getWorldTransform();
@@ -376,6 +381,7 @@ TEST(ATLAS_ARM, PROTO_RIGHT_IK)
 {
     robot_state_t *state = PREPARE_ROBOT_STATE();
     robot_kinematics_t *kin = PREPARE_ROBOT_KINEMATICS();
+    Skeleton* robot = state->robot();
     
     vector<int> right_arm;
     state->get_manip_indexes(right_arm, MANIP_R_HAND);
@@ -395,7 +401,7 @@ TEST(ATLAS_ARM, PROTO_RIGHT_IK)
     
     // Setup world xform + joint angles
     state->set_dofs(q, right_arm);
-    state->copy_into_robot();
+    robot->setPose(state->dart_pose());
 
     // Verify that HUBO FK/IK is setup consistently
     // xform to HUBOFK
@@ -449,7 +455,7 @@ TEST(ATLAS_ARM, PROTO_RIGHT_IK)
     kin->armIK(qik, Bw, q6, SIDE_RIGHT);
 
     state->set_dofs(qik, right_arm);
-    state->copy_into_robot();
+    robot->setPose(state->dart_pose());
 
     // print
     // printf("q6 =\n");
@@ -479,6 +485,7 @@ TEST(ATLAS_ARM, TEST_RIGHT_IK)
 {
     robot_state_t *state = PREPARE_ROBOT_STATE();
     robot_kinematics_t *kin = PREPARE_ROBOT_KINEMATICS();
+    Skeleton *robot = state->robot();
     
     vector<int> arm;
     state->get_manip_indexes(arm, MANIP_R_HAND);
@@ -496,7 +503,7 @@ TEST(ATLAS_ARM, TEST_RIGHT_IK)
 
     // Setup world xform + joint angles
     state->set_dofs(q, arm);
-    state->copy_into_robot();
+    robot->setPose(state->dart_pose());
 
     // q -> Dart hand
     Isometry3d Tw_hand;
@@ -513,7 +520,8 @@ TEST(ATLAS_ARM, TEST_RIGHT_IK)
     cout << "q6 = \n" << q6 << endl;
     cout << "qsol = \n" << q << endl;
 
-    state->copy_into_robot();
+    robot->setPose(state->dart_pose());
+
     Isometry3d B;
     B = state->robot()->getNode(ROBOT_RIGHT_HAND)->getWorldTransform();
     
@@ -527,6 +535,7 @@ TEST(ATLAS_ARM, TEST_RIGHT_JAC_IK)
 {
     robot_state_t *state = PREPARE_ROBOT_STATE();
     robot_kinematics_t *kin = PREPARE_ROBOT_KINEMATICS();
+    Skeleton *robot = state->robot();
     
     vector<int> arm;
     state->get_manip_indexes(arm, MANIP_R_HAND);
@@ -544,7 +553,7 @@ TEST(ATLAS_ARM, TEST_RIGHT_JAC_IK)
 
     // Setup world xform + joint angles
     state->set_dofs(q, arm);
-    state->copy_into_robot();
+    robot->setPose(state->dart_pose());
 
     // q -> Dart hand
     Isometry3d Tw_hand;
@@ -561,7 +570,7 @@ TEST(ATLAS_ARM, TEST_RIGHT_JAC_IK)
     cout << "q6 = \n" << q6 << endl;
     cout << "qsol = \n" << q << endl;
 
-    state->copy_into_robot();
+    robot->setPose(state->dart_pose());
     Isometry3d B;
     B = state->robot()->getNode(ROBOT_RIGHT_HAND)->getWorldTransform();
     
