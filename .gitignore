@@ -1,6 +1,8 @@
 *~
 *.py[cod]
 
+*.swp
+
 *.zip
 
 # C extensions
