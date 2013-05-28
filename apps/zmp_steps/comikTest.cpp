@@ -47,12 +47,6 @@ int main( int argc, char* argv[] ) {
 		     gWalker,
 		     Twb );
 
-	// Check I ACTUALLY have values here
-  for( int k = 0; k < 4; ++k ) {
-		for (int i = 0; i < 6; i++) {
-			printf("DART_DOF_IND[%d][%d]=%d \n", k, i, gAtlasKin.dart_dof_ind[k][i] );
-		}
-	}
   // Init walking context
   ZMPReferenceContext initContext;
   initContext = initWalkingContext( gAtlasKin,

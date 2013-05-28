@@ -164,15 +164,19 @@ std::vector<Footprint> walkCircle( double radius,
   // select stance foot, fill out transforms
   // Since the coordinates of the footprint will be given in world frame
   Eigen::Matrix4d stanceT = stance_foot.transform;
-  // We only take the translation
-  stanceT.block(0,0,3,3) = Eigen::Matrix3d::Identity();
-  std::cout << "stance T: "<< stanceT << std::endl;
+
+  // The transformations generated for swing.cpp are in global frame, no in feet frame (DH)
+  // so we have to convert them
+  Eigen::Matrix4d ToFootFrame = Eigen::Matrix4d::Identity();
+  ToFootFrame(0,0) = 0; ToFootFrame(0,1) = 0; ToFootFrame(0,2) = -1;
+  ToFootFrame(1,0) = 0; ToFootFrame(1,1) = 1; ToFootFrame(1,2) = 0;
+  ToFootFrame(2,0) = 1; ToFootFrame(2,1) = 0; ToFootFrame(2,2) = 0;
+
   // And multiply for the transf of the origin of the footprints (middle of both feet)
   Eigen::Matrix4d trans = Eigen::Matrix4d::Identity();
   trans.block(0,3,3,1) = Eigen::Vector3d(0, left_is_stance_foot?-width:width, 0);
 
-  Eigen::Matrix4d T_circle_to_world = stanceT* trans;
-  std::cout << "T circle to world: \n"<< T_circle_to_world << std::endl; 
+  Eigen::Matrix4d T_circle_to_world = stanceT*ToFootFrame*trans;
 
   // For some reason abs acts crazy so I have to do this
   double _radius_;
@@ -234,8 +238,10 @@ std::vector<Footprint> walkCircle( double radius,
 
     Eigen::Matrix4d temp = it->transform;
     it->transform = T_circle_to_world * temp;
+    it->transform_w = temp;
 
     std::cout << "Footprint: "<< it->x()<< ","<<it->y()<<", "<<it->transform(2,3) <<" theta: "<< it->theta() << std::endl;
+    std::cout << "Transform: \n"<< it->transform<<"\n Transform_w: \n"<< it->transform_w << std::endl;
     }
   
   result.insert(result.begin(), stance_foot);

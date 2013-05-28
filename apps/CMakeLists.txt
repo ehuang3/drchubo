@@ -12,6 +12,7 @@ foreach(APPDIR
     zmp_steps
     car_test
     perception
+    driver
     spnav_teleop
     pelvis_tilt_demo
     )
