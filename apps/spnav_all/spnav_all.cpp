@@ -175,14 +175,15 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
 
     // 1. Triggers on a left button click
     if (_j->buttons[0] && !lastButtons[0]) {
-        // 0. Set target pose to match current
+        // 1. Set target pose to match current
         std::cout << "Setting target pose." << std::endl;
         Eigen::VectorXd temp;
         atlasStateCurrent.get_ros_pose(temp);
         atlasStateTarget.set_ros_pose(temp);
+        move_origin_to_feet( atlasStateTarget );
+        move_origin_to_feet( atlasStateCurrent );
         targetPoseInited = true;
         // 1. Set target com to be current
-        move_origin_to_feet( atlasStateCurrent );
         atlasSkel->setPose( atlasStateCurrent.dart_pose() );
         com = atlasSkel->getWorldCOM();
         std::cout << "Starting com = " << com.transpose() << std::endl;
@@ -211,6 +212,7 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
     robot::LimbIndex targetLimb = robot::LIMB_L_ARM;
     std::vector<int> desired_dofs; // which dofs to run the jacobian on
     kinematics::BodyNode* end_effector; // the bodynode on the end of our limb
+    bool left = true;
     
     // 1. Trigger switch on right button click
     if (_j->buttons[1] && !lastButtons[1]) {
@@ -228,13 +230,15 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
     switch (teleopMode) {
     case TELEOP_COM: break;
     case TELEOP_LEFT_ARM_ANALYTIC:
-    case TELEOP_LEFT_ARM_JACOBIAN: 
+    case TELEOP_LEFT_ARM_JACOBIAN:
+        left = true;
         targetLimb = robot::LIMB_L_ARM;
         atlasStateTarget.get_manip_indexes(desired_dofs, targetLimb);
         end_effector = atlasSkel->getNode(ROBOT_LEFT_HAND);
         break;
     case TELEOP_RIGHT_ARM_ANALYTIC:
     case TELEOP_RIGHT_ARM_JACOBIAN: 
+        left = false;
         targetLimb = robot::LIMB_R_ARM;
         atlasStateTarget.get_manip_indexes(desired_dofs, targetLimb);
         end_effector = atlasSkel->getNode(ROBOT_RIGHT_HAND);
@@ -340,15 +344,39 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
 
             // compute the jacobian
             atlasJac.manip_jacobian(J, desired_dofs, end_effector, atlasStateTarget);
-            
+
             // use the jacobian to get the jointspace velocity
             qdot = Eigen::VectorXd::Zero(J.cols());
             aa_la_dls(J.rows(), J.cols(), 0.1, J.data(), movement.data(), qdot.data());
-            
+
             // use the jointspace velocity to update the target position
             dofs.resize(desired_dofs.size());
             atlasStateTarget.get_dofs(dofs, desired_dofs);
             atlasStateTarget.set_dofs(dofs + qdot, desired_dofs);
+            break;
+        }
+        case TELEOP_LEFT_ARM_ANALYTIC:
+        case TELEOP_RIGHT_ARM_ANALYTIC:
+        {
+            // 2. Swap rotation axes so they make sense for a teleoperator
+            std::swap(movement[3], movement[4]);
+            // 3.. Generate delta transform
+            Eigen::Isometry3d Tdelta;
+            Tdelta = Eigen::Matrix4d::Identity();
+            Eigen::Vector3d rot_axis = joy_axes.block<3,1>(3,0);
+            double rot_omega = rot_axis.norm();
+            Tdelta.translation() += off;
+            Tdelta.rotate(Eigen::AngleAxisd(rot_omega, rot_axis));
+            // 4. Generate new hand transform
+            Eigen::Isometry3d Twhand;
+            Eigen::VectorXd dofs;
+            Eigen::Vector6d q6;
+            atlasKin.arm_fk(Twhand, left, atlasStateTarget, true);
+            // atlasSkel->setPose(atlasStateTarget.dart_pose());
+            // Twhand = end_effector->getWorldTransform();
+            Twhand = Twhand * Tdelta;
+            // 5. Run IK
+            ok = atlasKin.arm_ik(Twhand, left, atlasStateTarget);
             break;
         }
         default:
