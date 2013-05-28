@@ -43,7 +43,7 @@
 #include <amino.h>
 
 // GUI stuff
-#include "MyWindow.h"
+#include <gui/teleop_gui.h>
 #include <pthread.h>
 
 //###########################################################
@@ -73,7 +73,8 @@ int max_thresh_iters;
 int thresh_iters;
 
 pthread_t gui_thread;
-MyWindow gui_window;
+gui::teleop_gui_t gui_window;
+gui::params_t gui_params;
 
 int teleopMode;
 Eigen::Isometry3d manip_xforms[robot::NUM_MANIPULATORS];
@@ -490,10 +491,12 @@ int main(int argc, char** argv) {
     //###########################################################
     //#### GUI initialization
     xformTarget = Eigen::Matrix4d::Identity();
-    gui_window.setCurrentState(&atlasStateCurrent);
-    gui_window.setTargetState(&atlasStateTarget);
-    gui_window.setTargetXform(&xformTarget);
-    pthread_create(&gui_thread, NULL, MyWindow::start_routine, &gui_window);
+    gui_params.goal = &xformTarget;
+    gui_params.current = &atlasStateCurrent;
+    gui_params.target = &atlasStateTarget;
+    gui_params.draw_limits = true;
+    gui_window.gui_params = &gui_params;
+    pthread_create(&gui_thread, NULL, gui::teleop_gui_t::start_routine, &gui_window);
 
     //###########################################################
     //#### ROS initialization
@@ -508,8 +511,6 @@ int main(int argc, char** argv) {
         last_ros_time_ = ros::Time::now();
         if (last_ros_time_.toSec() > 0) wait = false;
     }
-
-
 
     //###########################################################
     //#### Joystick initialization

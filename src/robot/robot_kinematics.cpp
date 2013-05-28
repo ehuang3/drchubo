@@ -597,7 +597,7 @@ robot_kinematics_t::~robot_kinematics_t() {
         Matrix4d Twb = state.robot()->getNode(ROBOT_BODY)->getWorldTransform();
         Matrix4d Tbe = Twb.inverse() * B.matrix(); // body -> end effector
         // solve ik
-        VectorXd q(6); //FIXME: ugh
+        VectorXd q(6);
         state.get_manip(q, left ? MANIP_L_FOOT : MANIP_R_FOOT);
         Vector6d q6 = q.block<6,1>(0,0);
         bool ok = legIK(leg_world_to_dh(Tbe), left, q6, q6);
