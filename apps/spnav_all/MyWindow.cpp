@@ -189,12 +189,12 @@ void MyWindow::drawSkels() {
     glPushMatrix();
     glMultMatrixd(goalTarget.data());
     Eigen::Vector3d base = Eigen::Vector3d::Zero();
-    glColor4d(1,0,0,0.5);
-    yui::drawArrow3D(base, Eigen::Vector3d::UnitX(), 0.2, 0.01, 0.02);
-    glColor4d(0,1,0,0.5);
+    glColor4d(1,0,0,0.9);
+    yui::drawArrow3D(base, Eigen::Vector3d::UnitX(), 0.1, 0.01, 0.02);
+    glColor4d(0,1,0,0.9);
     yui::drawArrow3D(base, Eigen::Vector3d::UnitY(), 0.2, 0.01, 0.02);
-    glColor4d(0,0,1,0.5);
-    yui::drawArrow3D(base, Eigen::Vector3d::UnitZ(), 0.2, 0.01, 0.02);
+    glColor4d(0,0,1,0.9);
+    yui::drawArrow3D(base, Eigen::Vector3d::UnitZ(), 0.1, 0.01, 0.02);
     glPopMatrix();
 
     // 99. Post up and go home

@@ -76,6 +76,7 @@ pthread_t gui_thread;
 MyWindow gui_window;
 
 int teleopMode;
+Eigen::Isometry3d manip_xforms[robot::NUM_MANIPULATORS];
 
 bool gazebo_sim; //< we are simulation in gazebo
 
@@ -194,6 +195,13 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         std::cout << "Joystick normal = " << joy_thresh.norm() << std::endl;
         // 3. Init last command as current state
         atlasStateCurrent.get_ros_pose( lastCommand );
+
+        // 4. Init manip xforms
+        atlasSkel->setPose( atlasStateCurrent.dart_pose() );
+        manip_xforms[robot::MANIP_L_HAND] = atlasSkel->getNode(ROBOT_LEFT_HAND)->getWorldTransform();
+        manip_xforms[robot::MANIP_R_HAND] = atlasSkel->getNode(ROBOT_RIGHT_HAND)->getWorldTransform();
+        manip_xforms[robot::MANIP_L_FOOT] = atlasSkel->getNode(ROBOT_LEFT_FOOT)->getWorldTransform();
+        manip_xforms[robot::MANIP_R_FOOT] = atlasSkel->getNode(ROBOT_RIGHT_FOOT)->getWorldTransform();
     }
     static bool print_once = true;
     if (!targetPoseInited && print_once) {
@@ -289,8 +297,8 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         std::cout << "invalid movement = " << movement.transpose() << std::endl;
     }
     // 4. Convert to movements to vectors
-    Eigen::Vector3d off = Eigen::Vector3d(movement[0], movement[1], movement[2]);
-    Eigen::Vector3d rot = Eigen::Vector3d(movement[3], movement[4], movement[5]);
+    Eigen::Vector3d movement_offset = Eigen::Vector3d(movement[0], movement[1], movement[2]);
+    Eigen::Vector3d movement_rotation = Eigen::Vector3d(movement[3], movement[4], movement[5]);
 
     //############################################################
     //### Teleop control
@@ -313,7 +321,7 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
 
             // 3. Grab the target state COM and offset by spacenav (might shake atlas around..)
             // com = atlasSkel->getWorldCOM();
-            com += off;
+            com += movement_offset;
             std::cout << "desired com = " << com.transpose() << std::endl;
 
             // 4. Do IK to target state COM. (Should give the exact same joint angles)
@@ -365,26 +373,28 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         case TELEOP_RIGHT_ARM_ANALYTIC:
         {
             // 2. Swap rotation axes so they make sense for a teleoperator
-            std::swap(movement[3], movement[4]);
+            std::swap(joy_axes[3], joy_axes[4]);
             // 3.. Generate delta transform
             Eigen::Isometry3d Tdelta;
             Tdelta = Eigen::Matrix4d::Identity();
             Eigen::Vector3d rot_axis = joy_axes.block<3,1>(3,0);
-            double rot_omega = rot_axis.norm();
-            Tdelta.translation() += off;
-            Tdelta.rotate(Eigen::AngleAxisd(rot_omega, rot_axis));
+            double rot_omega = 2*movement_rotation.norm(); //< 
+            rot_axis = rot_axis.normalized();
+            std::cout << "rot_axis = " << rot_axis.transpose() << std::endl;
+            if(!isnan(rot_axis[0])) // it happens when rot_axis is all zeros (when we clamp)
+                Tdelta.rotate(Eigen::AngleAxisd(rot_omega, rot_axis));
             // 4. Generate new hand transform
             Eigen::Isometry3d Twhand;
             Eigen::VectorXd dofs;
             Eigen::Vector6d q6;
-            atlasKin.arm_fk(Twhand, left, atlasStateTarget, true);
-            // atlasSkel->setPose(atlasStateTarget.dart_pose());
-            // Twhand = end_effector->getWorldTransform();
+            Twhand = manip_xforms[targetLimb];
             Twhand = Twhand * Tdelta;
+            Twhand.translation() += movement_offset;
             // 5. Run IK
-            ok = atlasKin.arm_ik(Twhand, left, atlasStateTarget);
+            ok = atlasKin.arm_jac_ik(Twhand, left, atlasStateTarget);
             // 6. Write xform target
             xformTarget = Twhand;
+            manip_xforms[targetLimb] = Twhand;
             break;
         }
         default:
