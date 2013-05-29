@@ -1,0 +1,18 @@
+<package>
+  <description brief="driver">
+
+     drchubo
+
+  </description>
+  <author>Eric Huang and Ana Huaman</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/vrc_golem</url>
+  <depend package="roscpp"/>
+  <depend package="std_msgs"/>
+  <depend package="sensor_msgs"/>
+  <depend package="rviz"/>
+
+</package>
+
+

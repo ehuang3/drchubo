@@ -25,6 +25,11 @@
   <!-- PCL -->
   <depend package="pcl" />
   <depend package="pcl_ros" />
+
+  <!-- Qt4 stuff -->	
+  <depend package="qt_build" />
+  <depend package="libqt4-dev" />
+  <depend package="qt4-qmake" />
 </package>
 
 

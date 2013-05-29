@@ -1,27 +1,43 @@
-set(ROSBUILD_DONT_REDEFINE_PROJECT True)
+## BEGIN_TUTORIAL
+## This CMakeLists.txt file for rviz_plugin_tutorials builds both the TeleopPanel tutorial and the ImuDisplay tutorial.
+##
+## First start with some standard ROS stuff.
+cmake_minimum_required(VERSION 2.4.6)
+include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+set(ROS_BUILD_TYPE RelWithDebInfo)
 rosbuild_init()
 
-# Find Qt4
-find_package( Qt4 4.4.3 REQUIRED QTCore QtGui QtXml )
-include( ${QT_USE_FILE} ) 
-add_definitions( ${QT_DEFINITIONS} )
+## This plugin includes Qt widgets, so we must include Qt like so:
+find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
+include(${QT_USE_FILE})
 
-# Find OpenCV
-find_package( OpenCV REQUIRED )
-include_directories( ${OpenCV_INCLUDE_DIRS} )
-link_directories( ${OpenCV_LIB_DIR} )
+## I prefer the Qt signals and slots to avoid defining "emit", "slots",
+## etc because they can conflict with boost signals, so define QT_NO_KEYWORDS here.
+add_definitions(-DQT_NO_KEYWORDS)
 
-# Source files
-set( driver_SOURCES driverInterface.cpp )
-# Header files for MOC processing (Qt4 stuff - VERY IMPORTANT)
-set( driver_HEADERS cvImageWidget.h )
+## Here we specify which header files need to be run through "moc",
+## Qt's meta-object compiler.
+qt4_wrap_cpp(MOC_FILES src/myviz.h )
 
-# Apply MOC 
-QT4_WRAP_CPP( driver_HEADERS_MOC ${driver_HEADERS} )
+## Here we specify the list of source files, including the output of
+## the previous command which is stored in ``${MOC_FILES}``.
+set(SOURCE_FILES
+  src/myviz.cpp
+  src/main.cpp
+  ${MOC_FILES}
+)
 
-# Generate executable
-rosbuild_add_executable( driverInterface ${driver_SOURCES} ${driver_HEADERS_MOC} )
-target_link_libraries( driverInterface ${QT_LIBRARIES} opencv_core opencv_imgproc opencv_highgui )
-set_target_properties( driverInterface PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
+## Set the default path for built binaries to the "bin" directory
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
+## Add the "myviz" executable and specify the list of source files we
+## collected above in ``${SOURCE_FILES}``.
+rosbuild_add_executable(myviz ${SOURCE_FILES})
 
+## Link the myviz executable with whatever Qt libraries have been defined by
+## the ``find_package(Qt4 ...)`` line above.
+target_link_libraries(myviz ${QT_LIBRARIES} default_plugin)
+## END_TUTORIAL
+
+add_subdirectory( rosQtInterface )
+add_subdirectory( src )
