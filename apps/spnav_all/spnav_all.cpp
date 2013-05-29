@@ -213,8 +213,12 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         for(int i=0; i < 6; i++)
             if(fabs(_j->axes[i]) > joy_thresh(i))
                 joy_thresh(i) = fabs(_j->axes[i]);
-        if (thresh_iters == max_thresh_iters)
+        if (thresh_iters == max_thresh_iters) {
+		if(joy_thresh.norm() < 0.01) {
+			joy_thresh = 0.02 * Eigen::Vector6d::Ones();
+		}
             std::cout << "Joystick thresholds = " << joy_thresh.transpose() << std::endl;
+	}
     }
     //############################################################
     //### State switching
@@ -374,6 +378,12 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
             dofs.resize(desired_dofs.size());
             atlasStateTarget.get_dofs(dofs, desired_dofs);
             atlasStateTarget.set_dofs(dofs + qdot, desired_dofs);
+
+	    // write into end effector array the new location of the hand
+	    Eigen::Isometry3d Twhand;
+	    Eigen::Vector6d dof6 = (dofs+qdot).block<6,1>(0,0);
+	    atlasKin.arm_fk(Twhand, left, atlasStateTarget, true);
+	    manip_xforms[targetLimb] = Twhand;
             break;
         }
         case TELEOP_LEFT_ARM_ANALYTIC:
