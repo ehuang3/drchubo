@@ -379,6 +379,7 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
             dofs.resize(desired_dofs.size());
             atlasStateTarget.get_dofs(dofs, desired_dofs);
             atlasStateTarget.set_dofs(dofs + qdot, desired_dofs);
+            atlasStateTarget.clamp_indexes(desired_dofs, false);
 
 	    // write into end effector array the new location of the hand
 	    Eigen::Isometry3d Twhand;

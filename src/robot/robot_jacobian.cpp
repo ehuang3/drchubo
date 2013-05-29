@@ -140,6 +140,7 @@ namespace robot {
 
             q += qdot;
             state.set_dofs(q, desired_dofs);
+            state.clamp_indexes(desired_dofs, false);
         }
         
     }
