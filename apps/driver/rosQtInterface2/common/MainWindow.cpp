@@ -1,284 +1,139 @@
 /**
  * @file MainWindow.cpp
  */
+// Qt
 #include <QtGui>
+#include <QLabel>
+#include <QVBoxLayout>
+#include <QGridLayout>
+#include <QMessageBox>
+
+// Rviz
+#include "rviz/visualization_manager.h"
+#include "rviz/render_panel.h"
+#include "rviz/display_wrapper.h"
+#include "rviz/default_plugin/grid_display.h"
+#include "rviz/ogre_helpers/grid.h"
 
 #include "MainWindow.h"
 
+/**
+ * @function MainWindow
+ * @brief Constructor
+ */
 MainWindow::MainWindow( QNode *_node, QWidget *_parent ) :
-  QMainWindow( _parent ),
+  QWidget( _parent ),
   qnode( _node ) {
 
-  textEdit = new QPlainTextEdit;
-  setCentralWidget(textEdit);
+  // Set node connections
+  QObject::connect( qnode, SIGNAL( loggingUpdated() ), this, SLOT(updateView()) );
+  QObject::connect( qnode, SIGNAL( rosShutdown()), this, SLOT(close()) );
+
+  // Construct and layout connect control
+  QLabel* connect_label = new QLabel("ROS Connect");
+
+  QPushButton *button_connect = new QPushButton("Connect", this);
+  button_connect->setGeometry( 50, 40, 75, 30 );
+
+  QGridLayout* controls_layout = new QGridLayout();
+  controls_layout->addWidget( connect_label, 0, 0 );
+  controls_layout->addWidget( button_connect, 1, 1 );
   
-  createActions();
-  createMenus();
-  createToolBars();
-  createStatusBar();
   
-  readSettings();
   
-  connect(textEdit->document(), SIGNAL(contentsChanged()),
-	  this, SLOT(documentWasModified()));
+  // Construct and lay out render panel
+  mRenderPanel = new rviz::RenderPanel();
+  QVBoxLayout* main_layout = new QVBoxLayout;
+  main_layout->addLayout( controls_layout );
+  main_layout->addWidget( mRenderPanel );
   
-  setCurrentFile("");
-  setUnifiedTitleAndToolBarOnMac(true);
+  // Set the top-level layout for the rviz widget
+  setLayout( main_layout );
+
+  // Make signal / slots connections
+  QObject::connect( button_connect, 
+		    SIGNAL(clicked()), 
+		    this, // IMPORTANT - NO qApp!!!!
+		    SLOT(on_button_connect_clicked()) );
+
+  // Initialize main RViz classes
+  mManager = new rviz::VisualizationManager( mRenderPanel );
+  mRenderPanel->initialize( mManager->getSceneManager(), mManager );
+  mManager->initialize();
+  mManager->startUpdate();
+
+  // Create a Grid display
+  rviz::DisplayWrapper* wrapper = mManager->createDisplay( "rviz/Grid",
+							   "adjustable grid",
+							   "true" );
+
+  // Unwrap it.
+  rviz::Display* display = wrapper->getDisplay();
+  ROS_ASSERT( display != NULL );
+
+  // Downcast it to the type we think we know it is.
+  mGrid = dynamic_cast<rviz::GridDisplay*>( display );
+  ROS_ASSERT( mGrid != NULL );
+
+  // Configure the GridDisplay the way we like it.
+  mGrid->setStyle( rviz::Grid::Billboards ); // Fat lines.
+  mGrid->setColor( rviz::Color( 1.0f, 1.0f, 0.0f )); // I like yellow.
+
 }
 
-void MainWindow::closeEvent(QCloseEvent *event)
-{
-  if (maybeSave()) {
-    writeSettings();
-    event->accept();
-  } else {
-    event->ignore();
+/**
+ * @function ~MainWindow
+ */
+MainWindow::~MainWindow() {
+
+  if( mManager != NULL ) {
+    mManager->removeAllDisplays();
   }
+
+  delete mRenderPanel;
+  delete mManager;
+
 }
 
-void MainWindow::newFile()
+/**
+ * @function closeEvent
+ */
+void MainWindow::closeEvent( QCloseEvent *_event )
 {
-  if (maybeSave()) {
-    textEdit->clear();
-    setCurrentFile("");
+  qnode->shutdown();
+  QWidget::closeEvent( _event );
+}
+
+/**
+ * @function showNoMasterMessage
+ */
+void MainWindow::showNoMasterMessage() {
+
+  QMessageBox msgBox;
+  msgBox.setText( "Could not find the ros master \n" );
+  msgBox.exec();
+  close();
+
+}
+
+
+/**
+ *
+ */
+void MainWindow::on_button_connect_clicked( bool _check ) {
+  printf("Checking connection \n");
+  if( !qnode->on_init(std::string("http://localhost:11311"), std::string("192.168.1.92") ) ) {
+    showNoMasterMessage();
   }
-}
-
- void MainWindow::open()
- {
-   if (maybeSave()) {
-     QString fileName = QFileDialog::getOpenFileName(this);
-     if (!fileName.isEmpty())
-       loadFile(fileName);
-   }
- }
-
-bool MainWindow::save()
-{
-  if (curFile.isEmpty()) {
-    return saveAs();
-     } else {
-    return saveFile(curFile);
+  else {
+    printf("It is connected! \n");
   }
+
 }
 
-bool MainWindow::saveAs()
- {
-   QString fileName = QFileDialog::getSaveFileName(this);
-   if (fileName.isEmpty())
-     return false;
-   
-   return saveFile(fileName);
- }
-
-void MainWindow::about()
-{
-  QMessageBox::about(this, tr("About Application"),
-		     tr("The <b>Application</b> example demonstrates how to "
-			"write modern GUI applications using Qt, with a menu bar, "
-			"toolbars, and a status bar."));
+/**
+ * @function updateView
+ */
+void MainWindow::updateView() {
+  printf("Updateing! \n");
 }
-
-void MainWindow::documentWasModified()
-{
-     setWindowModified(textEdit->document()->isModified());
-}
-
-void MainWindow::createActions()
-{
-     newAct = new QAction(QIcon(":/images/new.png"), tr("&New"), this);
-     newAct->setShortcuts(QKeySequence::New);
-     newAct->setStatusTip(tr("Create a new file"));
-     connect(newAct, SIGNAL(triggered()), this, SLOT(newFile()));
-
-     openAct = new QAction(QIcon(":/images/open.png"), tr("&Open..."), this);
-     openAct->setShortcuts(QKeySequence::Open);
-     openAct->setStatusTip(tr("Open an existing file"));
-     connect(openAct, SIGNAL(triggered()), this, SLOT(open()));
-
-     saveAct = new QAction(QIcon(":/images/save.png"), tr("&Save"), this);
-     saveAct->setShortcuts(QKeySequence::Save);
-     saveAct->setStatusTip(tr("Save the document to disk"));
-     connect(saveAct, SIGNAL(triggered()), this, SLOT(save()));
-
-     saveAsAct = new QAction(tr("Save &As..."), this);
-     saveAsAct->setShortcuts(QKeySequence::SaveAs);
-     saveAsAct->setStatusTip(tr("Save the document under a new name"));
-     connect(saveAsAct, SIGNAL(triggered()), this, SLOT(saveAs()));
-
-     exitAct = new QAction(tr("E&xit"), this);
-     exitAct->setShortcuts(QKeySequence::Quit);
-     exitAct->setStatusTip(tr("Exit the application"));
-     connect(exitAct, SIGNAL(triggered()), this, SLOT(close()));
-
-     cutAct = new QAction(QIcon(":/images/cut.png"), tr("Cu&t"), this);
-     cutAct->setShortcuts(QKeySequence::Cut);
-     cutAct->setStatusTip(tr("Cut the current selection's contents to the "
-                             "clipboard"));
-     connect(cutAct, SIGNAL(triggered()), textEdit, SLOT(cut()));
-
-     copyAct = new QAction(QIcon(":/images/copy.png"), tr("&Copy"), this);
-     copyAct->setShortcuts(QKeySequence::Copy);
-     copyAct->setStatusTip(tr("Copy the current selection's contents to the "
-                              "clipboard"));
-     connect(copyAct, SIGNAL(triggered()), textEdit, SLOT(copy()));
-
-     pasteAct = new QAction(QIcon(":/images/paste.png"), tr("&Paste"), this);
-     pasteAct->setShortcuts(QKeySequence::Paste);
-     pasteAct->setStatusTip(tr("Paste the clipboard's contents into the current "
-                               "selection"));
-     connect(pasteAct, SIGNAL(triggered()), textEdit, SLOT(paste()));
-
-     aboutAct = new QAction(tr("&About"), this);
-     aboutAct->setStatusTip(tr("Show the application's About box"));
-     connect(aboutAct, SIGNAL(triggered()), this, SLOT(about()));
-
-     aboutQtAct = new QAction(tr("About &Qt"), this);
-     aboutQtAct->setStatusTip(tr("Show the Qt library's About box"));
-     connect(aboutQtAct, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
-
-     cutAct->setEnabled(false);
-     copyAct->setEnabled(false);
-     connect(textEdit, SIGNAL(copyAvailable(bool)),
-             cutAct, SLOT(setEnabled(bool)));
-     connect(textEdit, SIGNAL(copyAvailable(bool)),
-             copyAct, SLOT(setEnabled(bool)));
- }
-
- void MainWindow::createMenus()
- {
-     fileMenu = menuBar()->addMenu(tr("&File"));
-     fileMenu->addAction(newAct);
-     fileMenu->addAction(openAct);
-     fileMenu->addAction(saveAct);
-     fileMenu->addAction(saveAsAct);
-     fileMenu->addSeparator();
-     fileMenu->addAction(exitAct);
-
-     editMenu = menuBar()->addMenu(tr("&Edit"));
-     editMenu->addAction(cutAct);
-     editMenu->addAction(copyAct);
-     editMenu->addAction(pasteAct);
-
-     menuBar()->addSeparator();
-
-     helpMenu = menuBar()->addMenu(tr("&Help"));
-     helpMenu->addAction(aboutAct);
-     helpMenu->addAction(aboutQtAct);
- }
-
- void MainWindow::createToolBars()
- {
-     fileToolBar = addToolBar(tr("File"));
-     fileToolBar->addAction(newAct);
-     fileToolBar->addAction(openAct);
-     fileToolBar->addAction(saveAct);
-
-     editToolBar = addToolBar(tr("Edit"));
-     editToolBar->addAction(cutAct);
-     editToolBar->addAction(copyAct);
-     editToolBar->addAction(pasteAct);
- }
-
- void MainWindow::createStatusBar()
- {
-     statusBar()->showMessage(tr("Ready"));
- }
-
- void MainWindow::readSettings()
- {
-     QSettings settings("Trolltech", "Application Example");
-     QPoint pos = settings.value("pos", QPoint(200, 200)).toPoint();
-     QSize size = settings.value("size", QSize(400, 400)).toSize();
-     resize(size);
-     move(pos);
- }
-
- void MainWindow::writeSettings()
- {
-     QSettings settings("Trolltech", "Application Example");
-     settings.setValue("pos", pos());
-     settings.setValue("size", size());
- }
-
- bool MainWindow::maybeSave()
- {
-     if (textEdit->document()->isModified()) {
-         QMessageBox::StandardButton ret;
-         ret = QMessageBox::warning(this, tr("Application"),
-                      tr("The document has been modified.\n"
-                         "Do you want to save your changes?"),
-                      QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-         if (ret == QMessageBox::Save)
-             return save();
-         else if (ret == QMessageBox::Cancel)
-             return false;
-     }
-     return true;
- }
-
- void MainWindow::loadFile(const QString &fileName)
- {
-     QFile file(fileName);
-     if (!file.open(QFile::ReadOnly | QFile::Text)) {
-         QMessageBox::warning(this, tr("Application"),
-                              tr("Cannot read file %1:\n%2.")
-                              .arg(fileName)
-                              .arg(file.errorString()));
-         return;
-     }
-
-     QTextStream in(&file);
- #ifndef QT_NO_CURSOR
-     QApplication::setOverrideCursor(Qt::WaitCursor);
- #endif
-     textEdit->setPlainText(in.readAll());
- #ifndef QT_NO_CURSOR
-     QApplication::restoreOverrideCursor();
- #endif
-
-     setCurrentFile(fileName);
-     statusBar()->showMessage(tr("File loaded"), 2000);
- }
-
- bool MainWindow::saveFile(const QString &fileName)
- {
-     QFile file(fileName);
-     if (!file.open(QFile::WriteOnly | QFile::Text)) {
-         QMessageBox::warning(this, tr("Application"),
-                              tr("Cannot write file %1:\n%2.")
-                              .arg(fileName)
-                              .arg(file.errorString()));
-         return false;
-     }
-
-     QTextStream out(&file);
- #ifndef QT_NO_CURSOR
-     QApplication::setOverrideCursor(Qt::WaitCursor);
- #endif
-     out << textEdit->toPlainText();
- #ifndef QT_NO_CURSOR
-     QApplication::restoreOverrideCursor();
- #endif
-
-     setCurrentFile(fileName);
-     statusBar()->showMessage(tr("File saved"), 2000);
-     return true;
- }
-
- void MainWindow::setCurrentFile(const QString &fileName)
- {
-     curFile = fileName;
-     textEdit->document()->setModified(false);
-     setWindowModified(false);
-
-     QString shownName = curFile;
-     if (curFile.isEmpty())
-         shownName = "untitled.txt";
-     setWindowFilePath(shownName);
- }
-
- QString MainWindow::strippedName(const QString &fullFileName)
- {
-     return QFileInfo(fullFileName).fileName();
- }

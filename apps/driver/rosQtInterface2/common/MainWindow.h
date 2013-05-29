@@ -1,72 +1,50 @@
 /**
  * @file MainWindow.h
+ * @brief Window with visualization of SL Data
  */
 
 #ifndef _MAINWINDOW_H_
 #define _MAINWINDOW_H_
 
 #include <QMainWindow>
+#include <QWidget>
 #include "qnode.hpp"
 
- class QAction;
- class QMenu;
- class QPlainTextEdit;
+// RViz stuff
+namespace rviz {
+  class RenderPanel;
+  class VisualizationManager;
+  class GridDisplay;
+}
 
 /**
  * @class MainWindow
  */
- class MainWindow : public QMainWindow
+ class MainWindow : public QWidget
  {
      Q_OBJECT
 
  public:
    MainWindow( QNode *_node, QWidget *_parent = 0 );
-   ~MainWindow() { };
- protected:
-     void closeEvent(QCloseEvent *event);
+   ~MainWindow();
 
- private Q_SLOTS:
-     void newFile();
-     void open();
-     bool save();
-     bool saveAs();
-     void about();
-     void documentWasModified();
+   void closeEvent( QCloseEvent *_event );
+   void showNoMasterMessage();
 
- private:
-     void createActions();
-     void createMenus();
-     void createToolBars();
-     void createStatusBar();
-     void readSettings();
-     void writeSettings();
-     bool maybeSave();
-     void loadFile(const QString &fileName);
-     bool saveFile(const QString &fileName);
-     void setCurrentFile(const QString &fileName);
-     QString strippedName(const QString &fullFileName);
+   /**< SLOTS */
+   public Q_SLOTS:
+   void on_button_connect_clicked( bool _check=true );
 
-     QPlainTextEdit *textEdit;
-     QString curFile;
+   /**< Manual connection */
+   void updateView();
 
-     QMenu *fileMenu;
-     QMenu *editMenu;
-     QMenu *helpMenu;
-     QToolBar *fileToolBar;
-     QToolBar *editToolBar;
-     QAction *newAct;
-     QAction *openAct;
-     QAction *saveAct;
-     QAction *saveAsAct;
-     QAction *exitAct;
-     QAction *cutAct;
-     QAction *copyAct;
-     QAction *pasteAct;
-     QAction *aboutAct;
-     QAction *aboutQtAct;
-
-     QNode* qnode;
-     
+ private: 
+   // ROS
+   QNode* qnode;
+   // rviz visualization
+   rviz::VisualizationManager* mManager;
+   rviz::RenderPanel* mRenderPanel;
+   rviz::GridDisplay* mGrid;
  };
 
- #endif
+ #endif /** _MAINWINDOW_H_ */

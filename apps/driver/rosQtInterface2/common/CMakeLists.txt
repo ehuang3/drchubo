@@ -14,5 +14,5 @@ QT4_ADD_RESOURCES( MainWindow_RESOURCES_RCC ${MainWindow_RESOURCES} )
 
 # Generate executable
 rosbuild_add_library( rosQtInterface2 ${MainWindow_SOURCES} ${MainWindow_HEADERS_MOC} ${MainWindow_RESOURCES_RCC} )
-target_link_libraries( rosQtInterface2 ${QT_LIBRARIES} )
+target_link_libraries( rosQtInterface2 ${QT_LIBRARIES} default_plugin rviz )
 #set_target_properties( MainWindow PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
