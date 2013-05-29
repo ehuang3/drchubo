@@ -105,7 +105,39 @@ namespace gui {
         glMatrixMode(GL_MODELVIEW);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glEnable(GL_NORMALIZE);
+        //glEnable(GL_COLOR_MATERIAL);
+        //glDisable(GL_CULL_FACE);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+
+        // 
+        glShadeModel(GL_SMOOTH);
+        glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+        glEnable(GL_MULTISAMPLE_ARB);
+
+        glEnable(GL_TEXTURE_2D);
+        glEnable(GL_BLEND);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glHint(GL_FOG_HINT,GL_NICEST);
+        glHint(GL_POLYGON_SMOOTH_HINT,GL_NICEST);
+        //glFrontFace(GL_CCW);
         glEnable(GL_COLOR_MATERIAL);
+
+        glColor4d(1.0,1.0,1.0,0);
+
+        static float front_mat_shininess[] = {60.0};
+        static float front_mat_specular[]  = {0.2, 0.2,  0.2,  1.0};
+        static float front_mat_diffuse[]   = {0.5, 0.28, 0.38, 1.0};
+
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, front_mat_shininess);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR,  front_mat_specular);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE,   front_mat_diffuse);
+
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+
+        glDisable(GL_FOG);
+
         glDisable(GL_POLYGON_SMOOTH); //< this one sucks
 
         //############################################################
@@ -134,9 +166,10 @@ namespace gui {
         robotSkel->setPose( current_state->dart_pose() );
         robotSkel->draw(mRI, Vector4d(0.5, 0.5, 0.5, 0.5), false); // he's the grey one
         // target state
+        glClear(GL_DEPTH_BUFFER_BIT);
         robotSkel->setPose( target_state->dart_pose() );
         // robotSkel->draw(mRI, Vector4d(0, 1, 0, 0.7), false); // he's green and transparents
-        render_skel(robotSkel, *target_state, Vector4d(0,1,0,0.7), false, true);
+        render_skel(robotSkel, *target_state, Vector4d(0,1,0,1), false, true);
 
         // 5. Render COM dots and disks
         Vector3d com;
@@ -175,7 +208,7 @@ namespace gui {
         // Do self transform
         kinematics::Joint* joint = root->getParentJoint();
         for(int i=0; i < joint->getNumTransforms(); ++i) {
-            glMultMatrixd(joint->getTransform(i)->getTransform().data());
+            joint->getTransform(i)->applyGLTransform(mRI);
         }
         for(int i=0; i < root->getNumChildJoints(); ++i)
             render_link(robot, root->getChildJoint(i)->getChildNode(), state, color, 
@@ -198,7 +231,7 @@ namespace gui {
         // Do self transform
         kinematics::Joint* joint = link->getParentJoint();
         for(int i=0; i < joint->getNumTransforms(); ++i) {
-            glMultMatrixd(joint->getTransform(i)->getTransform().data());
+            joint->getTransform(i)->applyGLTransform(mRI);
         }
         kinematics::Shape* shape = link->getVisualizationShape();
         if(shape && !draw_limits) {
@@ -217,6 +250,19 @@ namespace gui {
         glPopMatrix();
     }
 
+    Eigen::Vector4d lerp(Eigen::Vector4d& v0, Eigen::Vector4d& v1, double t)
+    {
+        if (t < 0) return v0;
+        if (t > 1) return v1;
+        return (1-t)*v0 + t*v1;
+    }
+
+    Eigen::Vector4d smoothstep(Eigen::Vector4d& v0, Eigen::Vector4d& v1, double t)
+    {
+        double tt = -2*t*t*t + 3*t*t;
+        return lerp(v0, v1, t);
+    }
+
     void teleop_gui_t::render_limits(kinematics::Skeleton *robot,
                                      kinematics::BodyNode *link,
                                      const robot::robot_state_t& state,
@@ -232,8 +278,18 @@ namespace gui {
         if(i != -1) {
             double dof = state.dofs(i);
             Eigen::Vector2d limits = state.get_limits(i);
-            double u = (dof - limits[0])/limits[1];
-            color  = (1-u)*color_ok + u*color_limit;
+            if(dof < limits[0] || limits[1] < dof) {
+                std::vector<int> jind;
+                jind.push_back(i);
+                // state.print_limits(jind);
+                // std::cout << "\tvalue" << dof << std::endl;
+            }
+
+            double middle = (limits[1]+limits[0])/2;
+
+            double t = fabs(dof - middle)/(fabs(middle-limits[0]));
+
+            color = smoothstep(color_ok, color_limit, t);
         }
         // Render shape w/ color
         kinematics::Shape *shape = link->getVisualizationShape();
@@ -249,7 +305,7 @@ namespace gui {
         Vector3d com = robot->getWorldCOM();
         glPushMatrix();
         glTranslated(com(0), com(1), foot2ground);
-        gluDisk(quadObj, 0, radius, 16, 16);
+        gluSphere(quadObj, radius, 16, 16);
         glPopMatrix();    
     }
 
@@ -278,3 +334,4 @@ namespace gui {
     }
 
 }
+
