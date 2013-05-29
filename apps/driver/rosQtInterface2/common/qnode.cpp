@@ -44,7 +44,7 @@ void QNode::shutdown() {
 
 bool QNode::on_init() {
 	ros::init(init_argc,init_argv,node_name);
-	if ( ! ros::master::check() ) {
+	if ( !ros::master::check() ) {
 		return false;
 	}
 	ros::start(); // our node handles go out of scope, so we want to control shutdown explicitly.

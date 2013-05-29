@@ -46,8 +46,13 @@
  int main(int argc, char *argv[])
  {
      Q_INIT_RESOURCE(MainWindow);
-     VisualDataNode vdn(argc, argv);
+
+     if( !ros::isInitialized() ) {
+       ros::init( argc, argv, "test", ros::init_options::AnonymousName );
+     }
      QApplication app(argc, argv);
+     VisualDataNode vdn(argc, argv);
+
      app.setOrganizationName("Trolltech");
      app.setApplicationName("Application Example");
 
