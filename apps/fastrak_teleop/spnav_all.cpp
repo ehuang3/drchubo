@@ -47,6 +47,7 @@
 #include <pthread.h>
 
 // Fastrak stuff
+#include "Teleop.h"
 
 
 //###########################################################
@@ -85,6 +86,11 @@ Eigen::Isometry3d manip_xforms[robot::NUM_MANIPULATORS];
 bool gazebo_sim; //< we are simulation in gazebo
 
 Eigen::Isometry3d xformTarget; //< Target transformation of teleoperation
+
+// Fastrak variables
+const char *teleopDeviceName = "fastrak";
+Teleop *teleopDevice;
+
 
 //###########################################################
 //###########################################################
@@ -180,6 +186,8 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
     //############################################################
     static bool targetPoseInited = false;
 
+    
+
     // 1. Triggers on a left button click
     if (_j->buttons[0] && !lastButtons[0]) {
         // 1. Set target pose to match current
@@ -206,6 +214,9 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         manip_xforms[robot::MANIP_R_HAND] = atlasSkel->getNode(ROBOT_RIGHT_HAND)->getWorldTransform();
         manip_xforms[robot::MANIP_L_FOOT] = atlasSkel->getNode(ROBOT_LEFT_FOOT)->getWorldTransform();
         manip_xforms[robot::MANIP_R_FOOT] = atlasSkel->getNode(ROBOT_RIGHT_FOOT)->getWorldTransform();
+
+        // 5. Do fastrak init stuff
+        
     }
     static bool print_once = true;
     if (!targetPoseInited && print_once) {
@@ -227,6 +238,7 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
     std::vector<int> desired_dofs; // which dofs to run the jacobian on
     kinematics::BodyNode* end_effector; // the bodynode on the end of our limb
     bool left = true;
+    bool fastrak = false;
     
     // 1. Trigger switch on right button click
     if (_j->buttons[1] && !lastButtons[1]) {
@@ -244,6 +256,7 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
     switch (teleopMode) {
     case TELEOP_COM: break;
     case TELEOP_LEFT_ARM_ANALYTIC:
+        fastrak = true;
     case TELEOP_LEFT_ARM_JACOBIAN:
         left = true;
         targetLimb = robot::LIMB_L_ARM;
@@ -251,7 +264,8 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         end_effector = atlasSkel->getNode(ROBOT_LEFT_HAND);
         break;
     case TELEOP_RIGHT_ARM_ANALYTIC:
-    case TELEOP_RIGHT_ARM_JACOBIAN: 
+        fastrak = true;
+    case TELEOP_RIGHT_ARM_JACOBIAN:
         left = false;
         targetLimb = robot::LIMB_R_ARM;
         atlasStateTarget.get_manip_indexes(desired_dofs, targetLimb);
@@ -309,7 +323,7 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
     //############################################################
     for (; targetPoseInited && !_j->buttons[0] ;) { //< so I can break... dance
         // 0. Breaks
-        if (allBelow || invalid_input)
+        if (!fastrak && (allBelow || invalid_input))
             break;
 
         // 1. Maintain a fixed target state. Send those joint commands to Atlas. Make observations.
@@ -391,7 +405,7 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
             Eigen::Vector3d rot_axis = joy_axes.block<3,1>(3,0);
             double rot_omega = 2*movement_rotation.norm(); //< 
             rot_axis = rot_axis.normalized();
-            std::cout << "rot_axis = " << rot_axis.transpose() << std::endl;
+            // std::cout << "rot_axis = " << rot_axis.transpose() << std::endl;
             if(!isnan(rot_axis[0])) // it happens when rot_axis is all zeros (when we clamp)
                 Tdelta.rotate(Eigen::AngleAxisd(rot_omega, rot_axis));
             // 4. Generate new hand transform
@@ -401,6 +415,24 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
             Twhand = manip_xforms[targetLimb];
             Twhand = Twhand * Tdelta;
             Twhand.translation() += movement_offset;
+
+
+
+            //############################################################
+            // 4.5 Get fastrak stuff instead
+            Eigen::Vector3d sensorOrigin;
+            Eigen::Matrix3d sensorRotation;
+            teleopDevice->getPose(sensorOrigin, sensorRotation, 4, true);
+            Twhand.linear() = sensorRotation;
+            Twhand.translation() = sensorOrigin;
+            std::cout << "SensorRotation = \n" << sensorRotation << std::endl;
+            std::cout << "SensorOrigin = \n" << sensorOrigin << std::endl;
+
+
+            
+
+
+            //############################################################
             // 5. Run IK
             ok = atlasKin.arm_jac_ik(Twhand, left, atlasStateTarget);
             // 6. Write xform target
@@ -514,6 +546,10 @@ int main(int argc, char** argv) {
         last_ros_time_ = ros::Time::now();
         if (last_ros_time_.toSec() > 0) wait = false;
     }
+    
+    //###########################################################
+    //#### Fastrak initialization
+    teleopDevice = new Teleop(teleopDeviceName);
 
     //###########################################################
     //#### Joystick initialization

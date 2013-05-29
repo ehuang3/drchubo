@@ -2,6 +2,7 @@
 #include <google/protobuf-c/protobuf-c.h>
 #include "somatic.h"
 #include "somatic.pb-c.h"
+#include <iostream>
 
 
 Teleop::Teleop(const char *teleopDeviceName) : TRACKER_NAME(teleopDeviceName)
@@ -94,24 +95,59 @@ flag_t Teleop::getPose( Eigen::Vector3d &position, Eigen::Quaterniond &quat, int
             contents = somatic__multi_transform__unpack(NULL, fs, data);
             
 
-            double* translationArray1 = new double[sizeof(double)*3];
-            double* translationArray2 = new double[sizeof(double)*3];
-            double* quatArray1 = new double[sizeof(double)*4];
-            double* quatArray2 = new double[sizeof(double)*4];
+            // double* translationArray1; // = new double[sizeof(double)*3];
+            // double* translationArray2; // = new double[sizeof(double)*3];
+            // double* quatArray1; // = new double[sizeof(double)*4];
+            // double* quatArray2; // = new double[sizeof(double)*4];
 
-            translationArray1 = contents->tf[0]->translation->data; //array of translation from sensor 1
-            translationArray2 = contents->tf[1]->translation->data; //array of translation from sensor 2
+            for(;;) {
+                if(!contents)
+                    break;
+                if(!contents->tf)
+                    break;
+                if(!contents->tf[0])
+                    break;
+                if(!contents->tf[0]->translation)
+                    break;
+                if(!contents->tf[0]->translation->data)
+                    break;
+                
+                double *trans = contents->tf[0]->translation->data;
+                double *quatArray = contents->tf[0]->rotation->data;
+                
+                for(int i=0; i < 3; i++) {
+                    position[i] = trans[i];
+                }
+                quat.w() = quatArray[0];
+                quat.x() = quatArray[1];
+                quat.y() = quatArray[2];
+                quat.z() = quatArray[3];
+                
+                break;
+            }
 
-            quatArray1 = contents->tf[0]->rotation->data; //array of quaternion from sensor 1
-            quatArray2 = contents->tf[1]->rotation->data; //array of quaternion from sensor 2
+            // translationArray1 = contents->tf[0]->translation->data; //array of translation from sensor 1
+            // translationArray2 = contents->tf[1]->translation->data; //array of translation from sensor 2
 
+            // quatArray1 = contents->tf[0]->rotation->data; //array of quaternion from sensor 1
+            // quatArray2 = contents->tf[1]->rotation->data; //array of quaternion from sensor 2
 
-            printf("[Teleop] Translation from sensor 1: %f %f %f\n", translationArray1[0], translationArray1[1], translationArray1[2]);
-            printf("[Teleop] Translation from sensor 2: %f %f %f\n", translationArray2[0], translationArray2[1], translationArray2[2]);
-            printf("[Teleop] Quaternion from sensor 1: %f %f %f %f\n", quatArray1[0], quatArray1[1], quatArray1[2], quatArray1[3]);
-            printf("[Teleop] Quaternion from sensor 2: %f %f %f %f\n", quatArray2[0], quatArray2[1], quatArray2[2], quatArray2[3]);
+            // for(int i=0; i < 3; i++) {
+            //     position[i] = translationArray1[i];
+            // }
+            // quat.w() = quatArray1[0];
+            // quat.x() = quatArray1[1];
+            // quat.y() = quatArray1[2];
+            // quat.z() = quatArray1[3];
+
+            // std::cout << "[Teleop] Eigen position = " << position.transpose() << std::endl;
+
+            // printf("[Teleop] Translation from sensor 1: %f %f %f\n", translationArray1[0], translationArray1[1], translationArray1[2]);
+            // printf("[Teleop] Translation from sensor 2: %f %f %f\n", translationArray2[0], translationArray2[1], translationArray2[2]);
+            // printf("[Teleop] Quaternion from sensor 1: %f %f %f %f\n", quatArray1[0], quatArray1[1], quatArray1[2], quatArray1[3]);
+            // printf("[Teleop] Quaternion from sensor 2: %f %f %f %f\n", quatArray2[0], quatArray2[1], quatArray2[2], quatArray2[3]);
             
-            sleep(0.5);
+            // sleep(0.5);
 
             //printf("[Teleop] Raw output:\n");
             //printf("%f %f %f %f %f %f %f %f\n",s,x,y,z,ss,xx,yy,zz);
@@ -127,6 +163,10 @@ flag_t Teleop::getPose( Eigen::Vector3d &position, Eigen::Quaterniond &quat, int
             double rz = atan2(2.f * (y*z + x*s), -sqx - sqy + sqz + sqw);
             */
 
+            // delete[] translationArray1;
+            // delete[] translationArray2;
+            // delete[] quatArray1;
+            // delete[] quatArray2;
 
             if ( r == ACH_OK ) {
                 //assert( sizeof(contents) == fs ); //We're just going to go ahead and ignore this...
@@ -134,7 +174,8 @@ flag_t Teleop::getPose( Eigen::Vector3d &position, Eigen::Quaterniond &quat, int
             } else {
                 syslog(LOG_ERR, "The ach_get() call failed: %s\n", ach_result_to_string(r));
             
-            }   
+            }
+            if(contents)
             somatic__multi_transform__free_unpacked(contents, NULL); //Free the unpacked protobuf packet
 
         }
@@ -145,38 +186,39 @@ flag_t Teleop::getPose( Eigen::Vector3d &position, Eigen::Quaterniond &quat, int
    //     printf("%d: %f %f %f\n", i, fastrakData.sensorData[i][0]/teleopScale, fastrakData.sensorData[i][1]/teleopScale, fastrakData.sensorData[i][2]/teleopScale);
    // }
 
-    sensor--;
+    // sensor--;
     
-    if(0 == strcmp(TRACKER_NAME, "liberty"))
-    {
-        if ( (sensor >= 0) && (sensor < NUM_OF_SENSORS) ) {
-            position[0] = libertyData.sensorData[sensor][0]/teleopScale;
-            position[1] = libertyData.sensorData[sensor][1]/teleopScale;
-            position[2] = libertyData.sensorData[sensor][2]/teleopScale;
+    // if(0 == strcmp(TRACKER_NAME, "liberty"))
+    // {
+    //     if ( (sensor >= 0) && (sensor < NUM_OF_SENSORS) ) {
+    //         position[0] = libertyData.sensorData[sensor][0]/teleopScale;
+    //         position[1] = libertyData.sensorData[sensor][1]/teleopScale;
+    //         position[2] = libertyData.sensorData[sensor][2]/teleopScale;
         
-            quat.w() = (double)libertyData.sensorData[sensor][3];
-            quat.x() = (double)libertyData.sensorData[sensor][4];
-            quat.y() = (double)libertyData.sensorData[sensor][5];
-            quat.z() = (double)libertyData.sensorData[sensor][6];
-        } else
-            return SENSOR_OOB;
-    }
-    else if(0 == strcmp(TRACKER_NAME, "fastrak"))
-    {
+    //         quat.w() = (double)libertyData.sensorData[sensor][3];
+    //         quat.x() = (double)libertyData.sensorData[sensor][4];
+    //         quat.y() = (double)libertyData.sensorData[sensor][5];
+    //         quat.z() = (double)libertyData.sensorData[sensor][6];
+    //     } else
+    //         return SENSOR_OOB;
+    // }
+    // else if(0 == strcmp(TRACKER_NAME, "fastrak"))
+    // {
 
-         if ( (sensor >= 0) && (sensor < NUM_OF_SENSORS) ) {
-            position[0] = fastrakData.sensorData[sensor][0]/teleopScale;
-            position[1] = fastrakData.sensorData[sensor][1]/teleopScale;
-            position[2] = fastrakData.sensorData[sensor][2]/teleopScale;
+    //      if ( (sensor >= 0) && (sensor < NUM_OF_SENSORS) ) {
+             
+    //         position[0] = fastrakData.sensorData[sensor][0]/teleopScale;
+    //         position[1] = fastrakData.sensorData[sensor][1]/teleopScale;
+    //         position[2] = fastrakData.sensorData[sensor][2]/teleopScale;
         
-            quat.w() = (double)fastrakData.sensorData[sensor][3];
-            quat.x() = (double)fastrakData.sensorData[sensor][4];
-            quat.y() = (double)fastrakData.sensorData[sensor][5];
-            quat.z() = (double)fastrakData.sensorData[sensor][6];
-        } else
-            return SENSOR_OOB;
+    //         quat.w() = (double)fastrakData.sensorData[sensor][3];
+    //         quat.x() = (double)fastrakData.sensorData[sensor][4];
+    //         quat.y() = (double)fastrakData.sensorData[sensor][5];
+    //         quat.z() = (double)fastrakData.sensorData[sensor][6];
+    //     } else
+    //         return SENSOR_OOB;
        
-    }
+    // }
  
     if( ACH_OK != r )
         return TRACKER_STALE;
