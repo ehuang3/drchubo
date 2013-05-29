@@ -10,7 +10,7 @@ namespace control {
 
     //############################################################
     //### This structure holds all the fields that controllers
-    //### want to use. Add fields as needed, go crazy.
+    //### want to use. Add fields as needed
     //############################################################
 
     struct control_data_t {
@@ -21,10 +21,21 @@ namespace control {
         robot::TeleopMode teleop_mode;
 
         // Joystick commands
+        std::vector<int> buttons; //< buttons that are depressed
+        std::vector<int> triggers; //< buttons that have been toggled
         Eigen::VectorXd joy_raw; //< raw joystick
         Eigen::VectorXd joy_filtered; //< filtered joystick
-        Eigen::VectorXd joy_movement; //< filtered and time derivated joystick 
+        Eigen::VectorXd joy_movement; //< filtered and time derivated joystick
+        bool joystick_ok;
 
+        // Sensor data
+        Eigen::Matrix3d sensor_rotation;
+        Eigen::Vector3d sensor_position;
+        bool sensor_ok;
+
+        //############################################################
+        //### Control fields
+        //############################################################
         //. target xform of the end effector
         Eigen::Isometry3d manip_target;
         Eigen::Isometry3d manip_prev;
