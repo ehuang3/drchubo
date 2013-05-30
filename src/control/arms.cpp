@@ -32,8 +32,24 @@ namespace control {
         Eigen::Isometry3d Twhand = data->manip_xform[data->manip_index];
         int mi = data->manip_index;
 
+        //std::cout << "Twhand before = \n" << Twhand.matrix() << std::endl;
+
+        // 2. Add delta transform
+        Twhand.linear() = Twhand.linear() * data->sensor_rotation;
+        Twhand.translation() += data->sensor_position;
+
+        //std::cout << "Twhand after = \n" << Twhand.matrix() << std::endl;
+
         // 2. Run IK
         bool ok = robot_kin->arm_jac_ik(Twhand, mi == robot::MANIP_L_HAND, target);
+
+        // 3. Save new manip
+        if (ok)
+            data->manip_xform[data->manip_index] = Twhand;
+
+        // 3. Visualize the target
+        data->manip_target = Twhand;
+
         return ok;
     }
 

@@ -26,6 +26,9 @@ namespace control {
         Eigen::VectorXd joy_raw; //< raw joystick
         Eigen::VectorXd joy_filtered; //< filtered joystick
         Eigen::VectorXd joy_movement; //< filtered and time derivated joystick
+
+        Eigen::Matrix3d joystick_rotation;
+        Eigen::Vector3d joystick_position;
         bool joystick_ok;
 
         // Sensor data

@@ -291,6 +291,11 @@ int main(int argc, char** argv) {
     atlasJac.init(atlasSkel);                 // init jacobians
     atlasKin.init(atlasSkel);                 // init kinematics
 
+    // Do not start at singularity
+    Eigen::VectorXd leftQ(6);
+    leftQ << 0, 0, 1, 0.4, 0, 0;
+    atlasStateCurrent.set_manip(leftQ, robot::MANIP_L_HAND);
+
     //###########################################################
     //#### Controll initilization
     c_data = new control::control_data_t();
@@ -298,6 +303,7 @@ int main(int argc, char** argv) {
     c_data->current = &atlasStateCurrent;
     c_data->kin = &atlasKin;
     c_data->jac = &atlasJac;
+    c_data->manip_index = robot::MANIP_L_HAND;
 
     controller = control::get_factory("ARM_AJIK")->create();
 

@@ -59,7 +59,7 @@ namespace teleop {
         //############################################################
         // 1. First, threshold the joystick using the threshold norm
         double thresh = 2 * axes_thresh.norm(); // Add slack, as joystick tends to not zero properly
-        int max_scale = 2; // scale threshold for maxmimum input velocity
+        int max_scale = 3; // scale threshold for maxmimum input velocity
         // Zero out commands
         joy_raw = Eigen::Vector6d::Zero();
         joy_filtered = Eigen::Vector6d::Zero();
@@ -106,9 +106,14 @@ namespace teleop {
         double r_omega = r_movement.norm();
         // 4. Filtered rotation axes are possible 0 ==> nan values after normalization
         if(isnan(r_axes[0]))
-            sensor_ok = false;
+            sensor_rotation = Eigen::Matrix3d::Identity();
         else
             sensor_rotation = Eigen::AngleAxisd(r_omega, r_axes);
+
+        std::cout << "r_pos = " << sensor_position.transpose() << std::endl;
+
+        std::cout << "r_axes = " << r_axes.transpose() << std::endl;
+        std::cout << "r_omega = " << r_omega << std::endl;
 
         //############################################################
         //### Button updates
