@@ -362,7 +362,7 @@ void DRCPlugin::SetRobotJointAnimation(const trajectory_msgs::JointTrajectory::C
   double t;
 
   for( unsigned int i = 0; i < _cmd->joint_names.size(); ++i ) {
-    joint_anim[ _cmd->joint_names[i] ].reset( new common::NumericAnimation( "anim", T, true) );
+    joint_anim[ _cmd->joint_names[i] ].reset( new common::NumericAnimation( "anim", T, false) );
   }
         
   for( int i = 0; i < numTrajPoints; ++i ) {
@@ -392,7 +392,7 @@ void DRCPlugin::SetRobotJointAnimation(const trajectory_msgs::JointTrajectory::C
   double T = _cmd->poses[numTrajPoints - 1].header.stamp.toSec();
   double t;
 
-  gazebo::common::PoseAnimationPtr pose_anim( new gazebo::common::PoseAnimation( "test", T, true ) );
+  gazebo::common::PoseAnimationPtr pose_anim( new gazebo::common::PoseAnimation( "test", T, false ) );
   gazebo::common::PoseKeyFrame *pose_key;
         
   for( int i = 0; i < numTrajPoints; ++i ) {
@@ -430,12 +430,12 @@ void DRCPlugin::SetRobotJointAnimation(const trajectory_msgs::JointTrajectory::C
     // Animation stuff
     std::map<std::string, common::NumericAnimationPtr> joint_anim;
     common::NumericKeyFrame *joint_key;
-    gazebo::common::PoseAnimationPtr pose_anim( new gazebo::common::PoseAnimation( "test", T, true ) );
+    gazebo::common::PoseAnimationPtr pose_anim( new gazebo::common::PoseAnimation( "test", T, false ) );
     gazebo::common::PoseKeyFrame *pose_key;
     
     // Store joint info
     for( unsigned int i = 0; i < _cmd->joint_names.size(); ++i ) {
-      joint_anim[ _cmd->joint_names[i] ].reset( new common::NumericAnimation( "anim", T, true) );
+      joint_anim[ _cmd->joint_names[i] ].reset( new common::NumericAnimation( "anim", T, false) );
     }
     
     // Save data

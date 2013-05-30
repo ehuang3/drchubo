@@ -32,6 +32,8 @@ To compile
    * You have to create a link to the huboplus folder needed by Matt's
      code. Follow the instructions from DRC/src/walkPublisher/mattStuff/README.md to do so.
    * Now you cand do the cmake and make procedure
+   * Finally, run 
+     source DRC/setup.sh in the terminal you will use. This sets GAZEBO_PLUGIN_PATH and LD_LIBRARY_PATH to find our DRCPlugin
 
 4. To run the rubble world example:
 

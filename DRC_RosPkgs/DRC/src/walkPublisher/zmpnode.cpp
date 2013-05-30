@@ -205,7 +205,7 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg() {
     //** Set poses
     p.position.x = mRootX[i];
     p.position.y = mRootY[i];
-    p.position.z = mRootZ[i] + 1.17;
+    p.position.z = mRootZ[i] + 1.18; //1.17
     p.orientation.x = 0;
     p.orientation.y = 0;
     p.orientation.z = 0;
@@ -455,7 +455,7 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg() {
   kinematics::Skeleton *captain;
 
   DartLoader dart_loader;
-  simulation::World *mWorld = dart_loader.parseWorld( drchubo_ROOT_PATH "/data/models/drchubo-master/hubo_world.urdf");
+  simulation::World *mWorld = dart_loader.parseWorld(drchubo_ROOT_PATH "/data/models/drchubo-master/hubo_world.urdf");
   
   captain = mWorld->getSkeleton("drchubo");
   if( captain == NULL ) {

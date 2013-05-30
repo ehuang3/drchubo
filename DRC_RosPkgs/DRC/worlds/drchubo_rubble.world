@@ -196,7 +196,7 @@
     </include>
 
     <!-- DRC Plugin -->
-    <plugin filename="/home/ana/Research/DRC/lib/libDRCPlugin.so" name="drc_plugin">
+    <plugin filename="libDRCPlugin.so" name="drc_plugin">
       <drchubo>
          <model_name>drchubo</model_name>
          <pin_link>Body_Torso</pin_link>
