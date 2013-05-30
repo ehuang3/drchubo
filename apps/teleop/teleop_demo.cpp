@@ -180,6 +180,11 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
     //############################################################
     //### Init states
     static bool targetPoseInited = false;
+    static bool print_once = true;
+    if (!targetPoseInited && print_once) {
+        std::cout << "Please init target pose first - hit the left button on the spacenav base." << std::endl;
+        print_once = false;
+    }
     if (c_data->triggers[0]) {
         // 1. Set target pose to match current
         std::cout << "Setting target pose." << std::endl;
@@ -196,18 +201,17 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         atlasSkel->setPose( atlasStateCurrent.dart_pose() );
         c_data->com = atlasSkel->getWorldCOM();
 
-        // 4. Set manip xforms
+        // 4. Set last command to current
+        c_data->last_command = atlasStateCurrent.ros_pose();
+
+        // 5. Set manip xforms
         c_data->manip_xform[robot::MANIP_L_HAND] = atlasSkel->getNode(ROBOT_LEFT_HAND)->getWorldTransform();
         c_data->manip_xform[robot::MANIP_R_HAND] = atlasSkel->getNode(ROBOT_RIGHT_HAND)->getWorldTransform();
         c_data->manip_xform[robot::MANIP_L_FOOT] = atlasSkel->getNode(ROBOT_LEFT_FOOT)->getWorldTransform();
         c_data->manip_xform[robot::MANIP_R_FOOT] = atlasSkel->getNode(ROBOT_RIGHT_FOOT)->getWorldTransform();
     }
-    
-    static bool print_once = true;
-    if (!targetPoseInited && print_once) {
-        std::cout << "Please init target pose first - hit the left button on the spacenav base." << std::endl;
-        print_once = false;
-    }
+    if (!targetPoseInited)
+        return;
     
     //############################################################
     //### Switch states
@@ -217,19 +221,11 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
     
     //############################################################
     //### Run controller
-    if (controller)
+    if (controller && c_data->sensor_ok && c_data->joystick_ok)
         controller->run(atlasStateTarget, c_data);
 
     //############################################################
     //### Send joint commands
-    // 6.2 joint delta norm
-    double motion_norm = (c_data->last_command - atlasStateTarget.ros_pose()).norm();
-    std::cout << "joint delta norm = " << motion_norm << std::endl;
-    
-    double error_norm = (atlasStateCurrent.ros_pose() - atlasStateTarget.ros_pose()).norm();
-    std::cout << "pid error norm = " << error_norm << std::endl;
-        
-    // 7. Send commands over ROS
     Eigen::VectorXd rospose;
     atlasStateTarget.get_ros_pose(rospose);
     if (gazebo_sim) {
@@ -238,6 +234,13 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         }
         jointCommand.header.stamp = _j->header.stamp;
         topic_pub_joint_commands.publish(jointCommand);
+        
+        // Errors
+        double motion_norm = (c_data->last_command - atlasStateTarget.ros_pose()).norm();
+        std::cout << "joint delta norm = " << motion_norm << std::endl;
+    
+        double error_norm = (atlasStateCurrent.ros_pose() - atlasStateTarget.ros_pose()).norm();
+        std::cout << "pid error norm = " << error_norm << std::endl;
     }
     c_data->last_command = rospose;
 
@@ -296,12 +299,7 @@ int main(int argc, char** argv) {
     c_data->kin = &atlasKin;
     c_data->jac = &atlasJac;
 
-    control::ARM_AIK_T aik("");
-    //ARM_AJIK__factory.create();
-
     controller = control::get_factory("ARM_AJIK")->create();
-
-    
 
     //###########################################################
     //#### GUI initialization

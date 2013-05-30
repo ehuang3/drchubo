@@ -35,6 +35,8 @@ namespace teleop {
             std::cout << "[spnav] Thresholds = " << axes_thresh.transpose() << std::endl;
             std::cout << "[spnav] Thresh norm = " << axes_thresh.norm() << std::endl;            
         }
+
+        return true;
     }
 
     bool spnav_t::sensor_update(const sensor_msgs::Joy::ConstPtr& _j) {
@@ -123,18 +125,23 @@ namespace teleop {
         last_buttons = _j->buttons;
         last_axes = _j->axes;
 
-        return joystick_ok && sensor_ok;
+        return true;
     }
     
     bool spnav_t::get_teleop_data(control::control_data_t* data) {
-        data->buttons = buttons;
-        data->triggers = buttons_triggered;
+        data->buttons.resize(buttons.size());
+        data->triggers.resize(buttons_triggered.size());
+        for(int i=0; i < buttons.size(); i++) {
+            data->buttons[i] = buttons[i];
+            data->triggers[i] = buttons_triggered[i];
+        }
         data->joy_raw = joy_raw;
         data->joy_filtered = joy_filtered;
         data->joy_movement = joy_movement;
         data->joystick_ok = joystick_ok;
         data->sensor_position = sensor_position;
         data->sensor_rotation = sensor_rotation;
+        data->sensor_ok = sensor_ok;
         return true;
     }
 

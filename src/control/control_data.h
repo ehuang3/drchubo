@@ -21,8 +21,8 @@ namespace control {
         robot::TeleopMode teleop_mode;
 
         // Joystick commands
-        std::vector<int> buttons; //< buttons that are depressed
-        std::vector<int> triggers; //< buttons that have been toggled
+        Eigen::VectorXd buttons; //< buttons that are depressed
+        Eigen::VectorXd triggers; //< buttons that have been toggled
         Eigen::VectorXd joy_raw; //< raw joystick
         Eigen::VectorXd joy_filtered; //< filtered joystick
         Eigen::VectorXd joy_movement; //< filtered and time derivated joystick
