@@ -36,14 +36,20 @@ namespace control {
         //############################################################
         //### Control fields
         //############################################################
-        //. target xform of the end effector
+        // target xform of the end effector
         Eigen::Isometry3d manip_target;
         Eigen::Isometry3d manip_prev;
 
-        //. array of target xforms (stance ik)
+        // target com
+        Eigen::Vector3d com;
+
+        // array of target xforms (stance ik)
         Eigen::Isometry3d manip_xform[robot::NUM_MANIPULATORS];
         robot::IK_Mode manip_mode[robot::NUM_MANIPULATORS];
         int manip_index;
+
+        // last command
+        Eigen::VectorXd last_command;
         
         //############################################################
         // General fields
