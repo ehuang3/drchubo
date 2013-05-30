@@ -1,12 +1,8 @@
 #include "arms.h"
 #include "utils/robot_configs.h"
 #include <amino.h>
+#include <assert.h>
 
-
-REGISTER_CONTROLLER(control::ARM_AIK_T, ARM_AIK)
-REGISTER_CONTROLLER(control::ARM_AJIK_T, ARM_AJIK)
-REGISTER_CONTROLLER(control::ARM_JIT_T, ARM_JIT)
-REGISTER_CONTROLLER(control::ARM_JIK_T, ARM_JIK)
 
 namespace control {
 
