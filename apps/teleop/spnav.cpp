@@ -44,7 +44,6 @@ namespace teleop {
         static ros::Time lastTime = _j->header.stamp;
         ros::Time currentTime = _j->header.stamp;
         ros::Duration dT = currentTime - lastTime;
-        std::cout << "Was spun" << std::endl;
         
         //############################################################
         //### Calibrate joystick
@@ -114,6 +113,7 @@ namespace teleop {
         //############################################################
         // 2. Check if flip flop
         buttons = _j->buttons;
+        buttons_triggered = buttons; //< just to initialize buttons_triggered
         for(int i=0; i < buttons.size(); i++) {
             buttons_triggered[i] = 0;
             if(buttons[i] && !last_buttons[i])
