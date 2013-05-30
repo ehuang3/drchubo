@@ -10,6 +10,7 @@ rosbuild_init()
 ## This plugin includes Qt widgets, so we must include Qt like so:
 find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
 include(${QT_USE_FILE})
+add_definitions( ${QT_DEFINITIONS} )
 
 ## I prefer the Qt signals and slots to avoid defining "emit", "slots",
 ## etc because they can conflict with boost signals, so define QT_NO_KEYWORDS here.
@@ -40,4 +41,5 @@ target_link_libraries(myviz ${QT_LIBRARIES} default_plugin)
 ## END_TUTORIAL
 
 add_subdirectory( rosQtInterface )
+add_subdirectory( rosQtInterface2 )
 add_subdirectory( src )

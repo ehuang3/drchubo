@@ -5,7 +5,7 @@ set(ROSBUILD_DONT_REDEFINE_PROJECT True)
 include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 rosbuild_init()
 
-set(spnav_all_src spnav_all.cpp MyWindow.cpp)
+set(spnav_all_src spnav_all.cpp)
 set(spnav_all_hdr )
 
 include_directories(${GAZEBO_INCLUDE_DIRS})

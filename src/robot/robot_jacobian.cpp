@@ -113,18 +113,11 @@ namespace robot {
         //
         int i=0;
         while(i++ < max_iter) {
-            // DEBUG_PRINT("iter %d\n", i);
-
             end_effector->getSkel()->setPose(state.dofs());
 
             A = end_effector->getWorldTransform();
 
             xform_error(error, B, A);
-            
-            // ERROR_PRINT("%d error %.16f\n", i, error.norm());
-
-            // DEBUG_PRINT("error norm %f\n", error.norm());
-            // DEBUG_STREAM << "error = \n" << error << endl;
 
             if(error.norm() < tol) {
                 break;
@@ -134,12 +127,11 @@ namespace robot {
 
             manip_jacobian(J, desired_dofs, end_effector, state);
 
-            // DEBUG_STREAM << "jac = \n" << J << endl;
-
             aa_la_dls(J.rows(), J.cols(), 0.05, J.data(), error.data(), qdot.data());
 
             q += qdot;
             state.set_dofs(q, desired_dofs);
+            state.clamp_indexes(desired_dofs, false);
         }
         
     }

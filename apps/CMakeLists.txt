@@ -18,6 +18,7 @@ foreach(APPDIR
     spnav_com
     spnav_gl
     spnav_all
+    #fastrak_teleop
     )
     add_subdirectory(${APPDIR})
 endforeach(APPDIR)
