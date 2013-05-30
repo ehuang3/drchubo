@@ -124,6 +124,7 @@ namespace teleop {
         // 3. Remember the past
         last_buttons = _j->buttons;
         last_axes = _j->axes;
+        lastTime = currentTime;
 
         return true;
     }
