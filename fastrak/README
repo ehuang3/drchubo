@@ -1,11 +1,42 @@
+BUILDNG
+-------
+Run setup.sh to install dependancies and prepare environment
+
+mkdir lib
+Install ach, somatic, make-common, and amino to the lib/ directory. 
+You can check them out from thebrain.golems.org git repo.
+git clone ssh://thebrain.golems.org/home/git/lib/ach.git
+git clone ssh://thebrain.golems.org/home/git/lib/amino.git
+git clone ssh://thebrain.golems.org/home/git/lib/somatic.git
+git clone ssh://thebrain.golems.org/home/git/lib/make-common.git
+
+
+To build each library (except make-common):
+autoreconf -i
+./configure
+make
+sudo make install
+
+To build make-common, run
+debinstall
+
+To build Teleop:
+g++ teleop-test.cpp Teleop.cpp -o teleop-test -lm -lach -lc -lrt -pthread -lprotobuf -lz -lpthread -lsomatic -lprotobuf-c -I lib/somatic/include
+
+RUNNING
+-------
+sudo /usr/local/etc/init.d/somatic start
+ach -C fastrak 
+./fastrak -p /dev/ttyUSB0 -vvvv
+
 
 COMM
-
+-----
 - The RS232 port on the FasTrak is a DTE port.  Connect it to a PC using a NULL
   Modem (crossover) serial cable.
 
 QUIRKS
-
+------
 - Device takes about ten seconds to initialize after switched on.  You
   must wait this time before starting the daemon.
 
