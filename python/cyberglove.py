@@ -149,8 +149,8 @@ ser.write("\x03") #Send ctrl+c to stop stream
 ser.close()
 closed_avg = closed_avg/200 #arithmetic average
 print "Average is "+str(closed_avg)
-right_closed_avg = closed_avg
-right_open_avg = open_avg
+right_closed_avg = closed_avg #-10 #experiment to make it easier to achieve max and min values
+right_open_avg = open_avg # +10 #see above
 print "Done!"
 
 

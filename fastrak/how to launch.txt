@@ -1,8 +1,0 @@
-g++ teleop-test.cpp Teleop.cpp -o teleop-test -lm -lach -lc -lrt -I/usr/include/eigen3
-
-
-
-
-sudo /usr/local/etc/init.d/somatic start
-ach -C fastrak 
-./fastrakd -p /dev/ttyUSB0 -vvvv
