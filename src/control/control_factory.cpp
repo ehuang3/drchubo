@@ -9,7 +9,8 @@ REGISTER_CONTROLLER(control::ARM_AIK_T, ARM_AIK)
 REGISTER_CONTROLLER(control::ARM_AJIK_T, ARM_AJIK)
 REGISTER_CONTROLLER(control::ARM_JIT_T, ARM_JIT)
 REGISTER_CONTROLLER(control::ARM_JIK_T, ARM_JIK)
-
+#include "legs.h"
+REGISTER_CONTROLLER(control::LEG_AIK_T, LEG_AIK)
 
 //############################################################
 //### Implementation
@@ -41,8 +42,6 @@ namespace control {
 
     const std::vector<control_factory_t*>& control_factory_t::factory_vector()
     {
-        std::cout << "_factories is " << control_factory_t::_factories << std::endl;
-
         return *control_factory_t::_factories;
     }
 
