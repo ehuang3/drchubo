@@ -76,6 +76,7 @@ namespace robot {
         
         // true: if no joint exceed limits
         bool check_limits(const std::vector<int>& indexes, double zero_tol = 1e-9) const;
+        bool check_limits(double zero_tol = 1e-9) const;
         Eigen::Vector2d get_limits(int i) const;
 
         // clamps joints to limits
