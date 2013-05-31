@@ -96,24 +96,17 @@ namespace teleop {
         //############################################################
         //### Convert to transformations
         //############################################################
-        // 1. Be optimistic
-        sensor_ok = true;
         // 2. Offset
-        sensor_position = joy_movement.block<3,1>(0,0); //< 
+        joy_position = joy_movement.block<3,1>(0,0); //< 
         // 3. Rotation
         Eigen::Vector3d r_axes = joy_filtered.block<3,1>(3,0).normalized();
         Eigen::Vector3d r_movement = joy_movement.block<3,1>(3,0); //< DO NOT USE THIS FOR AXES
         double r_omega = r_movement.norm();
         // 4. Filtered rotation axes are possible 0 ==> nan values after normalization
         if(isnan(r_axes[0]))
-            sensor_rotation = Eigen::Matrix3d::Identity();
+            joy_rotation = Eigen::Matrix3d::Identity();
         else
-            sensor_rotation = Eigen::AngleAxisd(r_omega, r_axes);
-
-        std::cout << "r_pos = " << sensor_position.transpose() << std::endl;
-
-        std::cout << "r_axes = " << r_axes.transpose() << std::endl;
-        std::cout << "r_omega = " << r_omega << std::endl;
+            joy_rotation = Eigen::AngleAxisd(r_omega, r_axes);
 
         //############################################################
         //### Button updates
@@ -144,10 +137,9 @@ namespace teleop {
         data->joy_raw = joy_raw;
         data->joy_filtered = joy_filtered;
         data->joy_movement = joy_movement;
+        data->joy_position = joy_position;
+        data->joy_rotation = joy_rotation;
         data->joystick_ok = joystick_ok;
-        data->sensor_position = sensor_position;
-        data->sensor_rotation = sensor_rotation;
-        data->sensor_ok = sensor_ok;
         return true;
     }
 

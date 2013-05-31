@@ -12,6 +12,8 @@ namespace control {
         virtual ~control_t() {}
         
         virtual bool run(robot::robot_state_t& target, control_data_t* params) = 0;
+
+        std::string name() { return _name; }
         
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 

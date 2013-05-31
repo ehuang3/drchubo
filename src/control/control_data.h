@@ -27,8 +27,8 @@ namespace control {
         Eigen::VectorXd joy_filtered; //< filtered joystick
         Eigen::VectorXd joy_movement; //< filtered and time derivated joystick
 
-        Eigen::Matrix3d joystick_rotation;
-        Eigen::Vector3d joystick_position;
+        Eigen::Matrix3d joy_rotation;
+        Eigen::Vector3d joy_position;
         bool joystick_ok;
 
         // Sensor data
@@ -50,6 +50,7 @@ namespace control {
         Eigen::Isometry3d manip_xform[robot::NUM_MANIPULATORS];
         robot::IK_Mode manip_mode[robot::NUM_MANIPULATORS];
         int manip_index;
+        int manip_side; //< left = 1 
 
         // last command
         Eigen::VectorXd last_command;
