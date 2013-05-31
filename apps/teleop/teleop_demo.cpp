@@ -180,12 +180,7 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
     //############################################################
     //### Init states
     static bool targetPoseInited = false;
-    static bool print_once = true;
-    if (!targetPoseInited && print_once) {
-        std::cout << "Please init target pose first - hit the left button on the spacenav base." << std::endl;
-        print_once = false;
-    }
-    if (c_data->triggers[0]) {
+    if (!targetPoseInited || c_data->triggers[1]) {
         // 1. Set target pose to match current
         std::cout << "Setting target pose." << std::endl;
         Eigen::VectorXd temp;
@@ -195,7 +190,6 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         // 2. Set world origins to feet
         move_origin_to_feet( atlasStateTarget );
         move_origin_to_feet( atlasStateCurrent );
-        targetPoseInited = true;
 
         // 3. Set target com to current
         atlasSkel->setPose( atlasStateCurrent.dart_pose() );
@@ -209,19 +203,37 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         c_data->manip_xform[robot::MANIP_R_HAND] = atlasSkel->getNode(ROBOT_RIGHT_HAND)->getWorldTransform();
         c_data->manip_xform[robot::MANIP_L_FOOT] = atlasSkel->getNode(ROBOT_LEFT_FOOT)->getWorldTransform();
         c_data->manip_xform[robot::MANIP_R_FOOT] = atlasSkel->getNode(ROBOT_RIGHT_FOOT)->getWorldTransform();
+
+        targetPoseInited = true;
     }
     if (!targetPoseInited)
         return;
     
     //############################################################
     //### Switch states
-    if (c_data->triggers[1]) {
+    if (gui_window.key != -1) {
+        int key = gui_window.key;
+        gui_window.key = -1;
         // Do the state switch here...
+        const std::vector<control::control_factory_t*>& F = control::factories();
+        key = (key)%F.size();
+
+        // Replace controller
+        delete controller;
+        controller = F[key]->create();
+        
+        // Let them know
+        std::cout << "Switched to " << controller->name() << std::endl;
+    }
+    if (c_data->triggers[0]) {
+        int& ms = c_data->manip_side;
+        ms = (ms+1)%2;
+        std::cout << "Switch sides to " << (ms ? "LEFT" : "RIGHT") << std::endl;
     }
     
     //############################################################
     //### Run controller
-    if (controller && c_data->sensor_ok && c_data->joystick_ok)
+    if (controller && (c_data->sensor_ok || c_data->joystick_ok))
         controller->run(atlasStateTarget, c_data);
 
     //############################################################
