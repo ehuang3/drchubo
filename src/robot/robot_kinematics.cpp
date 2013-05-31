@@ -663,6 +663,9 @@ robot_kinematics_t::~robot_kinematics_t() {
         double l2 = leg_link_disp[2](0); // hip yaw to hip pitch x
         double l3 = leg_link_disp[3](2); // hip pitch to knee pitch
         double l4 = leg_link_disp[4](2); // knee pitch to ankle pitch
+
+        // invert right limits
+        int mirror[] = {1, 1, 0, 0, 0, 1}; //< limits that need to be inverted
     
         Matrix4d T0f = _Tf;
         T0f(1,3) += _left ? -l0 : l0;
@@ -803,9 +806,22 @@ robot_kinematics_t::~robot_kinematics_t() {
                         U(j,i) = leg_u_lim[j][k];
         // check joint limits
         for(int i=0; i < 8; i++) {
-            for(int j=0; j < 6; j++)
-                if(!(leg_u_lim[j][0] <= U(j,i) && U(j,i) <= leg_u_lim[j][1]))
+            for(int j=0; j < 6; j++) {
+                if(_left && !(leg_u_lim[j][0] <= U(j,i) && U(j,i) <= leg_u_lim[j][1]))
                     within_lim[i] = false;
+                if(!_left) {
+                    if(mirror[j]) {
+                        std::cout << "mirror " << j << std::endl;
+                        if(!(-leg_u_lim[j][1] <= U(j,i) && U(j,i) <= -leg_u_lim[j][0])) {
+                            std::cout << "failed " << j << std::endl;
+                            within_lim[i] = false;
+                        }
+                    }
+                    else
+                        if(!(leg_u_lim[j][0] <= U(j,i) && U(j,i) <= leg_u_lim[j][1]))
+                            within_lim[i] = false;
+                }
+            }
             if(within_lim[i]) {
                 any_within = true;
             }
@@ -813,10 +829,20 @@ robot_kinematics_t::~robot_kinematics_t() {
         // clamp to joint limits
         for(int i=0; i < 8; i++)
             for(int j=0; j < 6; j++) {
-                if(U(j,i) < leg_u_lim[j][0])
-                    U(j,i) = leg_u_lim[j][0];
-                if(leg_u_lim[j][1] < U(j,i))
-                    U(j,i) = leg_u_lim[j][1];
+                if(_left) {
+                    if(U(j,i) < leg_u_lim[j][0])
+                        U(j,i) = leg_u_lim[j][0];
+                    if(leg_u_lim[j][1] < U(j,i))
+                        U(j,i) = leg_u_lim[j][1];
+
+                    //U(j,i) = max(min(U(j,i), leg_u_lim[j][0]), leg_u_lim[j][1]);
+                }
+                if(!_left) {
+                    if(mirror[j])
+                        U(j,i) = min(max(U(j,i), -leg_u_lim[j][1]), -leg_u_lim[j][0]);
+                    else
+                        U(j,i) = min(max(U(j,i), leg_u_lim[j][0]), leg_u_lim[j][1]);
+                }
             }
         // // complain if out of workspace
         // if(!any_within) {
