@@ -12,13 +12,10 @@ foreach(APPDIR
     zmp_steps
     car_test
     perception
-    driver
-    spnav_teleop
+    #driver
     pelvis_tilt_demo
-    spnav_com
-    spnav_gl
-    spnav_all
-    #fastrak_teleop
+    fastrak_teleop
+    teleop
     )
     add_subdirectory(${APPDIR})
 endforeach(APPDIR)
