@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<sdf version="1.4">
+  <model name="Grey Brick Wall">
+    <link name="link">
+      <inertial>
+        <pose>0 0 0.4 0 0 0</pose>
+        <mass>500</mass>
+        <inertia>
+          <ixx>51.2096</ixx>
+          <iyy>51.2096</iyy>
+          <izz>25</izz>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+        </inertia>
+      </inertial>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>model://grey_brickwall/meshes/grey_brickwall.dae</uri>
+          </mesh>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>model://grey_brickwall/meshes/grey_brickwall.dae</uri>
+ 	    <scale> 0.5 0.1 0.3 </scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://grey_brickwall/materials/scripts</uri>
+            <uri>model://grey_brickwall/materials/textures</uri>
+            <name>vrc/grey_wall</name>
+          </script>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>
