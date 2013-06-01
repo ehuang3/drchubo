@@ -9,13 +9,14 @@ foreach(APPDIR
     #drcsim_joint_commands_tutorial
     #quadruped
     #climber
-    zmp_steps
+    #zmp_steps
     #car_test
     #perception
     #driver
-    pelvis_tilt_demo
+    #pelvis_tilt_demo
     #fastrak_teleop
     #teleop
+    hubo-teleop
     )
     add_subdirectory(${APPDIR})
 endforeach(APPDIR)
