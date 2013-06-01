@@ -1,0 +1,161 @@
+<kinbody name="mzucker_hubo">
+
+  <kinbody file="huboplus/huboplus.kinbody.xml">
+  </kinbody>
+
+  <Manipulator name="leftFootManip">
+    <effector>Body_LAR</effector>
+    <base>Body_Torso</base>
+    <translation>0 0 -0.0365</translation>
+    <joints>LHY LHR LHP LKP LAP LAR</joints>
+  </Manipulator>
+
+  <Manipulator name="rightFootManip">
+    <effector>Body_RAR</effector>
+    <base>Body_Torso</base>       
+    <translation>0 0 -0.0365</translation>
+    <joints>RHY RHR RHP RKP RAP RAR</joints>
+  </Manipulator>
+
+  <Manipulator name="leftHandManip">
+    <effector>Body_LWP</effector>
+    <base>Body_Torso</base>       
+    <translation>0 0.0 -0.04</translation>
+    <rotationaxis>1 0 0 180</rotationaxis>
+    <rotationaxis>0 0 1 180</rotationaxis>
+    <joints>LSP LSR LSY LEP LWY LWP</joints>
+  </Manipulator>
+
+  <Manipulator name="rightHandManip">
+    <effector>Body_RWP</effector>
+    <base>Body_Torso</base>
+    <translation>0 0.0 -0.04</translation>
+    <rotationaxis>1 0 0 -180</rotationaxis>
+    <joints>RSP RSR RSY REP RWY RWP</joints>
+  </Manipulator>
+
+  <Body name="Body_Torso" type="dynamic">
+    <cgeom type="auto_aabb"/>
+  </Body>
+
+  <Body name="Body_Hip" type="dynamic">
+    <cgeom type="auto_aabb"/>
+  </Body>
+
+  <Body name="Body_RHR" type="dynamic">
+    <cgeom type="auto_aabb"/>
+  </Body>
+
+  <Body name="Body_LHR" type="dynamic">
+    <cgeom type="auto_aabb"/>
+  </Body>
+
+  <Body name="Body_RHP" type="dynamic">
+    <cgeom type="auto_aabb"/>
+  </Body>
+
+  <Body name="Body_LHP" type="dynamic">
+    <cgeom type="auto_aabb"/>
+  </Body>
+
+  <Body name="Body_RKP" type="dynamic">
+    <cgeom type="auto_aabb"/>
+  </Body>
+
+  <Body name="Body_LKP" type="dynamic">
+    <cgeom type="auto_aabb"/>
+  </Body>
+
+  <Body name="Body_LAP" type="dynamic">
+    <cgeom type="auto_aabb"/>
+  </Body>
+
+  <Body name="Body_RAP" type="dynamic">
+    <cgeom type="auto_aabb"/>
+  </Body>
+
+  <Body name="Body_LAR" type="dynamic">
+    <cgeom type="auto_aabb"/>
+  </Body>
+
+  <Body name="Body_RAR" type="dynamic">
+    <cgeom type="auto_aabb"/>
+  </Body>
+
+  <Body name="Body_HNP" type="dynamic">
+    <cgeom type="auto_sphere"/>
+  </Body>
+
+  <Body name="Body_RSR" type="dynamic">
+    <cgeom type="auto_sphere"/>
+  </Body>
+
+  <Body name="Body_LSR" type="dynamic">
+    <cgeom type="auto_sphere"/>
+  </Body>
+
+  <Body name="Body_LSY" type="dynamic">
+    <cgeom type="cylinder">
+      <Translation>-0.005 0 0.025</Translation>
+      <radius>0.045</radius>
+      <height>0.18</height>
+    </cgeom>
+  </Body>
+
+  <Body name="Body_RSY" type="dynamic">
+    <cgeom type="cylinder">
+      <Translation>-0.005 0 0.025</Translation>
+      <radius>0.045</radius>
+      <height>0.18</height>
+    </cgeom>
+  </Body>
+
+  <!--
+  <Body name="Body_LEP" type="dynamic">
+    <cgeom type="cylinder">
+      <Translation>0 0 0.03</Translation>
+      <radius>0.045</radius>
+      <height>0.04</height>
+    </cgeom>
+  </Body>
+
+  <Body name="Body_REP" type="dynamic">
+    <cgeom type="cylinder">
+      <Translation>0 0 0.03</Translation>
+      <radius>0.045</radius>
+      <height>0.04</height>
+    </cgeom>
+  </Body>
+  -->
+
+  <Body name="Body_LWY" type="dynamic">
+    <cgeom type="cylinder">
+      <Translation>0 0 0.035</Translation>
+      <radius>0.045</radius>
+      <height>0.17</height>
+    </cgeom>
+  </Body>
+
+  <Body name="Body_RWY" type="dynamic">
+    <cgeom type="cylinder">
+      <Translation>0 0 0.035</Translation>
+      <radius>0.045</radius>
+      <height>0.17</height>
+    </cgeom>
+  </Body>
+
+  <Body name="Body_LWP" type="dynamic">
+    <cgeom type="auto_aabb"/>
+  </Body>
+
+  <Body name="Body_RWP" type="dynamic">
+    <cgeom type="auto_aabb"/>
+  </Body>
+
+
+  <adjacent>Body_RSY Body_RWY</adjacent>
+  <adjacent>Body_LSY Body_LWY</adjacent>
+  <adjacent>Body_Hip Body_RHP</adjacent>
+  <adjacent>Body_Hip Body_LHP</adjacent>
+
+</kinbody>

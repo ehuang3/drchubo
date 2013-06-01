@@ -2,8 +2,8 @@
 <gazebo version="1.2">
   <world name="default">
     <physics type="ode">
-      <!-- Gravity zero -->	
-      <gravity>0 0 0</gravity>
+      <!-- Gravity-->	
+      <gravity>0 0 -9.8</gravity>
       <update_rate>1000</update_rate>
       <ode>
         <solver>
@@ -31,7 +31,7 @@
     <include>
       <uri>model://drchubo</uri>
       <pose>0 0 1.0 0 0 0</pose>
-      <plugin filename="libdrchubo_Animation.so" name="basics"/>	
+      <plugin filename="libdrchubo_Animation.so" name="animation"/>
     </include>
 
 

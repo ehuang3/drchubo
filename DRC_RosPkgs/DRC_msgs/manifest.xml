@@ -1,0 +1,15 @@
+<package>
+  <description brief="DRC">
+
+     DRC
+
+  </description>
+  <author>Ana Huaman and Eric Huang</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/vrc_golem</url>
+  <depend package="geometry_msgs"/>
+  <depend package="trajectory_msgs"/>
+</package>
+
+

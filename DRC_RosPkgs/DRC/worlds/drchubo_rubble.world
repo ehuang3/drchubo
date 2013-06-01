@@ -1,0 +1,208 @@
+<?xml version="1.0" ?>
+<gazebo version="1.2">
+  <world name="default">
+    <physics type="ode">
+      <!-- Gravity-->	
+      <gravity>0 0 -9.8</gravity>
+      <update_rate>1000</update_rate>
+      <ode>
+        <solver>
+          <type>quick</type>
+          <dt>0.001</dt>
+          <iters>50</iters>
+          <sor>1.4</sor>
+        </solver>
+        <constraints>
+          <cfm>0.0</cfm>
+          <erp>0.2</erp>
+          <contact_max_correcting_vel>100.0</contact_max_correcting_vel>
+          <contact_surface_layer>0.0</contact_surface_layer>
+        </constraints>
+      </ode>
+    </physics>
+    <!-- A global light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <!-- Asphalte Plane -->	
+    <include>
+      <uri>model://asphalt_plane</uri>
+      <pose>0.0 0.0 -0.05 0.0 0.0 0.0</pose>
+    </include>
+
+    <!-- Mud Box -->	
+    <include>
+      <uri>model://mud_box</uri>
+      <pose>2.5 -2.5 -0.05 0.0 0.0 0.0</pose>
+    </include>
+
+    <!-- Table2 -->
+    <include>
+      <uri>model://table2</uri>
+      <name>table_a</name>
+      <pose>5.786 -0.113 0.05 0 0 1.57</pose>
+    </include>
+
+    <!-- Drill -->
+    <include>
+      <uri>model://cordless_drill</uri>
+      <name>drill</name>
+      <pose>5.64 -0.22 0.81 0 0 0</pose>
+    </include>
+
+    <!-- Coke -->
+    <include>
+      <uri>model://coke_can</uri>
+      <name>coke_a</name>
+      <pose>5.7 0.44 0.81 0 0 0</pose>
+    </include>
+
+    <!-- Beer -->
+    <include>
+      <uri>model://beer</uri>
+      <name>beer_a</name>
+      <pose>6.10 -0.535 0.82 0 0 0</pose>
+    </include>
+
+    <!-- Fallen Table -->
+    <include>
+      <uri>model://table2</uri>
+      <name>table_b</name>
+      <static>false</static>
+      <pose>-0.42 2.0 1.16 3.1416 0.9 0.0</pose>
+    </include>
+
+    <!-- Fallen Bookshelf -->
+    <include>
+      <uri>model://bookshelf</uri>
+      <name>bookshelf_a</name>
+      <static>false</static>
+      <pose>-0.0 -2.0 0.5 1.57 -2.37 -1.92</pose>
+    </include>
+
+    <!-- Brick Wall -->
+    <include>
+      <uri>model://brick_box_3x1x3</uri>
+      <name>brick_wall_a</name>
+      <pose>0 3.0 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://brick_box_3x1x3</uri>
+      <name>brick_wall_b</name>
+      <pose>3.0 3.0 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://brick_box_3x1x3</uri>
+      <name>brick_wall_c</name>
+      <pose>6.0 3.0 0 0 0 0</pose>
+    </include>
+
+    <!-- Entrance Brick -->
+    <include>
+      <uri>model://brick_box_3x1x3</uri>
+      <name>brick_wall_d</name>
+      <pose>-2.00 2.0 0 0 0 1.57</pose>
+    </include>
+
+    <include>
+      <uri>model://brick_box_3x1x3</uri>
+      <name>brick_wall_e</name>
+      <pose>-2.0 -3.0 0 0 0 1.57</pose>
+    </include>
+
+    <!-- End Brick Wall -->
+    <include>
+      <uri>model://brick_box_3x1x3</uri>
+      <name>brick_wall_f</name>
+      <pose>7.0 1.0 0 0 0 1.57</pose>
+    </include>
+
+    <include>
+      <uri>model://brick_box_3x1x3</uri>
+      <name>brick_wall_g</name>
+      <pose>7.0 -2.0 0 0 0 1.57</pose>
+    </include>
+
+    <!-- Cinder blocks -->
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_a</name>
+      <pose>2.0 -1.0 0.1 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_b</name>
+      <pose>2.000000 1.554800 0.15 1.57 0.000000 1.0</pose>
+    </include>
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_c</name>
+      <pose>5.000000 2.25 0.000000 0.000000 0.000000 0.20</pose>
+    </include>
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_d</name>
+      <pose>5.000000 0.000000 0.25 0.000000 1.57 -1.30</pose>
+    </include>
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_e</name>
+      <pose>3.000 0.000 0.25 0.000 1.57 0.20</pose>
+    </include>
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_f</name>
+      <pose>2.4 3.5 0.118 1.57 0.000 0.050</pose>
+    </include>
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_g</name>
+      <pose>4.2 2.250 0.2 0.000 1.57 0.800</pose>
+    </include>
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_h</name>
+      <pose>4.000 1.487 0.000 0.000 0.000 2.000</pose>
+    </include>
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_i</name>
+      <pose>5.000 -3.0 0.100 0.000 0.000 3.000</pose>
+    </include>
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_j</name>
+      <pose>2.000 -3.0 0.25 0.000 1.57 -2.000</pose>
+    </include>
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_k</name>
+      <pose>2.000 3.0 0.000 1.57 0.000 -0.500</pose>
+    </include>
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_l</name>
+      <pose>3.700 -2.00 0.000 0.000 0.000 2.600</pose>
+    </include>
+
+    <!-- Captain Hubo -->
+    <include>
+      <uri>model://drchubo</uri>
+      <pose>-0.0315 -0.011 0.93 0 0 0</pose>
+    </include>
+
+    <!-- DRC Plugin -->
+    <plugin filename="libDRCPlugin.so" name="drc_plugin">
+      <drchubo>
+         <model_name>drchubo</model_name>
+         <pin_link>Body_Torso</pin_link>
+      </drchubo>
+    </plugin>
+
+
+  </world>
+</gazebo>

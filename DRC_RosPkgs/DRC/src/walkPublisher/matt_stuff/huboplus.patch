@@ -1,0 +1,31 @@
+diff --git robots/huboplus/huboplus.kinbody.xml robots/huboplus/huboplus.kinbody.xml
+index 3ecfcc7..768f3a5 100644
+--- robots/huboplus/huboplus.kinbody.xml
++++ robots/huboplus/huboplus.kinbody.xml
+@@ -117,7 +117,7 @@
+         <!--Body_LHY Parent Center of Mass to Base -->
+         <translation>0.013850358943 0.000007806523 0.035461283862</translation>
+         <!--Body_LHY Parent to Current -->
+-        <translation>0.000000000000 0.088499911702 -0.076468866947</translation>
++        <translation>0.000125136311 0.088499911702 -0.076468866947</translation>
+         <!--Body_LHY Base to Center of Mass -->
+         <translation>0.034706500276 0.000037480007 -0.072615273181</translation>
+ 
+@@ -696,7 +696,7 @@
+     <body name="Body_RSP" type="dynamic">
+         <offsetfrom>Body_Torso</offsetfrom>
+         <!--Body_RSP Parent Center of Mass to Base -->
+-        <translation>0.012258116293 0.002473149928 0.048635606065</translation>
++        <translation>0.012258116293 -0.002473149928 0.048635606065</translation>
+         <!--Body_RSP Parent to Current -->
+         <translation>0.000000000000 -0.141500022154 0.000000000000</translation>
+         <!--Body_RSP Base to Center of Mass -->
+@@ -1069,7 +1069,7 @@
+     <body name="Body_RWP" type="dynamic">
+         <offsetfrom>Body_RWY</offsetfrom>
+         <!--Body_RWP Parent Center of Mass to Base -->
+-        <translation>0.001220192079 0.000635233335 0.023804318643</translation>
++        <translation>0.001220192079 -0.000635233335 0.023804318643</translation>
+         <!--Body_RWP Parent to Current -->
+         <translation>0.000000000000 0.010000000000 -0.052549999972</translation>
+         <!--Body_RWP Base to Center of Mass -->

@@ -27,6 +27,13 @@ target_link_libraries( drchubo_Animation ${GAZEBO_LIBRARIES} )
 
 set_target_properties( drchubo_Animation PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib" ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib" )
 
+#########################
+# drchubo_AnimationPush
+#########################
+add_library( drchubo_AnimationPush SHARED drchubo_AnimationPush/drchubo_AnimationPush.cpp ) 
+target_link_libraries( drchubo_AnimationPush ${GAZEBO_LIBRARIES} )
+
+set_target_properties( drchubo_AnimationPush PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib" ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib" )
 
 #########################
 # drchubo_Walk1
@@ -35,3 +42,8 @@ add_library( drchubo_Walk1 SHARED drchubo_Walk1/drchubo_Walk1.cpp ${control_srcs
 target_link_libraries( drchubo_Walk1 ${GAZEBO_LIBRARIES} )
 
 set_target_properties( drchubo_Walk1 PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib" ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib" )
+
+#########################
+# drchubo_MattCode
+#########################
+add_subdirectory( drchubo_MattCode )

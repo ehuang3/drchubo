@@ -1,0 +1,99 @@
+<?xml version="1.0" ?>
+<gazebo version="1.2">
+  <world name="default">
+    <physics type="ode">
+      <!-- Gravity -->	
+      <gravity>0 0 -9.8</gravity>
+      <update_rate>1000</update_rate>
+      <ode>
+        <solver>
+          <type>quick</type>
+          <dt>0.001</dt>
+          <iters>50</iters>
+          <sor>1.4</sor>
+        </solver>
+        <constraints>
+          <cfm>0.0</cfm>
+          <erp>0.2</erp>
+          <contact_max_correcting_vel>100.0</contact_max_correcting_vel>
+          <contact_surface_layer>0.0</contact_surface_layer>
+        </constraints>
+      </ode>
+    </physics>
+    <!-- A global light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <!-- Table -->	
+    <include>
+      <uri>model://table2</uri>
+      <static>true</static>	
+      <pose>0.75 0.0 0.0 0 0 1.57</pose>	
+    </include> 
+
+    <!-- Beer pile -->	
+    <include>
+      <uri>model://beer</uri>
+      <name>beer_a</name>	
+      <pose>0.55 0.15 0.78 0 0 0</pose>	
+    </include> 
+	
+    <include>
+      <uri>model://beer</uri>
+      <name>beer_b</name>	
+      <pose>0.55 0.15 1.02 0 0 0</pose>	
+    </include> 
+
+    <include>
+      <uri>model://beer</uri>
+      <name>beer_c</name>	
+      <pose>0.55 0.02 0.78 0 0 0</pose>	
+    </include> 
+
+    <include>
+      <uri>model://beer</uri>
+      <name>beer_d</name>	
+      <pose>0.55 0.02 1.02 0 0 0</pose>	
+    </include> 
+
+    <include>
+      <uri>model://beer</uri>
+      <name>beer_e</name>	
+      <pose>0.55 0.08 1.26 0 0 0</pose>	
+    </include> 
+
+
+    <!-- Beer 2-->	
+    <!--<include>
+      <uri>model://beer</uri>
+      <name>beer_b</name>	
+      <pose>0.55 0.15 1.06 0 0 0</pose>	
+    </include> -->
+
+    <!-- Beer -->	
+    <include>
+      <uri>model://beer</uri>
+      <name>beer_set</name>	
+      <pose>0.53 -0.25 0.78 0 0 0</pose>	
+    </include> 
+
+    <!-- Saucepan -->	
+    <include>
+      <uri>model://saucepan</uri>
+      <pose>0.75 -0.4 0.78 0 0 0</pose>	
+    </include> 
+
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <include>
+      <uri>model://drchubo</uri>
+      <pose>0 0 0.95 0 0 0</pose>
+      <plugin filename="libdrchubo_AnimationPush.so" name="push"/>
+    </include>
+
+
+  </world>
+</gazebo>

@@ -3,6 +3,7 @@
  * @author A. Huaman
  */
 #include "drchubo_Walk1.h"
+#include "../../src/utils/data_paths.h"
 
 std::string mWholeJointNames[26] = {"drchubo::LSP", "drchubo::LSR", "drchubo::LSY", "drchubo::LEP", "drchubo::LWY", "drchubo::LWP", "drchubo::LWR",
 				    "drchubo::RSP", "drchubo::RSR", "drchubo::RSY", "drchubo::REP", "drchubo::RWY", "drchubo::RWP", "drchubo::RWR",
@@ -164,8 +165,8 @@ namespace gazebo {
 
     // Read file with trajectories and stance
     FILE* pFile; FILE* sFile;
-    pFile = fopen("/home/ana/Research/drchubo/data/trajs/traj.txt", "r");
-    sFile = fopen("/home/ana/Research/drchubo/data/trajs/stance.txt", "r");
+    pFile = fopen(VRC_DATA_PATH "trajs/traj.txt", "r");
+    sFile = fopen(VRC_DATA_PATH "trajs/stance.txt", "r");
     
     if( pFile == NULL || sFile == NULL ) {
       printf("Did not find either traj or stance file, exiting! \n");
