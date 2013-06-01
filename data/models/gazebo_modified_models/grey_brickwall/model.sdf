@@ -17,6 +17,7 @@
         <geometry>
           <mesh>
             <uri>model://grey_brickwall/meshes/grey_brickwall.dae</uri>
+ 	    <scale> 0.5 0.1 0.3 </scale>
           </mesh>
         </geometry>
       </collision>

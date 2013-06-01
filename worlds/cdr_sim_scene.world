@@ -238,6 +238,7 @@
     <include>
       <uri>model://grey_brickwall</uri>
       <name>broken Grey Brickwall</name>
+      <static>true</static>
       <pose>5.534370 1.300000 0.000000 0.000000 0.000000 -1.3000</pose>
     </include>
 
