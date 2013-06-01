@@ -1,4 +1,5 @@
 #include "hubo_kinematics.h"
+#include "hubo_state.h"
 
 #include <kinematics/Skeleton.h>
 #include <kinematics/BodyNode.h>
@@ -28,11 +29,40 @@ hubo_kinematics_t::~hubo_kinematics_t() {
 void hubo_kinematics_t::init(Skeleton *_hubo) {
 	robot = _hubo;
 
-	// // zero atlas
-	// VectorXd dofs = _atlas->getPose();
-	// VectorXd zerod_dofs(_atlas->getNumDofs());
-	// zerod_dofs.setZero();
-	// _atlas->setPose(zerod_dofs, true, false);
+	// zero atlas
+	VectorXd dofs = robot->getPose();
+	VectorXd zerod_dofs(robot->getNumDofs());
+	zerod_dofs.setZero();
+	robot->setPose(zerod_dofs, true, false);
+
+
+
+    hubo_state_t hubo_state;
+    hubo_state.init(_hubo);
+
+    vector<int> left_leg;
+    vector<int> right_leg;
+
+    hubo_state.get_manip_indexes(left_leg, robot::LIMB_L_LEG);
+    hubo_state.get_manip_indexes(right_leg, robot::LIMB_R_LEG);
+
+    hubo_state.print_joints(left_leg);
+    hubo_state.print_joints(right_leg);
+
+    BodyNode *left[6];
+    BodyNode *right[6];
+
+    for(int i=0; i < 6; i++) {
+        left[i] = _hubo->getDof(left_leg[i])->getJoint()->getChildNode();
+        right[i] = _hubo->getDof(right_leg[i])->getJoint()->getChildNode();
+    }
+    
+    for(int i=0; i < 6; i++) {
+        cout << left[i]->getName() << " = \n" << left[i]->getWorldTransform() << endl;
+    }
+    
+
+
 
 	// // joint 1 - hip yaw
 	// BodyNode *LHY = _atlas->getNode("l_uglut");
@@ -49,86 +79,90 @@ void hubo_kinematics_t::init(Skeleton *_hubo) {
 
 	// // BodyNode *P = _atlas->getNode("pelvis");
 
-	// // "body origin" is at Atlas's pelvis
-	// Matrix4d Tw1 = LHY->getWorldTransform();
-	// Matrix4d Tw3 = LHP->getWorldTransform();
-	// Matrix4d Tw4 = LKP->getWorldTransform();
-	// Matrix4d Tw5 = LAP->getWorldTransform();
+	// "body origin" is at Atlas's pelvis
+	Matrix4d Tw1 = left[0]->getWorldTransform();
+	Matrix4d Tw3 = left[2]->getWorldTransform();
+	Matrix4d Tw4 = left[3]->getWorldTransform();
+	Matrix4d Tw5 = left[4]->getWorldTransform();
 
-	// double l0, l1, l2, l3, l4;
+    double ox, oz;
+    ox = abs(Tw1(0,3));
+    oz = abs(Tw3(2,3));
+
+	double l0, l1, l2, l3, l4;
 	// double h3;
-	// l0 = abs(Tw1(1,3));
-	// l1 = abs(Tw3(2,3));
-	// l2 = abs(Tw3(0,3));
-	// h3 = abs(Tw4(2,3)) - l1; // l3 is at an angle
-	// l4 = abs(Tw5(2,3)) - h3 - l1;
+	l0 = abs(Tw1(1,3));
+	l1 = 0;
+	l2 = 0;
+	l3 = abs(Tw4(2,3)) - oz;
+	l4 = abs(Tw5(2,3)) - l3 - oz;
 
 	// l3 = sqrt(h3*h3 + l2*l2);
 
-	// // angle offs
-	// for(int i=0; i < 6; ++i) {
-	// 	leg_u_off[i] = 0;
-	// }
+	// angle offs
+	for(int i=0; i < 6; ++i) {
+		leg_u_off[i] = 0;
+	}
 	// leg_u_off[2] = atan2(l2, h3);
 	// leg_u_off[3] = -leg_u_off[2];
 
 	// // joint limits
 	// BodyNode* node[6] = { LHY, LHR, LHP, LKP, LAP, LAR };
-	// for(int i=0; i < 6; i++) {
-	// 	leg_u_lim[i][0] = node[i]->getParentJoint()->getDof(0)->getMin();
-	// 	leg_u_lim[i][1] = node[i]->getParentJoint()->getDof(0)->getMax();
-	// }
+	for(int i=0; i < 6; i++) {
+		leg_u_lim[i][0] = left[i]->getParentJoint()->getDof(0)->getMin();
+		leg_u_lim[i][1] = left[i]->getParentJoint()->getDof(0)->getMax();
+	}
 
-	// // joint displacements
-	// // l0 is pelvis to hip
-	// leg_link_disp[0] = Vector3d(0, l0, 0);
-	// leg_link_disp[1] = Vector3d(0, 0, 0);
-	// // l1 is hip yaw to hip pitch z
-	// // l2 is hip yaw to hip pitch x
-	// leg_link_disp[2] = Vector3d(l2, 0, l1);
-	// // l3 hip to knee
-	// leg_link_disp[3] = Vector3d(0, 0, l3);
-	// // l4 knee to ankle
-	// leg_link_disp[4] = Vector3d(0, 0, l4);
-	// leg_link_disp[5] = Vector3d(0, 0, 0);
-	// leg_link_disp[6] = Vector3d(0, 0, 0);
+	// joint displacements
+	// l0 is pelvis to hip
+	leg_link_disp[0] = Vector3d(ox, l0, oz);
+	leg_link_disp[1] = Vector3d(0, 0, 0);
+	// l1 is hip yaw to hip pitch z
+	// l2 is hip yaw to hip pitch x
+	leg_link_disp[2] = Vector3d(l2, 0, l1);
+	// l3 hip to knee
+	leg_link_disp[3] = Vector3d(0, 0, l3);
+	// l4 knee to ankle
+	leg_link_disp[4] = Vector3d(0, 0, l4);
+	leg_link_disp[5] = Vector3d(0, 0, 0);
+	leg_link_disp[6] = Vector3d(0, 0, 0);
 
-	// // dh parameters
-	// // frame 0 - hip origin with atlas xyz orientation
-	// leg_dh[0].t = 0;
-	// leg_dh[0].d = 0;
-	// leg_dh[0].r = 0;
-	// leg_dh[0].a = 0;
-	// // frame 1 - hip yaw
-	// leg_dh[1].t = M_PI/2;
-	// leg_dh[1].d = 0;
-	// leg_dh[1].r = 0;
-	// leg_dh[1].a = M_PI/2;
-	// // frame 2 - hip roll
-	// leg_dh[2].t = -M_PI/2;
-	// leg_dh[2].d = l2;
-	// leg_dh[2].r = l1;
-	// leg_dh[2].a = -M_PI/2;
-	// // frame 3 - hip pitch
-	// leg_dh[3].t = 0;
-	// leg_dh[3].d = 0;
-	// leg_dh[3].r = l3;
-	// leg_dh[3].a = 0;
-	// // frame 4 - knee pitch
-	// leg_dh[4].t = 0;
-	// leg_dh[4].d = 0;
-	// leg_dh[4].r = l4;
-	// leg_dh[4].a  = 0;
-	// // frame 5 - ankle pitch
-	// leg_dh[5].t = 0;
-	// leg_dh[5].d = 0;
-	// leg_dh[5].r  = 0;
-	// leg_dh[5].a  = M_PI/2;
-	// // frame 6 - ankle roll
-	// leg_dh[6].t = 0;
-	// leg_dh[6].d = 0;
-	// leg_dh[6].r = 0;
-	// leg_dh[6].a  = 0;
+	// dh parameters
+	// frame 0 - hip origin with atlas xyz orientation
+	leg_dh[0].t = 0;
+	leg_dh[0].d = 0;
+	leg_dh[0].r = 0;
+	leg_dh[0].a = 0;
+	// frame 1 - hip yaw
+	leg_dh[1].t = M_PI/2;
+	leg_dh[1].d = 0;
+	leg_dh[1].r = 0;
+	leg_dh[1].a = M_PI/2;
+	// frame 2 - hip roll
+	leg_dh[2].t = -M_PI/2;
+	leg_dh[2].d = l2;
+	leg_dh[2].r = l1;
+	leg_dh[2].a = -M_PI/2;
+	// frame 3 - hip pitch
+	leg_dh[3].t = 0;
+	leg_dh[3].d = 0;
+	leg_dh[3].r = l3;
+	leg_dh[3].a = 0;
+	// frame 4 - knee pitch
+	leg_dh[4].t = 0;
+	leg_dh[4].d = 0;
+	leg_dh[4].r = l4;
+	leg_dh[4].a  = 0;
+	// frame 5 - ankle pitch
+	leg_dh[5].t = 0;
+	leg_dh[5].d = 0;
+	leg_dh[5].r  = 0;
+	leg_dh[5].a  = M_PI/2;
+	// frame 6 - ankle roll
+	leg_dh[6].t = 0;
+	leg_dh[6].d = 0;
+	leg_dh[6].r = 0;
+	leg_dh[6].a  = 0;
 
 	// // index of joint angles in DART
 	// dart_dof_ind[MANIP_L_FOOT][0] = 7;  //= l_leg_uhz

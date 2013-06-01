@@ -158,11 +158,8 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         int key = gui_window.key;
         gui_window.key = -1;
 
+
         if('A' <= key && key <= 'Z') {
-            c_data->command_char = key;
-            controller->change_mode(key, huboStateTarget);
-        } 
-        else {
             // Do the state switch here...
             const std::vector<control::control_factory_t*>& F = control::factories();
             key = (key)%F.size();
@@ -174,6 +171,10 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
             // Let them know
             std::cout << "Switched to " << controller->name() << std::endl;
         }
+        else {
+            c_data->command_char = key;
+            controller->change_mode(key, huboStateTarget);
+        } 
     }
     if (c_data->triggers[0]) {
         int& ms = c_data->manip_side;

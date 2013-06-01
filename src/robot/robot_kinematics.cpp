@@ -657,6 +657,9 @@ robot_kinematics_t::~robot_kinematics_t() {
                                     bool _nearest,
                                     Vector6d& _u,
                                     MatrixXd& _U) {
+        double ox = leg_link_disp[0](0);
+        double oz = leg_link_disp[0](2);
+
         // link lengths
         double l0 = leg_link_disp[0](1); // pelvis to hip
         double l1 = leg_link_disp[2](2); // hip yaw to hip pitch z
@@ -669,6 +672,8 @@ robot_kinematics_t::~robot_kinematics_t() {
     
         Matrix4d T0f = _Tf;
         T0f(1,3) += _left ? -l0 : l0;
+        T0f(0,3) -= ox;
+        T0f(2,3) += oz;
         
         // % C++ implementation of script/AtlasLegIK.m
         // for convenience
