@@ -25,6 +25,18 @@ namespace robot {
 
 void robot_graphics_t::renderCOM(Skeleton *_atlas, RenderInterface *_ri) {
 	glDisable(GL_CULL_FACE);
+    
+    Vector3d com = _atlas->getWorldCOM();
+    double radius = 0.05;
+    
+    // COM disk
+    _ri->pushMatrix();
+    glTranslated(com(0), com(1), 0);
+    glColor3d(0.0, 1.0, 0.3);
+    QUAD_OBJ_INIT;
+    gluDisk(quadObj, 0, radius, 8, 8);
+    _ri->popMatrix();
+
 	renderCOM(_atlas->getRoot(), _ri);
 }
 

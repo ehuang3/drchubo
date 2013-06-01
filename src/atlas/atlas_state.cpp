@@ -18,6 +18,7 @@ namespace atlas {
 
         _dofs = _robot->getPose();
         _dofs.setZero();
+        _robot->setPose(_dofs);
 
         if(robot_state_t::g_init)
             return;
