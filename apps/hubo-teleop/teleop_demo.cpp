@@ -137,6 +137,14 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         huboStateCurrent.get_ros_pose(temp);
         huboStateTarget.set_ros_pose(temp);
 
+        // Get HUBO out of the singularity.
+        std::vector<int> manip_enum = { robot::MANIP_L_HAND, robot::MANIP_R_HAND };
+        Eigen::VectorXd arm_dofs(7);
+        arm_dofs << 0, 0, 0, -M_PI/2, 0, M_PI/2, 0;
+        for(int i=0; i < manip_enum.size(); i++) {
+            huboStateCurrent.set_manip(arm_dofs, manip_enum[i]);
+        }
+
         // 2. Set world origins to feet
         //move_origin_to_feet( huboStateTarget );
         //move_origin_to_feet( huboStateCurrent );
@@ -157,17 +165,18 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         // 6. Calibrate
         fastrak.calibrate(huboStateTarget, c_data);
         fastrak.update_sensors(c_data);
-        std::cout << "Left calibrated position = \n" << c_data->sensor_tf[1].matrix() << std::endl;
+        // std::cout << "Left calibrated position = \n" << c_data->sensor_tf[1].matrix() << std::endl;
 
         //
         targetPoseInited = true;
         
         return;
     }
-    if (c_data->buttons[0]) {
-        fastrak.update_sensors(c_data);
-        std::cout << "Left calibrated position = \n" << c_data->sensor_tf[1].matrix() << std::endl;
-    }
+    // if (c_data->buttons[0]) {
+    //     fastrak.update_sensors(c_data);
+    //     std::cout << "Left calibrated position = \n" << c_data->sensor_tf[1].matrix() << std::endl;
+    // }
+    fastrak.update_sensors(c_data);
 
     if (!targetPoseInited)
         return;
@@ -201,8 +210,8 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         std::cout << "Switch sides to " << (ms ? "LEFT" : "RIGHT") << std::endl;
     }
 
-    if (!c_data->buttons[0]) 
-        return;
+    // if (!c_data->buttons[0]) 
+    //     return;
     
     //############################################################
     //### Run controller
@@ -214,6 +223,11 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
     Eigen::VectorXd rospose;
     huboStateTarget.get_ros_pose(rospose);
     c_data->last_command = rospose;
+
+    
+
+    c_data->joystick_ok = false;
+    c_data->sensor_ok = false;
 
     //############################################################
     //### Set all manipulator transforms to current location

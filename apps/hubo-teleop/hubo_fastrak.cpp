@@ -33,7 +33,7 @@ void fastrak_t::calibrate(robot::robot_state_t& target, control::control_data_t*
 
 void fastrak_t::update_sensors(control::control_data_t* data)
 {
-    std::cout << "[fastrak_t] Updating ...\n";
+    // std::cout << "[fastrak_t] Updating ...\n";
 
     for(int i=0; i < hand_index.size(); i++) {
         Eigen::Isometry3d tf;
@@ -42,8 +42,8 @@ void fastrak_t::update_sensors(control::control_data_t* data)
         Eigen::Matrix3d dR = raw_frame[i].rotation().inverse() * tf.rotation();
         Eigen::Vector3d dv = (raw_frame[i].inverse() * tf).translation();
 
-        std::cout << "Delta rotation left hand = \n" << dR << std::endl;
-        std::cout << "Delta translation left hand = " << dv.transpose() << std::endl;
+        // std::cout << "Delta rotation left hand = \n" << dR << std::endl;
+        // std::cout << "Delta translation left hand = " << dv.transpose() << std::endl;
 
         tf = hand[i] * raw_frame[i].inverse() * tf;
 
