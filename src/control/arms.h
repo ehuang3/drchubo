@@ -35,6 +35,13 @@ namespace control {
         ~ARM_JIT_T() {}
         virtual bool run(robot::robot_state_t& target, control_data_t* data);
     };
+
+    class ARM_BOTH_JIT_T : public control_t {
+    public:
+    	ARM_BOTH_JIT_T(std::string name) : control_t(name) {}
+        ~ARM_BOTH_JIT_T() {}
+        virtual bool run(robot::robot_state_t& target, control_data_t* data);
+    };
     
     //############################################################
     //### Arm: Iterative Jacobian - Position

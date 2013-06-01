@@ -9,6 +9,9 @@ namespace control {
     bool LEG_AIK_T::run(robot::robot_state_t& target, control_data_t* data)
     {
         assert(data);
+        
+        if(!data->joystick_ok)
+            return false;
 
         // 1. Set up
         kinematics::Skeleton* robot = data->robot;

@@ -48,6 +48,9 @@
 // SPACENAV stuff
 #include "spnav.h"
 
+// Fastrak stuff
+#include "hubo_fastrak.h"
+
 // Control stuff
 #include <control/control.h>
 #include <control/control_factory.h>
@@ -82,6 +85,8 @@ teleop::spnav_t spnav;
 
 control::control_data_t* c_data;
 control::control_t* controller;
+
+fastrak_t fastrak;
 
 //###########################################################
 //###########################################################
@@ -120,6 +125,8 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         return;
     spnav.get_teleop_data(c_data);
     
+    // fastrak.update_sensors(c_data);
+
     //############################################################
     //### Init states
     static bool targetPoseInited = false;
@@ -131,8 +138,8 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         huboStateTarget.set_ros_pose(temp);
 
         // 2. Set world origins to feet
-        move_origin_to_feet( huboStateTarget );
-        move_origin_to_feet( huboStateCurrent );
+        //move_origin_to_feet( huboStateTarget );
+        //move_origin_to_feet( huboStateCurrent );
 
         // 3. Set target com to current
         huboSkel->setPose( huboStateCurrent.dart_pose() );
@@ -147,8 +154,21 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         c_data->manip_xform[robot::MANIP_L_FOOT] = huboSkel->getNode(ROBOT_LEFT_FOOT)->getWorldTransform();
         c_data->manip_xform[robot::MANIP_R_FOOT] = huboSkel->getNode(ROBOT_RIGHT_FOOT)->getWorldTransform();
 
+        // 6. Calibrate
+        fastrak.calibrate(huboStateTarget, c_data);
+        fastrak.update_sensors(c_data);
+        std::cout << "Left calibrated position = \n" << c_data->sensor_tf[1].matrix() << std::endl;
+
+        //
         targetPoseInited = true;
+        
+        return;
     }
+    if (c_data->buttons[0]) {
+        fastrak.update_sensors(c_data);
+        std::cout << "Left calibrated position = \n" << c_data->sensor_tf[1].matrix() << std::endl;
+    }
+
     if (!targetPoseInited)
         return;
     
@@ -157,7 +177,6 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
     if (gui_window.key != -1) {
         int key = gui_window.key;
         gui_window.key = -1;
-
 
         if('A' <= key && key <= 'Z') {
             // Do the state switch here...
@@ -174,13 +193,16 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
         else {
             c_data->command_char = key;
             controller->change_mode(key, huboStateTarget);
-        } 
+        }
     }
     if (c_data->triggers[0]) {
         int& ms = c_data->manip_side;
         ms = (ms+1)%2;
         std::cout << "Switch sides to " << (ms ? "LEFT" : "RIGHT") << std::endl;
     }
+
+    if (!c_data->buttons[0]) 
+        return;
     
     //############################################################
     //### Run controller
@@ -262,7 +284,7 @@ int main(int argc, char** argv) {
     c_data->jac = &huboJac;
     c_data->manip_index = robot::MANIP_L_HAND;
 
-    controller = control::get_factory("ARM_AJIK")->create();
+    controller = control::get_factory("ARM_JIT")->create();
 
     //###########################################################
     //#### GUI initialization
@@ -295,6 +317,9 @@ int main(int argc, char** argv) {
 
     topic_sub_joystick_opts.transport_hints = ros::TransportHints().unreliable();
     ros::Subscriber topic_sub_joystick = rosnode->subscribe(topic_sub_joystick_opts);
+
+    //############################################################
+    //### Fastrak initialization
 
     //###########################################################
     //#### Connect to simulation and start spinning

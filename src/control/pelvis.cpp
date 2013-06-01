@@ -8,6 +8,9 @@ namespace control {
     {
         assert(data);
 
+        if(!data->joystick_ok)
+            return false;
+
         // 1. Init
         kinematics::Skeleton* robot = data->robot;
         robot::robot_kinematics_t* robot_kin = data->kin;
@@ -50,7 +53,9 @@ namespace control {
     bool BODY_XZP_FIX_LEGS_T::run(robot::robot_state_t& target, control_data_t* data)
     {
         assert(data);
-        assert(data->joystick_ok);
+
+        if(!data->joystick_ok)
+            return false;
 
         // 1. Variables
         Eigen::Quaterniond save_rotation(data->joy_rotation);
@@ -79,7 +84,9 @@ namespace control {
     bool BODY_ZY_FIX_LEGS_T::run(robot::robot_state_t& target, control_data_t* data)
     {
         assert(data);
-        assert(data->joystick_ok);
+
+        if(!data->joystick_ok)
+            return false;
 
         // 1. Variables
         Eigen::Quaterniond save_rotation(data->joy_rotation);

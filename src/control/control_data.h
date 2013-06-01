@@ -32,8 +32,7 @@ namespace control {
         bool joystick_ok;
 
         // Sensor data
-        Eigen::Matrix3d sensor_rotation;
-        Eigen::Vector3d sensor_position;
+        Eigen::Isometry3d sensor_tf[2];
         bool sensor_ok;
 
         //############################################################
