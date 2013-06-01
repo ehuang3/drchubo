@@ -811,9 +811,7 @@ robot_kinematics_t::~robot_kinematics_t() {
                     within_lim[i] = false;
                 if(!_left) {
                     if(mirror[j]) {
-                        std::cout << "mirror " << j << std::endl;
                         if(!(-leg_u_lim[j][1] <= U(j,i) && U(j,i) <= -leg_u_lim[j][0])) {
-                            std::cout << "failed " << j << std::endl;
                             within_lim[i] = false;
                         }
                     }
