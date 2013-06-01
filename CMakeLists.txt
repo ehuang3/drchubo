@@ -64,19 +64,16 @@ set(PATH_HEADER_DIR ${CMAKE_SOURCE_DIR}/src/utils/data_paths.h)
 message(STATUS "Generate the path header file to ${PATH_HEADER_DIR}")
 configure_file(${PATH_HEADER_DIR}.in ${PATH_HEADER_DIR} @ONLY)
 
-# Link with DART and GRIP
+# Link with DART 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_INSTALL_PREFIX}/share/dart")
-#set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_INSTALL_PREFIX}/share/grip")
 
 find_package(DARTExt REQUIRED)
 find_package(DART REQUIRED)
-#find_package(GRIP REQUIRED)
+
 
 include_directories(${DARTExt_INCLUDEDIR})
 include_directories(${DART_INCLUDEDIR})
-#include_directories(${GRIP_INCLUDEDIR})
 link_directories(${DART_LIBRARY_DIRS})
-#link_directories(${GRIP_LIBRARY_DIRS})
 
 # Build source
 message(STATUS "Building drchubo source")

@@ -104,9 +104,15 @@
       <pose>0 0 0.95 0 0 0</pose>
       <!-- Code used when working with pure gazebo -->	
       <!-- <plugin filename="libdrchubo_AnimationPush.so" name="push"/> -->	
-      <!-- DRC plugin which does the same functions as VRC plugin, but for DRC Hubo using ROS -->
-      <plugin filename="liDRCplugin.so" name="DRC plugin"/>
     </include>
+
+    <!-- DRC Plugin -->
+    <plugin filename="libDRCPlugin.so" name="drc_plugin">
+      <drchubo>
+         <model_name>drchubo</model_name>
+         <pin_link>Body_Torso</pin_link>
+      </drchubo>
+    </plugin>
 
 
   </world>

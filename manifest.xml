@@ -4,14 +4,16 @@
      drchubo
 
   </description>
-  <author>Eric Huang and Ana Huaman</author>
+  <author>Ana Huaman and Eric Huang</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/vrc_golem</url>
   <depend package="roscpp"/>
-  <depend package="trajectory_msgs"/>
   <depend package="std_msgs"/>
-  <depend package="osrf_msgs"/>
+  <depend package="trajectory_msgs"/>
+  <depend package="geometry_msgs"/>
+  <!-- Custom message - INSTALL DRC_msgs first -->
+  <depend package="DRC_msgs"/>
 
 </package>
 
