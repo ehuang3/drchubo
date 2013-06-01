@@ -31,7 +31,10 @@
     <include>
       <uri>model://drchubo</uri>
       <pose>0 0 0.8 0 0 0</pose>
-      <plugin filename="libdrchubo_Basics.so" name="basics"/>	
+      <!-- Code used when working with pure gazebo -->	
+      <!-- <plugin filename="libdrchubo_Basics.so" name="basics"/> -->	
+      <!-- DRC plugin which does the same functions as VRC plugin, but for DRC Hubo using ROS -->
+      <plugin filename="liDRCplugin.so" name="DRC plugin"/>
     </include>
 
 
