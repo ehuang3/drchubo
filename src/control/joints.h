@@ -19,4 +19,11 @@ namespace control {
         bool joint_changed;
     };
 
+    class GRASP_T : public control_t {
+    public:
+    	GRASP_T(std::string name) : control_t(name) {}
+        ~GRASP_T() {}
+        virtual bool run(robot::robot_state_t& target, control_data_t* data);
+    };
+
 }

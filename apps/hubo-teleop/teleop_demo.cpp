@@ -249,7 +249,7 @@ int main(int argc, char** argv) {
 
     // Do not start at singularity
     Eigen::VectorXd leftQ(7);
-    leftQ << 0, 0, 1, 0.4, 0, 0, 0;
+    leftQ << 0, 0, 0, 0, 0, 0, 0;
     huboStateCurrent.set_manip(leftQ, robot::MANIP_L_HAND);
 
     //###########################################################

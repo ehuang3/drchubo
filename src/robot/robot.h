@@ -39,6 +39,8 @@ namespace robot {
         LIMB_R_ARM,
         LIMB_HEAD,
         LIMB_TORSO,
+        LIMB_L_HAND,
+        LIMB_R_HAND,
         NUM_LIMBS,
     };
     

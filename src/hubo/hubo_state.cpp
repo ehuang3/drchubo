@@ -68,6 +68,8 @@ namespace hubo {
         limb2s[robot::LIMB_R_ARM] = {"RSP", "RSR", "RSY", "REP", "RWY", "RWP", "RWR"};
         limb2s[robot::LIMB_HEAD] = {"NKY", "NKP"};
         limb2s[robot::LIMB_TORSO] = {"TSY"};
+        limb2s[robot::LIMB_L_HAND] = {"LF1", "LF2", "LF3"};
+        limb2s[robot::LIMB_R_HAND] = {"RF1", "RF2", "RF3"};
 
         static_init(_robot, ros2s, limb2s);
     }
