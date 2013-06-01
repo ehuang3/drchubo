@@ -181,9 +181,9 @@ namespace gazebo
       /// \brief Load the robot portion of plugin.
       /// \param[in] _parent Pointer to parent world.
       /// \param[in] _sdf Pointer to sdf element.
+    private: void SetFootParallelToFloor();
     private: void Load( physics::WorldPtr _parent, 
-			sdf::ElementPtr _sdf );
-      
+			sdf::ElementPtr _sdf );  
     private: physics::ModelPtr model;
     private: physics::LinkPtr pinLink;
     private: physics::JointPtr pinJoint;
@@ -200,6 +200,7 @@ namespace gazebo
 
       /// \brief Mode flags
       int modeType;
+    public: double ankleOffset;
 
       /// \brief drchubo's  Subscribers 
     private: ros::Subscriber subJointAnimation;
@@ -214,16 +215,27 @@ namespace gazebo
     } drchubo;
 
 
+    /// \brief Are we animating?
+  public: bool onJointAnimation;
+  public: bool onPoseAnimation;
+
+    /// \brief Animation callbacks
+  private:  boost::function<void()> jointAnim_callback;
+  private:  boost::function<void()> poseAnim_callback;
+  private: void jointAnimation_callback();
+  private: void poseAnimation_callback();
+
+
     ////////////////////////////////////////////////////////////////////////////
     //                                                                        //
     //   Private variables                                                    //
     //                                                                        //
     ////////////////////////////////////////////////////////////////////////////
-    private: double lastUpdateTime;
-
-
+  private: double lastUpdateTime;
+  private: sensor_msgs::JointState::ConstPtr defaultJointState;    
+    
     /// \brief Pointer to parent world.
-    private: physics::WorldPtr world;
+  private: physics::WorldPtr world;
 
     /// \brief Pointer to the update event connection
     private: event::ConnectionPtr updateConnection;

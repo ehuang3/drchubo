@@ -236,7 +236,7 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg() {
 
   walktype walk_type = walk_canned;
   double walk_circle_radius = 5.0;
-  double walk_dist = 20;
+  double walk_dist = 10;
 
   double footsep_y = 0.10;//0.0985; // half of horizontal separation distance between feet
   double foot_liftoff_z = 0.05; // foot liftoff height
