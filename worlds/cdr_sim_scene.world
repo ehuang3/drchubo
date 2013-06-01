@@ -47,7 +47,7 @@
     <include>
       <uri>model://cordless_drill</uri>
       <name>drill</name>
-          <pose> 5.006370 -0.258000 0.80 0.000000 0.000000 0.000000</pose>
+          <pose> 4.93 -0.48 1.02 0.000000 0.000000 0.000000</pose>
     </include>
 
     <!-- Fallen Table -->
@@ -55,7 +55,7 @@
       <uri>model://table2</uri>
       <name>table_b</name>
       <static>false</static>
-      <pose>-0.42 2.0 1.16 3.1416 0.9 0.0</pose>
+      <pose>-0.43 1.98 1.07 3.1416 0.9 0.0</pose>
     </include>
 
     <!-- Fallen Bookshelf -->
@@ -247,7 +247,7 @@
       <uri>model://jersey_barrier_small</uri>
       <name>small jersey barrier</name>
       <static>false</static>     
-      <pose> 0.8 1.300 0.25 -1.570 0.000 -0.200</pose>
+      <pose> 0.8 1.300 0.23 -1.570 0.000 -0.200</pose>
     </include>
 
     <!-- VRC fire hose long -->
