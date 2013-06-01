@@ -33,7 +33,7 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/lib/)
 rosbuild_add_boost_directories()
 
 # Important: Set drchubo_PATH!! Default is in the same directory as DRC
-set( drchubo_ROOT_PATH ${CMAKE_SOURCE_DIR}/../drchubo )
+set( drchubo_ROOT_PATH /home/ana/Research/drchubo )
 message( WARNING "\n SETTING DRCHUBO PACKAGE PATH TO: ${drchubo_ROOT_PATH}\n CHANGE IT IF THIS PATH IS NOT CORRECT" )
 
 # Generate path header file

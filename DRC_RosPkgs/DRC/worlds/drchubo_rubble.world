@@ -189,10 +189,10 @@
       <pose>3.700 -2.00 0.000 0.000 0.000 2.600</pose>
     </include>
 
-    <!-- Captain Hubo -->
+    <!-- Captain Hubo  -0.0315 -0.011 0.93-->
     <include>
       <uri>model://drchubo</uri>
-      <pose>-0.0315 -0.011 0.93 0 0 0</pose>
+      <pose>-0.0315 -0.011 1.1 0 0 0</pose> 
     </include>
 
     <!-- DRC Plugin -->

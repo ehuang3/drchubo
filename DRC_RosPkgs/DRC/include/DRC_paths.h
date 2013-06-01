@@ -3,8 +3,8 @@
 
 /* #undef WITH_DRCHUBO */
 
-#define DRC_ROOT_PATH "/home/ana/Research/DRC"
-#define drchubo_ROOT_PATH "/home/ana/Research/DRC/../drchubo"
+#define DRC_ROOT_PATH "/home/ana/Research/drchubo/DRC_RosPkgs/DRC"
+#define drchubo_ROOT_PATH "/home/ana/Research/drchubo"
 
 #endif /** _DRC_PATHS_H_ */
 

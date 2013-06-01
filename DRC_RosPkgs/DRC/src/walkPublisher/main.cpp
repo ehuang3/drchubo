@@ -7,6 +7,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <DRC_msgs/PoseStampedArray.h>
 #include <DRC_msgs/PoseJointTrajectory.h>
+#include <std_msgs/String.h>
 
 #include "zmpnode.h"
 
@@ -21,6 +22,7 @@ int main( int argc, char* argv[] ) {
   ros::Publisher poseJointTrajPub = node->advertise<DRC_msgs::PoseJointTrajectory>( "drchubo/poseJointAnimation", 
 										    1,
 										    false );
+  ros::Publisher modePub = node->advertise<std_msgs::String>( "drchubo/mode", 1, false );
 
   // Give time
   ros::Duration(1.0).sleep();
@@ -44,6 +46,16 @@ int main( int argc, char* argv[] ) {
   printf("SPIN NOW \n");
 
   // Spin
-  ros::spin();
+  ros::spinOnce();
   
+  // Wait
+  ros::Duration(20).sleep();
+  printf("Send stay dog \n");
+  // Send stayDog mode
+  std_msgs::String mode_msg;
+  mode_msg.data = "stay_dog";
+  modePub.publish( mode_msg );
+  ros::Duration(1.0).sleep();
+  printf("End \n");
+
 }

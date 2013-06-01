@@ -37,6 +37,13 @@
 #include <gazebo/common/Plugin.hh>
 #include <gazebo/common/Events.hh>
 
+enum MODE_TYPE {
+  ON_FEET_MODE,
+  ON_NOMINAL_MODE,
+  ON_NO_GRAVITY_MODE,
+  ON_STAY_DOG_MODE
+};
+
 namespace gazebo
 {
   /**
@@ -188,6 +195,13 @@ namespace gazebo
       /// \brief flag for successful initialization of atlas
     private: bool isInitialized;
       
+      // Helpers
+      math::Pose mTempPose;
+
+      /// \brief Mode flags
+      int modeType;
+
+      /// \brief drchubo's  Subscribers 
     private: ros::Subscriber subJointAnimation;
     private: ros::Subscriber subPoseAnimation;
     private: ros::Subscriber subPoseJointAnimation;

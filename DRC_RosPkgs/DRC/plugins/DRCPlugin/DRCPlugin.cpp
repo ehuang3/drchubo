@@ -80,8 +80,7 @@ void DRCPlugin::DeferredLoad()
   this->LoadRobotROSAPI();
   
   // Set robot mode to no_gravity to see what happens
-  this->SetRobotMode( "no_gravity" );
-  printf("Set ROBOT MODE To NO GRAVITY ! \n");
+  this->SetRobotMode( "feet" );
 
   // ros callback queue for processing subscription
   this->callbackQueueThread = boost::thread(
@@ -224,11 +223,17 @@ void DRCPlugin::UpdateStates()
 {
   double curTime = this->world->GetSimTime().Double();
 
-
+  
   if (curTime > this->lastUpdateTime)
   {
     double dt = curTime - this->lastUpdateTime;
   }
+
+  if( this->drchubo.modeType == ON_STAY_DOG_MODE ) {
+    // Set drchubo state
+    this->drchubo.model->SetWorldPose( this->drchubo.mTempPose );
+  }
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -494,12 +499,41 @@ void DRCPlugin::SetRobotModeTopic(const std_msgs::String::ConstPtr &_str)
 ////////////////////////////////////////////////////////////////////////////////
 void DRCPlugin::SetRobotMode(const std::string &_str)
 {
+
+  // No gravity for all robot's joints
   if (_str == "no_gravity") {
     this->drchubo.model->SetGravityMode( false );
+    this->drchubo.modeType = ON_NO_GRAVITY_MODE;
   }
+  // Gravity only in left and right robot's feet
+  else if( _str == "feet" ) {
+    printf("Setting mode gravity to true for feet \n");
+    physics::Link_V links = this->drchubo.model->GetLinks();
+    for( unsigned int i = 0; i < links.size(); ++i ) {
+      if( links[i]->GetName() == "leftFoot" ||
+	  links[i]->GetName() == "rightFoot" ) {
+	printf("Setting one foot to gravity true!! \n");
+	links[i]->SetGravityMode( true );
+      }
+      else {
+	links[i]->SetGravityMode( false );
+      }
+    }
+    this->drchubo.modeType = ON_FEET_MODE;
+  }
+  // Nominal gravity
   else if (_str == "nominal") {
     this->drchubo.model->SetGravityMode( true );
+    this->drchubo.modeType = ON_NOMINAL_MODE;
   }
+
+  // Stay at the current ModelState (pose + joints)
+  else if (_str == "stay_dog") {
+    this->drchubo.modeType = ON_STAY_DOG_MODE;
+    this->drchubo.mTempPose = this->drchubo.model->GetWorldPose();
+  }
+
+
 
   else {
     ROS_INFO("available modes:no_gravity, nominal (with gravity)");
