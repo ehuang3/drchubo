@@ -1,7 +1,0 @@
-* Feb 07 - Introduction and Installation
-** Introduce ourselves and the project
-** How to install drcsim - Stewart
-** Git and Github tutorial - Saul
-**** Will also take people through signing up live
-** drcsim tutorials - Kyle
-**** The source for the tutorials will be moved to the github so people can gain expereince with it.
