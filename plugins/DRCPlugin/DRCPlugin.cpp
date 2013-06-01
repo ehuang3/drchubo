@@ -253,13 +253,21 @@ void DRCPlugin::UpdateStates()
     // Set drchubo state
     std::map<std::string, double> joint_position_map;
     
-    // Read the values and send them
-    for ( unsigned int i = 0; i < defaultJointState->name.size(); ++i ) {  
-      joint_position_map[ defaultJointState->name[i] ] = defaultJointState->position[i]; 
+    // Set default joint state (Set with drchubo/configuration)
+    for ( unsigned int i = 0; i < defaultJointState.name.size(); ++i ) {  
+      joint_position_map[ defaultJointState.name[i] ] = defaultJointState.position[i]; 
     }
-    
-    // Send
     this->drchubo.model->SetJointPositions( joint_position_map ); 
+
+    // Send world pose
+    math::Vector3 p( defaultPose.position.x, defaultPose.position.y, defaultPose.position.z ); 
+    math::Quaternion q( defaultPose.orientation.w,
+			defaultPose.orientation.x,
+			defaultPose.orientation.y,
+			defaultPose.orientation.z );
+    math::Pose pose( p, q );
+    this->drchubo.model->SetWorldPose( pose );
+
   }
   
 }
@@ -459,6 +467,45 @@ void DRCPlugin::SetRobotJointAnimation(const trajectory_msgs::JointTrajectory::C
 
 }
 
+/**
+ * @function getCurrentJointState
+ */
+sensor_msgs::JointState DRCPlugin::getCurrentJointState() { 
+
+  sensor_msgs::JointState joint_msg;
+
+  // Get joints
+  physics::Joint_V joints = this->drchubo.model->GetJoints();
+  physics::Joint_V::iterator iter;
+  for( iter = joints.begin(); iter != joints.end();
+       ++iter ) {
+    joint_msg.name.push_back( (*iter)->GetName() );
+    joint_msg.position.push_back( (*iter)->GetAngle(0).Radian() );
+  }
+
+  return joint_msg;
+}
+    
+/**
+ * @function getCurrentPose
+ */
+geometry_msgs::Pose DRCPlugin::getCurrentPose() {
+  
+  geometry_msgs::Pose pose_msg;
+  math::Pose pose = this->drchubo.model->GetWorldPose();
+  
+  pose_msg.position.x = pose.pos.x;
+  pose_msg.position.y = pose.pos.y;
+  pose_msg.position.z = pose.pos.z;
+
+  pose_msg.orientation.x = pose.rot.x;
+  pose_msg.orientation.y = pose.rot.y;
+  pose_msg.orientation.z = pose.rot.z;
+  pose_msg.orientation.w = pose.rot.w;
+
+  return pose_msg;
+}
+
   /**
    * @function jointAnimation_callback
    * @brief
@@ -473,6 +520,11 @@ void DRCPlugin::SetRobotJointAnimation(const trajectory_msgs::JointTrajectory::C
     
     this->drchubo.model->SetLinearVel( math::Vector3( 0, 0, 0 ) );
     this->drchubo.model->SetAngularVel( math::Vector3( 0, 0, 0 ) );
+
+    // Set robot to stay dog mode
+    this->SetRobotMode("stay_dog");
+    // Set current configuration (last animation joint configuration) for the robot to stay
+    defaultJointState = this->getCurrentJointState();
   }
 
   /**
@@ -490,6 +542,10 @@ void DRCPlugin::SetRobotJointAnimation(const trajectory_msgs::JointTrajectory::C
     this->drchubo.model->SetLinearVel( math::Vector3( 0, 0, 0 ) );
     this->drchubo.model->SetAngularVel( math::Vector3( 0, 0, 0 ) );
 
+    // Set robot to stay dog mode
+    this->SetRobotMode("stay_dog");
+    // Set current configuration (last animation joint configuration) for the robot to stay
+    defaultPose = this->getCurrentPose();
   }
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -512,11 +568,11 @@ void DRCPlugin::SetRobotJointAnimation(const trajectory_msgs::JointTrajectory::C
     pose_key->SetTranslation( math::Vector3( _cmd->poses[i].pose.position.x,
 					     _cmd->poses[i].pose.position.y,
 					     _cmd->poses[i].pose.position.z) );
-    pose_key->SetRotation( math::Quaternion( 0.0, 0.0, 0.0 ) );
-/*    pose_key->SetRotation( math::Quaternion( _cmd->poses[i].pose.orientation.x,
+
+    pose_key->SetRotation( math::Quaternion( _cmd->poses[i].pose.orientation.w,
+					     _cmd->poses[i].pose.orientation.x,
 					     _cmd->poses[i].pose.orientation.y,
-					     _cmd->poses[i].pose.orientation.z,
-					     _cmd->poses[i].pose.orientation.w ) );*/
+					     _cmd->poses[i].pose.orientation.z ) );
   }
     
   // Attach the animation to the model
@@ -564,11 +620,11 @@ void DRCPlugin::SetRobotJointAnimation(const trajectory_msgs::JointTrajectory::C
       pose_key->SetTranslation( math::Vector3( _cmd->poses[i].position.x,
 					       _cmd->poses[i].position.y,
 					       _cmd->poses[i].position.z) );
-      pose_key->SetRotation( math::Quaternion( 0.0, 0.0, 0.0 ) );
-      /*    pose_key->SetRotation( math::Quaternion( _cmd->poses[i].pose.orientation.x,
-	    _cmd->poses[i].pose.orientation.y,
-	    _cmd->poses[i].pose.orientation.z,
-	    _cmd->poses[i].pose.orientation.w ) );*/
+
+      pose_key->SetRotation( math::Quaternion( _cmd->poses[i].orientation.w,
+					       _cmd->poses[i].orientation.x,
+					       _cmd->poses[i].orientation.y,
+					       _cmd->poses[i].orientation.z ) );
       
     }
     
@@ -582,11 +638,11 @@ void DRCPlugin::SetRobotJointAnimation(const trajectory_msgs::JointTrajectory::C
 
 
 ////////////////////////////////////////////////////////////////////////////////
-  void DRCPlugin::SetRobotConfiguration(const sensor_msgs::JointState::ConstPtr &_cmd )
-  {printf("[DRCPLUGIN - SetRobotConfiguration] \n");
+void DRCPlugin::SetRobotConfiguration(const sensor_msgs::JointState::ConstPtr &_cmd )
+{printf("[DRCPLUGIN - SetRobotConfiguration] \n");
   // Store defaultJointConfiguration (in case we need to call stay dog)
-  defaultJointState = _cmd;
-
+  defaultJointState = *( _cmd );
+  
   std::map<std::string, double> joint_position_map;
   
   // Read the values and send them
@@ -651,13 +707,14 @@ void DRCPlugin::SetRobotMode(const std::string &_str)
 
   // Stay at the current ModelState (pose + joints)
   else if (_str == "stay_dog") {
+    ROS_INFO("[DRCPlugin] Set STAY_DOG mode \n");
     this->drchubo.modeType = ON_STAY_DOG_MODE;
   }
 
 
 
   else {
-    ROS_INFO("available modes:no_gravity, nominal (with gravity)");
+    ROS_INFO("available modes:no_gravity, nominal (with gravity), feet (gravity only on both feet - SO FAR THIS GIVES STRANGE RESULTS. TRY USING NO_GRAVITY FOR ANIMATIONS)");
   }
 }
 

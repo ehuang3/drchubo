@@ -225,6 +225,9 @@ namespace gazebo
   private: void jointAnimation_callback();
   private: void poseAnimation_callback();
 
+    /// \brief Joint and pose current state getters
+  private:  sensor_msgs::JointState getCurrentJointState();
+  private:  geometry_msgs::Pose getCurrentPose();
 
     ////////////////////////////////////////////////////////////////////////////
     //                                                                        //
@@ -232,7 +235,8 @@ namespace gazebo
     //                                                                        //
     ////////////////////////////////////////////////////////////////////////////
   private: double lastUpdateTime;
-  private: sensor_msgs::JointState::ConstPtr defaultJointState;    
+  private: sensor_msgs::JointState defaultJointState;    
+  private: geometry_msgs::Pose defaultPose;
     
     /// \brief Pointer to parent world.
   private: physics::WorldPtr world;
