@@ -313,6 +313,13 @@ namespace robot {
         printf("\n");
     }
 
+    bool robot_state_t::check_limits(double zero_tol) const
+    {
+        std::vector<int> full_indexes;
+        get_full_indexes(full_indexes);
+        return check_limits(full_indexes, zero_tol);
+    }
+
     bool robot_state_t::check_limits(const vector<int>& indexes, double zero_tol) const
     {
         bool any_exceed = false;

@@ -76,6 +76,7 @@ namespace robot {
         
         // true: if no joint exceed limits
         bool check_limits(const std::vector<int>& indexes, double zero_tol = 1e-9) const;
+        bool check_limits(double zero_tol = 1e-9) const;
         Eigen::Vector2d get_limits(int i) const;
 
         // clamps joints to limits
@@ -83,7 +84,7 @@ namespace robot {
         bool clamp_all(bool err_msg = true, double zero_tol = 1e-9); //< only clamps joints declared in init()
         bool clamp_manip(int mi, bool err_msg = true, double zero_tol = 1e-9);
         bool clamp_indexes(const std::vector<int>& indexes, bool err_msg = true, double zero_tol = 1e-9);
-        inline bool clamp_dof(int i, bool err_msy = true, double zero_tol = 1e-9);
+        bool clamp_dof(int i, bool err_msy = true, double zero_tol = 1e-9);
 
         std::map<int,int> get_d2r() const { return g_d2r; }
         std::map<int,int> get_r2d() const { return g_r2d; }

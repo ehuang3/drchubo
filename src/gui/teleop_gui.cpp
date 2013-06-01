@@ -97,6 +97,8 @@ namespace gui {
         return args;
     }
 
+    
+
     void teleop_gui_t::drawSkels() {
         //############################################################
         //### GL initialization

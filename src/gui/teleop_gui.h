@@ -38,7 +38,7 @@ namespace gui {
     class teleop_gui_t : public simulation::SimWindow {
     public:
         /// The constructor - set the position of the skeleton
-		teleop_gui_t(): SimWindow() {
+    	teleop_gui_t(): SimWindow(), key(-1) {
             mTrans[1] = 0.f;
             mZoom = 0.3;
         }
@@ -91,8 +91,10 @@ namespace gui {
                 
         params_t* gui_params;
 
-        /// Move the joints with the {1,2,3} keys and '-' to change direction
-        //virtual void keyboard(unsigned char key, int x, int y);
+        int key;
+        virtual void keyboard(unsigned char _key, int x, int y) {
+            key = _key;
+        }
     };
 
 

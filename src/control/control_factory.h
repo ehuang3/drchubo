@@ -2,40 +2,40 @@
 #include "control.h"
 // STL includes
 #include <string>
-#include <list>
+#include <vector>
 
 
 //############################################################
-//### Macro that automagically populate list of controllers
-#define REGISTER_CONTROLLER(x, c) static control::control_factory_impl<x> __factory__##c (#c);
+//### Macro that automagically populate vector of controllers
+#define REGISTER_CONTROLLER(x, c) control::control_factory_impl<x> c##__factory(#c);
 
 namespace control {
 
     class control_factory_t;
     class control_t;
     
-    static const control_factory_t* get_factory(std::string name);
-    static const std::list<control_factory_t*>& factories();
+    const control_factory_t* get_factory(std::string name);
+    const std::vector<control_factory_t*>& factories();
 
     class control_factory_t {
     public:
-        control_factory_t(std::string name);
+        control_factory_t(std::string name = "");
         virtual ~control_factory_t();
 
         virtual control_t* create() const = 0;
         virtual std::string name() const { return _name; }
 
-        static const std::list<control_factory_t*>& factory_list();
+        static const std::vector<control_factory_t*>& factory_vector();
 
     protected:
         std::string _name;
-        static std::list<control_factory_t*> *_factories;
+        static std::vector<control_factory_t*> *_factories;
     };
     
     template<class X>
     class control_factory_impl : public control_factory_t {
     public:
-        control_factory_impl(std::string name)
+        control_factory_impl(std::string name = "")
             : control_factory_t(name) {
         }
 

@@ -12,6 +12,7 @@ namespace control {
     class ARM_AIK_T : public control_t {
     public:
     	ARM_AIK_T(std::string name) : control_t(name) {}
+        ~ARM_AIK_T() {}
         virtual bool run(robot::robot_state_t& target, control_data_t* data);
     };
     
@@ -21,6 +22,7 @@ namespace control {
     class ARM_AJIK_T : public control_t {
     public:
         ARM_AJIK_T(std::string name) : control_t(name) {}
+        ~ARM_AJIK_T() {}
         virtual bool run(robot::robot_state_t& target, control_data_t* data);
     };
 
@@ -30,6 +32,7 @@ namespace control {
     class ARM_JIT_T : public control_t {
     public:
         ARM_JIT_T(std::string name) : control_t(name) {}
+        ~ARM_JIT_T() {}
         virtual bool run(robot::robot_state_t& target, control_data_t* data);
     };
     
@@ -39,6 +42,7 @@ namespace control {
     class ARM_JPIT_T : public control_t {
     public:
         ARM_JPIT_T(std::string name) : control_t(name) {}
+        ~ARM_JPIT_T() {}
         virtual bool run(robot::robot_state_t& target, control_data_t* data);
     };
 
@@ -48,6 +52,7 @@ namespace control {
     class ARM_JIK_T : public control_t {
     public:
         ARM_JIK_T(std::string name) : control_t(name) {}
+        ~ARM_JIK_T() {}
         virtual bool run(robot::robot_state_t& target, control_data_t* data);
     };
     
@@ -57,6 +62,7 @@ namespace control {
     class ARM_JPIK_T : public control_t {
     public:
         ARM_JPIK_T(std::string name) : control_t(name) {}
+        ~ARM_JPIK_T() {}
         virtual bool run(robot::robot_state_t& target, control_data_t* data);
     };
 

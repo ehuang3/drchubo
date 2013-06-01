@@ -2,16 +2,40 @@
 #include <iostream>
 #include <boost/foreach.hpp>
 
+//############################################################
+//### Register controllers below
+#include "arms.h"
+//REGISTER_CONTROLLER(control::ARM_AIK_T, ARM_AIK)
+REGISTER_CONTROLLER(control::ARM_AJIK_T, ARM_AJIK)
+REGISTER_CONTROLLER(control::ARM_JIT_T, ARM_JIT)
+//REGISTER_CONTROLLER(control::ARM_JIK_T, ARM_JIK)
+#include "legs.h"
+REGISTER_CONTROLLER(control::LEG_AIK_T, LEG_AIK)
+#include "pelvis.h"
+REGISTER_CONTROLLER(control::BODY_XYZRPY_FIX_LEGS_T, BODY_XYZRPY_FIX_LEGS)
+REGISTER_CONTROLLER(control::BODY_XZP_FIX_LEGS_T, BODY_XZP_FIX_LEGS)
+REGISTER_CONTROLLER(control::BODY_ZY_FIX_LEGS_T, BODY_ZY_FIX_LEGS)
+#include "joints.h"
+REGISTER_CONTROLLER(control::JOINT_T, JOINT)
+
+
+//############################################################
+//### Implementation
 namespace control {
     
     //############################################################
     //### Global variables and functions
     //############################################################
-    std::list<control_factory_t*> *control_factory_t::_factories = 0;
+    std::vector<control_factory_t*> *control_factory_t::_factories = 0;
 
     const control_factory_t* get_factory(std::string name)
     {
-        BOOST_FOREACH(control_factory_t* factory, control_factory_t::factory_list()) {
+        const std::vector<control_factory_t*>& f = factories();
+        for(int i=0; i < f.size(); i++) {
+            std::cout << "Factory " << f[i]->name() << std::endl;
+        }
+        
+        BOOST_FOREACH(control_factory_t* factory, control_factory_t::factory_vector()) {
             if(name == factory->name())
                 return factory;
         }
@@ -19,11 +43,11 @@ namespace control {
         return NULL;
     }
     
-    const std::list<control_factory_t*>& factories() {
-        return control_factory_t::factory_list();
+    const std::vector<control_factory_t*>& factories() {
+        return control_factory_t::factory_vector();
     }
 
-    const std::list<control_factory_t*>& control_factory_t::factory_list()
+    const std::vector<control_factory_t*>& control_factory_t::factory_vector()
     {
         return *control_factory_t::_factories;
     }
@@ -35,7 +59,7 @@ namespace control {
         : _name(name)
     {
         if(!_factories) {
-            _factories = new std::list<control_factory_t*>();
+            _factories = new std::vector<control_factory_t*>();
         }
         _factories->push_back(this);
     }

@@ -26,7 +26,7 @@
 #include <utils/robot_configs.h>
 #include <atlas/atlas_state.h>
 #include <atlas/atlas_jacobian.h>
-#include "spnav_all.h"
+#include "teleop_demo.h"
 
 // DART stuff
 #include <robotics/parser/dart_parser/DartLoader.h>
@@ -45,6 +45,9 @@
 // GUI stuff
 #include <gui/teleop_gui.h>
 #include <pthread.h>
+
+// SPACENAV stuff
+#include "spnav.h"
 
 //###########################################################
 //###########################################################
@@ -82,6 +85,8 @@ Eigen::Isometry3d manip_xforms[robot::NUM_MANIPULATORS];
 bool gazebo_sim; //< we are simulation in gazebo
 
 Eigen::Isometry3d xformTarget; //< Target transformation of teleoperation
+
+teleop::spnav_t spnav;
 
 //###########################################################
 //###########################################################
@@ -215,11 +220,11 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
             if(fabs(_j->axes[i]) > joy_thresh(i))
                 joy_thresh(i) = fabs(_j->axes[i]);
         if (thresh_iters == max_thresh_iters) {
-		if(joy_thresh.norm() < 0.01) {
-			joy_thresh = 0.02 * Eigen::Vector6d::Ones();
-		}
+            if(joy_thresh.norm() < 0.01) {
+                joy_thresh = 0.02 * Eigen::Vector6d::Ones();
+            }
             std::cout << "Joystick thresholds = " << joy_thresh.transpose() << std::endl;
-	}
+        }
     }
     //############################################################
     //### State switching
@@ -528,6 +533,8 @@ int main(int argc, char** argv) {
     joy_thresh = Eigen::Vector6d::Zero();
     max_thresh_iters = 100;
     thresh_iters = 0;
+
+    spnav.init();
 
     teleopMode = TELEOP_LEFT_ARM_ANALYTIC;
 

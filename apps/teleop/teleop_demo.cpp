@@ -26,7 +26,7 @@
 #include <utils/robot_configs.h>
 #include <atlas/atlas_state.h>
 #include <atlas/atlas_jacobian.h>
-#include "spnav_com.h"
+#include "teleop_demo.h"
 
 // DART stuff
 #include <robotics/parser/dart_parser/DartLoader.h>
@@ -43,8 +43,17 @@
 #include <amino.h>
 
 // GUI stuff
-#include "MyWindow.h"
+#include <gui/teleop_gui.h>
 #include <pthread.h>
+
+// SPACENAV stuff
+#include "spnav.h"
+
+// Control stuff
+#include <control/control.h>
+#include <control/control_factory.h>
+#include <control/arms.h>
+
 
 //###########################################################
 //###########################################################
@@ -65,15 +74,16 @@ atlas::atlas_jacobian_t atlasJac;
 ros::Publisher topic_pub_joint_commands;
 atlas_msgs::AtlasCommand jointCommand;
 
-Eigen::Vector3d com;
-Eigen::VectorXd lastCommand;
-
-Eigen::Vector6d joy_thresh; //< static spacenav readings have noise
-int max_thresh_iters;
-int thresh_iters;
-
 pthread_t gui_thread;
-MyWindow gui_window;
+gui::teleop_gui_t gui_window;
+gui::params_t gui_params;
+
+bool gazebo_sim; //< we are simulation in gazebo
+
+teleop::spnav_t spnav;
+
+control::control_data_t* c_data;
+control::control_t* controller;
 
 //###########################################################
 //###########################################################
@@ -132,7 +142,7 @@ namespace atlas {
 
 //###########################################################
 //###########################################################
-//#### com math
+//#### World orientation math
 //###########################################################
 //###########################################################
 // Calculates the orientation of atlas's body given a foot position
@@ -156,163 +166,103 @@ void move_origin_to_feet(atlas::atlas_state_t& atlasState)
 
 //###########################################################
 //###########################################################
-//#### initialization stuff
+//#### Main loop
 //###########################################################
 //###########################################################
 
 void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
-    static std::vector<int> lastButtons = _j->buttons;
-    static std::vector<float> lastAxes = _j->axes;
-    static bool targetPoseInited = false;
-
-    static ros::Time lastTime = _j->header.stamp;
-    ros::Time currentTime = _j->header.stamp;
-    ros::Duration dT = currentTime - lastTime;
-
-    robot::LimbIndex targetLimb = robot::LIMB_L_ARM;
-    std::vector<int> desired_dofs; // which dofs to run the jacobian on
-    kinematics::BodyNode* end_effector; // the bodynode on the end of our limb
-    atlasStateTarget.get_manip_indexes(desired_dofs, targetLimb);
-    end_effector = atlasSkel->getNode("l_hand");
+    //############################################################
+    //### Update peripherals
+    if(!spnav.sensor_update(_j))
+        return;
+    spnav.get_teleop_data(c_data);
     
-    // Triggers on a left button click
-    if (_j->buttons[0] && !lastButtons[0]) {
-        // 0. Set target pose to match current
+    //############################################################
+    //### Init states
+    static bool targetPoseInited = false;
+    if (!targetPoseInited || c_data->triggers[1]) {
+        // 1. Set target pose to match current
         std::cout << "Setting target pose." << std::endl;
         Eigen::VectorXd temp;
         atlasStateCurrent.get_ros_pose(temp);
         atlasStateTarget.set_ros_pose(temp);
-        targetPoseInited = true;
-        // 1. Set target com to be current
-        move_origin_to_feet( atlasStateCurrent );
-        atlasSkel->setPose( atlasStateCurrent.dart_pose() );
-        com = atlasSkel->getWorldCOM();
-        std::cout << "Starting com = " << com.transpose() << std::endl;
-        // 2. Display joystick thresholds and normal
-        std::cout << "Joystick thresholds = " << joy_thresh.transpose() << std::endl;
-        std::cout << "Joystick normal = " << joy_thresh.norm() << std::endl;
-        // 3. Init last command as current state
-        atlasStateCurrent.get_ros_pose( lastCommand );
-    }
-    if (!targetPoseInited) {
-        std::cout << "Please init target pose first - hit the left button on the spacenav base." << std::endl;
-    }
-    if (thresh_iters++ < max_thresh_iters) {
-        // 0. Update error. Don't touch the joystick!
-        for(int i=0; i < 6; i++)
-            if(fabs(_j->axes[i]) > joy_thresh(i))
-                joy_thresh(i) = fabs(_j->axes[i]);
-        if (thresh_iters == max_thresh_iters)
-            std::cout << "Joystick thresholds = " << joy_thresh.transpose() << std::endl;
-    }
-    for (; targetPoseInited && !_j->buttons[0] ;) {
-        // 0. Threshold the joystick values using norm
-        double thresh = 2*joy_thresh.norm(); // add some slack (on release, joysick will not bounce back to zero)
-        int max_scale = 2; // scale thresh to get max input caps
-        Eigen::VectorXd true_axes(6);
-        Eigen::VectorXd joy_axes(6);
-        joy_axes.setZero();
-        bool allBelow = true;
-        for(int i=0; i < 6; i++) {
-            true_axes(i) = _j->axes[i];
-            if( fabs(_j->axes[i]) <= thresh )
-                continue;
-            joy_axes[i] = _j->axes[i];
-            if( fabs(joy_axes[i]) > max_scale * thresh )
-                joy_axes[i] *= max_scale*thresh / fabs(joy_axes[i]);
-            allBelow = false;
-        }
-        if (allBelow) {
-            break;
-        }
-        
-        // 2. Convert to move speeds 
-        double movespeed = .00005;
-        Eigen::VectorXd movement(6); // the desired end effector velocity in worldspace
-        movement[0] = movespeed * joy_axes[0] / dT.toSec(); // translate +x
-        movement[1] = movespeed * joy_axes[1] / dT.toSec(); // translate +y
-        movement[2] = movespeed * joy_axes[2] / dT.toSec(); // translate +z
-        movement[3] = movespeed * joy_axes[4] / dT.toSec(); // rotate + around x
-        movement[4] = movespeed * joy_axes[3] / dT.toSec(); // rotate + around y
-        movement[5] = movespeed * joy_axes[5] / dT.toSec(); // rotate + around z
-        // -48. Sanity check
-        bool invalid_input = dT.toSec() == 0;
-        for(int i=0; i < 6; i++) {
-            invalid_input |= isnan(movement[0]);
-            invalid_input |= isinf(movement[0]);
-        }
-        if (invalid_input) {
-            std::cout << "invalid movement = " << movement.transpose() << std::endl;
-            break;
-        }
-        
-        // 0. Convert to movements to vectors
-        Eigen::Vector3d off = Eigen::Vector3d(movement[0], movement[1], movement[2]);
-        Eigen::Vector3d rot = Eigen::Vector3d(movement[3], movement[4], movement[5]);
 
-        // 0.5. Update target to match current (MAY CAUSE SUPER PROBLEMS)
-        // atlasStateTarget.set_dart_pose( atlasStateCurrent.dart_pose() );
-
-        // 1. Maintain a fixed target state. Send those joint commands to Atlas. Make observations.
-        atlasSkel->setPose( atlasStateTarget.dart_pose() );
-
-        // 2. Orient Atlas about his feet
+        // 2. Set world origins to feet
         move_origin_to_feet( atlasStateTarget );
-        atlasSkel->setPose(atlasStateTarget.dart_pose()); //< save into skel so we can compute with it
+        move_origin_to_feet( atlasStateCurrent );
 
-        // 4. Grab the target state COM and offset by spacenav (might shake atlas around..)
-        com = atlasSkel->getWorldCOM();
-        com += off;
-        std::cout << "desired com = " << com.transpose() << std::endl;
+        // 3. Set target com to current
+        atlasSkel->setPose( atlasStateCurrent.dart_pose() );
+        c_data->com = atlasSkel->getWorldCOM();
 
-        // 5. Do IK to target state COM. (Should give the exact same joint angles)
-        Eigen::Isometry3d Twlf, Twrf;
-        Eigen::Isometry3d end_effectors[robot::NUM_MANIPULATORS];
-        Twlf = atlasSkel->getNode(ROBOT_LEFT_FOOT)->getWorldTransform();
-        Twrf = atlasSkel->getNode(ROBOT_RIGHT_FOOT)->getWorldTransform();
-        end_effectors[robot::MANIP_L_FOOT] = Twlf;
-        end_effectors[robot::MANIP_R_FOOT] = Twrf;
+        // 4. Set last command to current
+        c_data->last_command = atlasStateCurrent.ros_pose();
+
+        // 5. Set manip xforms
+        c_data->manip_xform[robot::MANIP_L_HAND] = atlasSkel->getNode(ROBOT_LEFT_HAND)->getWorldTransform();
+        c_data->manip_xform[robot::MANIP_R_HAND] = atlasSkel->getNode(ROBOT_RIGHT_HAND)->getWorldTransform();
+        c_data->manip_xform[robot::MANIP_L_FOOT] = atlasSkel->getNode(ROBOT_LEFT_FOOT)->getWorldTransform();
+        c_data->manip_xform[robot::MANIP_R_FOOT] = atlasSkel->getNode(ROBOT_RIGHT_FOOT)->getWorldTransform();
+
+        targetPoseInited = true;
+    }
+    if (!targetPoseInited)
+        return;
+    
+    //############################################################
+    //### Switch states
+    if (gui_window.key != -1) {
+        int key = gui_window.key;
+        gui_window.key = -1;
+
+        if('A' <= key && key <= 'Z') {
+            c_data->command_char = key;
+            controller->change_mode(key, atlasStateTarget);
+        } 
+        else {
+            // Do the state switch here...
+            const std::vector<control::control_factory_t*>& F = control::factories();
+            key = (key)%F.size();
+
+            // Replace controller
+            delete controller;
+            controller = F[key]->create();
         
-        robot::IK_Mode mode[robot::NUM_MANIPULATORS];
-        mode[0] = robot::IK_MODE_SUPPORT;
-        mode[1] = robot::IK_MODE_WORLD;
-        mode[2] = robot::IK_MODE_FREE;
-        mode[3] = robot::IK_MODE_FREE;
-
-        bool ok = atlasKin.com_ik(com, end_effectors, mode, atlasStateTarget);
-
-        // 6.1 Freak out
-        if(!ok) {
-            std::cerr << "com ik failed\n" << std::endl;
-            break;
+            // Let them know
+            std::cout << "Switched to " << controller->name() << std::endl;
         }
-        
-        // 6.2 joint delta norm
-        double motion_norm = (lastCommand - atlasStateTarget.ros_pose()).norm();
-        std::cout << "joint delta norm = " << motion_norm << std::endl;
-        
-        double error_norm = (atlasStateCurrent.ros_pose() - atlasStateTarget.ros_pose()).norm();
-        std::cout << "pid error norm = " << error_norm << std::endl;
-        
-        
-        // 7. Send commands over ROS
-        Eigen::VectorXd rospose;
-        atlasStateTarget.get_ros_pose(rospose);
+    }
+    if (c_data->triggers[0]) {
+        int& ms = c_data->manip_side;
+        ms = (ms+1)%2;
+        std::cout << "Switch sides to " << (ms ? "LEFT" : "RIGHT") << std::endl;
+    }
+    
+    //############################################################
+    //### Run controller
+    if (controller && (c_data->sensor_ok || c_data->joystick_ok))
+        controller->run(atlasStateTarget, c_data);
+
+    //############################################################
+    //### Send joint commands
+    Eigen::VectorXd rospose;
+    atlasStateTarget.get_ros_pose(rospose);
+    if (gazebo_sim) {
         for(unsigned int i = 0; i < rospose.size(); i++) {
             jointCommand.position[i] = rospose[i];
         }
-            
         jointCommand.header.stamp = _j->header.stamp;
         topic_pub_joint_commands.publish(jointCommand);
-        lastCommand = rospose;
         
-        // 99. We're in a for loop
-        break;
+        // Errors
+        double motion_norm = (c_data->last_command - atlasStateTarget.ros_pose()).norm();
+        std::cout << "joint delta norm = " << motion_norm << std::endl;
+    
+        double error_norm = (atlasStateCurrent.ros_pose() - atlasStateTarget.ros_pose()).norm();
+        std::cout << "pid error norm = " << error_norm << std::endl;
     }
+    c_data->last_command = rospose;
 
-    lastTime = currentTime;
-    lastButtons = _j->buttons;
-    lastAxes = _j->axes;
 }
 
 //###########################################################
@@ -340,6 +290,16 @@ void topic_sub_joint_states_handler(const sensor_msgs::JointState::ConstPtr &_js
 
 int main(int argc, char** argv) {
     //###########################################################
+    //#### Command line arguments
+    gazebo_sim = true;
+    if (argc == 2) {
+        std::string in(argv[1]);
+        if(in == "--no-sim")
+            gazebo_sim = false;
+    }
+    std::cout << "gazebo sim = " << gazebo_sim << std::endl;
+
+    //###########################################################
     //#### DART initialization
     DartLoader dart_loader;
     mWorld = dart_loader.parseWorld(VRC_DATA_PATH "models/atlas/atlas_world.urdf");
@@ -350,21 +310,34 @@ int main(int argc, char** argv) {
     atlasJac.init(atlasSkel);                 // init jacobians
     atlasKin.init(atlasSkel);                 // init kinematics
 
+    // Do not start at singularity
+    Eigen::VectorXd leftQ(6);
+    leftQ << 0, 0, 1, 0.4, 0, 0;
+    atlasStateCurrent.set_manip(leftQ, robot::MANIP_L_HAND);
+
     //###########################################################
-    //#### Joystick initialization
-    joy_thresh = Eigen::Vector6d::Zero();
-    max_thresh_iters = 100;
-    thresh_iters = 0;
+    //#### Controll initilization
+    c_data = new control::control_data_t();
+    c_data->robot = atlasSkel;
+    c_data->current = &atlasStateCurrent;
+    c_data->kin = &atlasKin;
+    c_data->jac = &atlasJac;
+    c_data->manip_index = robot::MANIP_L_HAND;
+
+    controller = control::get_factory("ARM_AJIK")->create();
 
     //###########################################################
     //#### GUI initialization
-    gui_window.setCurrentState(&atlasStateCurrent);
-    gui_window.setTargetState(&atlasStateTarget);
-    pthread_create(&gui_thread, NULL, MyWindow::start_routine, &gui_window);
+    c_data->manip_target = Eigen::Matrix4d::Identity();
+    gui_params.goal = &c_data->manip_target;
+    gui_params.current = &atlasStateCurrent;
+    gui_params.target = &atlasStateTarget;
+    gui_params.draw_limits = true;
+    gui_window.gui_params = &gui_params;
+    pthread_create(&gui_thread, NULL, gui::teleop_gui_t::start_routine, &gui_window);
 
     //###########################################################
     //#### ROS initialization
-
     // initialize our ros node and block until we connect to the ROS
     // master
     ros::init(argc, argv, "spacenav_teloperator");
@@ -376,25 +349,34 @@ int main(int argc, char** argv) {
         if (last_ros_time_.toSec() > 0) wait = false;
     }
 
-    // set up the joint command
-    atlasStateCurrent.fill_joint_command(&jointCommand, rosnode);
-    
-    // set up publishing
-    topic_pub_joint_commands = rosnode->advertise<atlas_msgs::AtlasCommand>(
-        "/atlas/atlas_command", 1, true);
-
-    // set up subscriptions
-    ros::SubscribeOptions topic_sub_joint_states_opts = ros::SubscribeOptions::create<sensor_msgs::JointState>(
-        "/atlas/joint_states", 1, topic_sub_joint_states_handler,
-        ros::VoidPtr(), rosnode->getCallbackQueue());
-    topic_sub_joint_states_opts.transport_hints = ros::TransportHints().unreliable();
-    ros::Subscriber topic_sub_joint_states = rosnode->subscribe(topic_sub_joint_states_opts);
-
+    //###########################################################
+    //#### Joystick initialization
     ros::SubscribeOptions topic_sub_joystick_opts = ros::SubscribeOptions::create<sensor_msgs::Joy>(
         "/spacenav/joy", 1, topic_sub_joystick_handler,
         ros::VoidPtr(), rosnode->getCallbackQueue());
+
     topic_sub_joystick_opts.transport_hints = ros::TransportHints().unreliable();
-    ros::Subscriber topic_sub_joystick = rosnode->subscribe(topic_sub_joystick_opts);    
-    ros::spin();
+    ros::Subscriber topic_sub_joystick = rosnode->subscribe(topic_sub_joystick_opts);
+
+    //###########################################################
+    //#### Connect to simulation and start spinning
+    if(gazebo_sim) {
+        // set up the joint command
+        atlasStateCurrent.fill_joint_command(&jointCommand, rosnode);
+
+        topic_pub_joint_commands = rosnode->advertise<atlas_msgs::AtlasCommand>(
+            "/atlas/atlas_command", 1, true);
+
+        // set up subscriptions
+        ros::SubscribeOptions topic_sub_joint_states_opts = ros::SubscribeOptions::create<sensor_msgs::JointState>(
+            "/atlas/joint_states", 1, topic_sub_joint_states_handler,
+            ros::VoidPtr(), rosnode->getCallbackQueue());
+        topic_sub_joint_states_opts.transport_hints = ros::TransportHints().unreliable();
+        ros::Subscriber topic_sub_joint_states = rosnode->subscribe(topic_sub_joint_states_opts);
+
+        ros::spin();
+    } else {
+        ros::spin();
+    }
     return 0;
 }
