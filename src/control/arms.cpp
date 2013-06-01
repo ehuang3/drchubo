@@ -1,12 +1,8 @@
 #include "arms.h"
 #include "utils/robot_configs.h"
 #include <amino.h>
+#include <assert.h>
 
-
-REGISTER_CONTROLLER(control::ARM_AIK_T, ARM_AIK)
-REGISTER_CONTROLLER(control::ARM_AJIK_T, ARM_AJIK)
-REGISTER_CONTROLLER(control::ARM_JIT_T, ARM_JIT)
-REGISTER_CONTROLLER(control::ARM_JIK_T, ARM_JIK)
 
 namespace control {
 
@@ -33,11 +29,24 @@ namespace control {
 
         // 1. Setup
         robot::robot_kinematics_t* robot_kin = data->kin;
-        Eigen::Isometry3d Twhand = data->manip_xform[data->manip_index];
-        int mi = data->manip_index;
+        int ms = data->manip_side;
+        int mi = ms ? robot::MANIP_L_HAND : robot::MANIP_R_HAND;
+        Eigen::Isometry3d Twhand = data->manip_xform[mi];
+
+        // 2. Add delta transform
+        Twhand.linear() = Twhand.linear() * data->joy_rotation;
+        Twhand.translation() += data->joy_position;
 
         // 2. Run IK
-        bool ok = robot_kin->arm_jac_ik(Twhand, mi == robot::MANIP_L_HAND, target);
+        bool ok = robot_kin->arm_jac_ik(Twhand, ms, target);
+
+        // 3. Save new manip
+        if (ok)
+            data->manip_xform[mi] = Twhand;
+
+        // 3. Visualize the target
+        data->manip_target = Twhand;
+
         return ok;
     }
 
@@ -47,11 +56,13 @@ namespace control {
             return false;
 
         // 1. Setup
+        int ms = data->manip_side;
+        int mi = ms ? robot::MANIP_L_HAND : robot::MANIP_R_HAND;
         kinematics::Skeleton* robot = data->robot;
         kinematics::BodyNode *end_effector = 
-            robot->getNode(data->manip_index == robot::MANIP_L_HAND ? ROBOT_LEFT_HAND : ROBOT_RIGHT_HAND);
+            robot->getNode(ms ? ROBOT_LEFT_HAND : ROBOT_RIGHT_HAND);
         std::vector<int> desired_dofs;
-        target.get_manip_indexes(desired_dofs, data->manip_index);
+        target.get_manip_indexes(desired_dofs, mi);
 
         // 2. Jacobians setup
         robot::robot_jacobian_t* robot_jac = data->jac;
@@ -73,7 +84,16 @@ namespace control {
         target.set_dofs(dofs + qdot, desired_dofs);
         
         // 6. Clamp joint angles! Or else we are dead.
-        bool ok = target.clamp_indexes(desired_dofs);
+        bool ok = target.clamp_indexes(desired_dofs, false);
+
+        // 7. Set target manip correctly so other controllers can use it
+        robot::robot_kinematics_t* robot_kin = data->kin;
+        Eigen::Isometry3d Twhand_hubo; //< Get "Hubo" hand location
+
+        robot_kin->arm_fk(Twhand_hubo, ms, target, true);
+        data->manip_xform[mi] = Twhand_hubo;
+        data->manip_target = Twhand_hubo;
+
         return ok;
     }
 

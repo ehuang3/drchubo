@@ -35,6 +35,8 @@ namespace teleop {
             std::cout << "[spnav] Thresholds = " << axes_thresh.transpose() << std::endl;
             std::cout << "[spnav] Thresh norm = " << axes_thresh.norm() << std::endl;            
         }
+
+        return true;
     }
 
     bool spnav_t::sensor_update(const sensor_msgs::Joy::ConstPtr& _j) {
@@ -44,7 +46,6 @@ namespace teleop {
         static ros::Time lastTime = _j->header.stamp;
         ros::Time currentTime = _j->header.stamp;
         ros::Duration dT = currentTime - lastTime;
-        std::cout << "Was spun" << std::endl;
         
         //############################################################
         //### Calibrate joystick
@@ -58,7 +59,7 @@ namespace teleop {
         //############################################################
         // 1. First, threshold the joystick using the threshold norm
         double thresh = 2 * axes_thresh.norm(); // Add slack, as joystick tends to not zero properly
-        int max_scale = 2; // scale threshold for maxmimum input velocity
+        int max_scale = 3; // scale threshold for maxmimum input velocity
         // Zero out commands
         joy_raw = Eigen::Vector6d::Zero();
         joy_filtered = Eigen::Vector6d::Zero();
@@ -95,25 +96,24 @@ namespace teleop {
         //############################################################
         //### Convert to transformations
         //############################################################
-        // 1. Be optimistic
-        sensor_ok = true;
         // 2. Offset
-        sensor_position = joy_movement.block<3,1>(0,0); //< 
+        joy_position = joy_movement.block<3,1>(0,0); //< 
         // 3. Rotation
         Eigen::Vector3d r_axes = joy_filtered.block<3,1>(3,0).normalized();
         Eigen::Vector3d r_movement = joy_movement.block<3,1>(3,0); //< DO NOT USE THIS FOR AXES
         double r_omega = r_movement.norm();
         // 4. Filtered rotation axes are possible 0 ==> nan values after normalization
         if(isnan(r_axes[0]))
-            sensor_ok = false;
+            joy_rotation = Eigen::Matrix3d::Identity();
         else
-            sensor_rotation = Eigen::AngleAxisd(r_omega, r_axes);
+            joy_rotation = Eigen::AngleAxisd(r_omega, r_axes);
 
         //############################################################
         //### Button updates
         //############################################################
         // 2. Check if flip flop
         buttons = _j->buttons;
+        buttons_triggered = buttons; //< just to initialize buttons_triggered
         for(int i=0; i < buttons.size(); i++) {
             buttons_triggered[i] = 0;
             if(buttons[i] && !last_buttons[i])
@@ -122,19 +122,24 @@ namespace teleop {
         // 3. Remember the past
         last_buttons = _j->buttons;
         last_axes = _j->axes;
+        lastTime = currentTime;
 
-        return joystick_ok && sensor_ok;
+        return true;
     }
     
     bool spnav_t::get_teleop_data(control::control_data_t* data) {
-        data->buttons = buttons;
-        data->triggers = buttons_triggered;
+        data->buttons.resize(buttons.size());
+        data->triggers.resize(buttons_triggered.size());
+        for(int i=0; i < buttons.size(); i++) {
+            data->buttons[i] = buttons[i];
+            data->triggers[i] = buttons_triggered[i];
+        }
         data->joy_raw = joy_raw;
         data->joy_filtered = joy_filtered;
         data->joy_movement = joy_movement;
+        data->joy_position = joy_position;
+        data->joy_rotation = joy_rotation;
         data->joystick_ok = joystick_ok;
-        data->sensor_position = sensor_position;
-        data->sensor_rotation = sensor_rotation;
         return true;
     }
 

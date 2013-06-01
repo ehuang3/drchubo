@@ -51,11 +51,10 @@ namespace teleop {
         Eigen::VectorXd joy_filtered; //< filtered joystick
         Eigen::VectorXd joy_movement; //< filtered and time derivated joystick
 
+        Eigen::Matrix3d joy_rotation;
+        Eigen::Vector3d joy_position;
+
         bool joystick_ok; //< signals if input is ready for use
-        bool sensor_ok;
-        
-        Eigen::Matrix3d sensor_rotation; //< rotation
-        Eigen::Vector3d sensor_position; //< offset
         
     };
 
