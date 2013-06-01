@@ -4,21 +4,22 @@ set_property(DIRECTORY PROPERTY EXCLUDE_FROM_DEFAULT_BUILD ON)
 
 # List of all the subdirectories to include
 foreach(APPDIR
-    ros_ik
-    robot_viz
+    #ros_ik
+    #robot_viz
     #drcsim_joint_commands_tutorial
-    quadruped
-    climber
-    zmp_steps
-    car_test
-    perception
-    driver
-    spnav_teleop
-    pelvis_tilt_demo
-    spnav_com
-    spnav_gl
-    spnav_all
+    #quadruped
+    #climber
+    #zmp_steps
+    #car_test
+    #perception
+    #driver
+    #spnav_teleop
+    #pelvis_tilt_demo
+    #spnav_com
+    #spnav_gl
+    #spnav_all
     #fastrak_teleop
+    teleop
     )
     add_subdirectory(${APPDIR})
 endforeach(APPDIR)
