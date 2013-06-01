@@ -123,7 +123,7 @@
     <include>
       <uri>model://cinder_block</uri>
       <name>cinder_1</name>
-      <pose>2.15 -1.0 0.1 0 0 0</pose>
+      <pose>2.0 -1.0 0.1 0 0 0</pose>
     </include>
     <include>
       <uri>model://cinder_block</uri>
@@ -217,7 +217,7 @@
     <include>
       <uri>model://cabinet</uri>
       <name>cabinet 1</name>
-      <pose>1.000000 0.4000 0.000000 0.000000 0.000000 0.000000</pose>
+      <pose>1.000000 0.3000 0.000000 0.000000 0.000000 0.000000</pose>
     </include>
 
     <include>
