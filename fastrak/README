@@ -18,16 +18,20 @@ make
 sudo make install
 
 To build make-common, run
-debinstall
+make debinstall
+
+To build fastrak:
+make
 
 To build Teleop:
 g++ teleop-test.cpp Teleop.cpp -o teleop-test -lm -lach -lc -lrt -pthread -lprotobuf -lz -lpthread -lsomatic -lprotobuf-c -I lib/somatic/include
 
 RUNNING
 -------
+sudo ldconfig
 sudo /usr/local/etc/init.d/somatic start
 ach -C fastrak 
-./fastrak -p /dev/ttyUSB0 -vvvv
+sudo ./fastrak -p /dev/ttyUSB0 -vvvv
 
 
 COMM

@@ -308,8 +308,8 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
     // 3. Sanity check
     bool invalid_input = dT.toSec() == 0;
     for(int i=0; i < 6; i++) {
-        invalid_input |= isnan(movement[0]);
-        invalid_input |= isinf(movement[0]);
+        invalid_input |= std::isnan(movement[0]);
+        invalid_input |= std::isinf(movement[0]);
     }
     if (invalid_input) {
         std::cout << "invalid movement = " << movement.transpose() << std::endl;
@@ -406,7 +406,7 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
             double rot_omega = 2*movement_rotation.norm(); //< 
             rot_axis = rot_axis.normalized();
             // std::cout << "rot_axis = " << rot_axis.transpose() << std::endl;
-            if(!isnan(rot_axis[0])) // it happens when rot_axis is all zeros (when we clamp)
+            if(!std::isnan(rot_axis[0])) // it happens when rot_axis is all zeros (when we clamp)
                 Tdelta.rotate(Eigen::AngleAxisd(rot_omega, rot_axis));
             // 4. Generate new hand transform
             Eigen::Isometry3d Twhand;
@@ -422,7 +422,7 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
             // 4.5 Get fastrak stuff instead
             Eigen::Vector3d sensorOrigin;
             Eigen::Matrix3d sensorRotation;
-            teleopDevice->getPose(sensorOrigin, sensorRotation, 4, true);
+            teleopDevice->getPose(sensorOrigin, sensorRotation, 0, true);
             Twhand.linear() = sensorRotation;
             Twhand.translation() = sensorOrigin;
             std::cout << "SensorRotation = \n" << sensorRotation << std::endl;
