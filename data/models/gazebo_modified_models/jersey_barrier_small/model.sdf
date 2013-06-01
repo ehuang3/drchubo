@@ -8,59 +8,60 @@
           <mesh>
             <uri>model://jersey_barrier_small/meshes/jersey_barrier_small.dae</uri>
 	    <scale> 0.4 0.4 0.4 </scale>
-          </mesh>
+          </mesh> 
+        </geometry> 
       </visual>
 
       <collision name="upright">
-        <pose>0 0 0.5715 0 0 0</pose>
+        <pose>0 0 0.2286 0 0 0</pose>
         <geometry>
           <box>
-            <size>4.06542 0.3063 1.143</size>
+            <size>4.06542 0.12252 0.4572</size>
           </box>
         </geometry>
       </collision>
 
       <collision name="base">
-        <pose>0 0 0.032258 0 0 0</pose>
+        <pose>0 0 0.0129032 0 0 0</pose>
         <geometry>
           <box>
-            <size>4.06542 0.8107 0.064516</size>
+            <size>1.626168 0.32428 0.0258064</size>
           </box>
         </geometry>
       </collision>
 
       <collision name="base2">
-        <pose>0 0 0.1 0 0 0</pose>
+        <pose>0 0 0.04 0 0 0</pose>
         <geometry>
           <box>
-            <size>4.06542 0.65 0.1</size>
+            <size>1.626168 0.26 0.04</size>
           </box>
         </geometry>
       </collision>
 
       <collision name="base3">
-        <pose>0 0 0.2 0 0 0</pose>
+        <pose>0 0 0.08 0 0 0</pose>
         <geometry>
           <box>
-            <size>4.06542 0.5 0.1</size>
+            <size>1.626168 0.2 0.04</size>
           </box>
         </geometry>
       </collision>
 
       <collision name="left-angle">
-        <pose>0 -0.224 0.2401 0.9 0 0</pose>
+        <pose>0 -0.0896 0.09604 0.36 0 0</pose>
         <geometry>
           <box>
-            <size>4.06542 0.5 0.064516</size>
+            <size>1.626168 0.2 0.0258064</size>
           </box>
         </geometry>
       </collision>
 
       <collision name="right-angle">
-        <pose>0 0.224 0.2401 -0.9 0 0</pose>
+        <pose>0 0.0896 0.09604 -0.36 0 0</pose>
         <geometry>
           <box>
-            <size>4.06542 0.5 0.064516</size>
+            <size>1.626168 0.2 0.0258064</size>
           </box>
         </geometry>
       </collision>

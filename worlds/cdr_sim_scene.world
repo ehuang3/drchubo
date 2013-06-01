@@ -63,7 +63,7 @@
       <uri>model://bookshelf</uri>
       <name>bookshelf_a</name>
       <static>false</static>
-      <pose> 2.0 -0.6 0.5 1.57 -2.37 -1.92</pose>
+      <pose> 2.0 -0.6 0.45 1.57 -2.37 -1.92</pose>
     </include>
 
     <!-- Grey Brick Wall -->
@@ -217,7 +217,7 @@
     <include>
       <uri>model://cabinet</uri>
       <name>cabinet 1</name>
-      <pose>1.000000 0.4000 0.000000 0.000000 0.000000 0.000000</pose>
+      <pose>1.000000 0.38000 0.000000 0.000000 0.000000 0.000000</pose>
     </include>
 
     <include>
@@ -246,7 +246,8 @@
     <include>
       <uri>model://jersey_barrier_small</uri>
       <name>small jersey barrier</name>
-      <pose> 0.8 1.3000 0.000000 -1.57000 0.000000 -0.200</pose>
+      <static>false</static>     
+      <pose> 0.8 1.300 0.25 -1.570 0.000 -0.200</pose>
     </include>
 
     <!-- VRC fire hose long -->
