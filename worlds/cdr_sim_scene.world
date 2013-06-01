@@ -217,6 +217,7 @@
     <include>
       <uri>model://cabinet</uri>
       <name>cabinet 1</name>
+      <static>false</static>
       <pose>1.000000 0.38000 0.000000 0.000000 0.000000 0.000000</pose>
     </include>
 

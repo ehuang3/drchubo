@@ -1,7 +1,9 @@
 # ************************************************************
-# walkPublisher
+# zmpnode
 # ROS nodet that generates trajectories based on Matt's code
 # ************************************************************
+set(ROSBUILD_DONT_REDEFINE_PROJECT True)
+rosbuild_init()
 
 include( matt_stuff/mzsettings.cmake)
 

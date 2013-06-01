@@ -33,7 +33,7 @@
 #include "zmpnode.h"
 
 // Paths
-#include "DRC_paths.h"
+#include "src/utils/data_paths.h"
 
 using namespace fakerave;
 
@@ -265,7 +265,7 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg() {
   ZMPWalkGenerator::ik_error_sensitivity ik_sense = ZMPWalkGenerator::ik_sloppy;
 
 
-  const char* hubofile( DRC_ROOT_PATH "/src/walkPublisher/matt_stuff/myhubo.kinbody.xml" );
+  const char* hubofile( DRC_ROOT_PATH "apps/zmpnode/matt_stuff/myhubo.kinbody.xml" );
   
   HuboPlus hplus(hubofile);
   printf( "Loaded correctly, I hope \n"); 
@@ -455,7 +455,7 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg() {
   kinematics::Skeleton *captain;
 
   DartLoader dart_loader;
-  simulation::World *mWorld = dart_loader.parseWorld(drchubo_ROOT_PATH "/data/models/drchubo-master/hubo_world.urdf");
+  simulation::World *mWorld = dart_loader.parseWorld(DRC_DATA_PATH "models/drchubo-master/hubo_world.urdf");
   
   captain = mWorld->getSkeleton("drchubo");
   if( captain == NULL ) {
