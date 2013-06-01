@@ -21,6 +21,7 @@ namespace control {
         virtual ~control_t() {}
         
         virtual bool run(robot::robot_state_t& target, control_data_t* params) = 0;
+        virtual bool change_mode(int ch, robot::robot_state_t& target) { return false; }
 
         std::string name() { return _name; }
         

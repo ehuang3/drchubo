@@ -214,16 +214,23 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
     if (gui_window.key != -1) {
         int key = gui_window.key;
         gui_window.key = -1;
-        // Do the state switch here...
-        const std::vector<control::control_factory_t*>& F = control::factories();
-        key = (key)%F.size();
 
-        // Replace controller
-        delete controller;
-        controller = F[key]->create();
+        if('A' <= key && key <= 'Z') {
+            c_data->command_char = key;
+            controller->change_mode(key, atlasStateTarget);
+        } 
+        else {
+            // Do the state switch here...
+            const std::vector<control::control_factory_t*>& F = control::factories();
+            key = (key)%F.size();
+
+            // Replace controller
+            delete controller;
+            controller = F[key]->create();
         
-        // Let them know
-        std::cout << "Switched to " << controller->name() << std::endl;
+            // Let them know
+            std::cout << "Switched to " << controller->name() << std::endl;
+        }
     }
     if (c_data->triggers[0]) {
         int& ms = c_data->manip_side;

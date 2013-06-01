@@ -52,6 +52,9 @@ namespace control {
         int manip_index;
         int manip_side; //< left = 1 
 
+        // command character ?? < for joint contorller?
+        int command_char;
+
         // last command
         Eigen::VectorXd last_command;
         
