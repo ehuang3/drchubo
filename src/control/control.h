@@ -1,8 +1,17 @@
 #pragma once
 #include "control_data.h"
 #include "control_factory.h"
+
+// General includes
 #include <Eigen/Dense>
 #include <string>
+
+// DART includes
+#include <kinematics/Skeleton.h>
+#include <kinematics/BodyNode.h>
+#include <kinematics/Joint.h>
+#include <kinematics/Dof.h>
+#include <kinematics/Transformation.h>
 
 namespace control {
 
