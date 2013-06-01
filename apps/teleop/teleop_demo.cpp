@@ -263,6 +263,14 @@ void topic_sub_joystick_handler(const sensor_msgs::Joy::ConstPtr& _j) {
     }
     c_data->last_command = rospose;
 
+    //############################################################
+    //### Set all manipulator transforms to current location
+    //FIXME: Does this cause any problems? (Likely will for AJIK)
+    atlasSkel->setPose(atlasStateTarget.dart_pose());
+    c_data->manip_xform[robot::MANIP_L_HAND] = atlasSkel->getNode(ROBOT_LEFT_HAND)->getWorldTransform();
+    c_data->manip_xform[robot::MANIP_R_HAND] = atlasSkel->getNode(ROBOT_RIGHT_HAND)->getWorldTransform();
+    // c_data->manip_xform[robot::MANIP_L_FOOT] = atlasSkel->getNode(ROBOT_LEFT_FOOT)->getWorldTransform();
+    // c_data->manip_xform[robot::MANIP_R_FOOT] = atlasSkel->getNode(ROBOT_RIGHT_FOOT)->getWorldTransform();
 }
 
 //###########################################################
