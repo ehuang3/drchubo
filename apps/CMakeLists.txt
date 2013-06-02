@@ -17,6 +17,7 @@ foreach(APPDIR
     #fastrak_teleop
     #teleop
     hubo-teleop
+    new-fastrak
     )
     add_subdirectory(${APPDIR})
 endforeach(APPDIR)
