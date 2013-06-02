@@ -63,9 +63,14 @@ int main( int argc, char* argv[] ) {
   
   printf("Start loop of commands \n");
   double t = 0;
+
+  trajectory_msgs::JointTrajectoryPoint prevJointTrajPoint;
+  geometry_msgs::Pose prevPose;
+
+
   // Do it
   for( int i = 0; i < numSteps; ++i ) {
-
+		
     // Set the default animation message
     DRC_msgs::PoseJointTrajectory pjt;
     pjt.header.stamp = ros::Time::now();
@@ -73,6 +78,13 @@ int main( int argc, char* argv[] ) {
     
     for( int i = 0; i < gNumJoints; ++i ) {
       pjt.joint_names.push_back( gJointNames[i] );  
+    }
+
+    if( i > 0 ) {
+       // Set previous point
+       prevJointTrajPoint.time_from_start = ros::Duration().fromSec(dt);
+       pjt.points.push_back( prevJointTrajPoint );    
+       pjt.poses.push_back( prevPose );
     }
     
     // Only one point
@@ -82,7 +94,6 @@ int main( int argc, char* argv[] ) {
     double angle = -1.57 / (double) numSteps;
     double val = angle*i;
     
-
     jt.positions.resize( gNumJoints );
     // Generate the message
     for( int j = 0; j < gNumJoints; ++j ) {
@@ -105,19 +116,26 @@ int main( int argc, char* argv[] ) {
     p.orientation.z = 0;
     p.orientation.w = 1.0;
 
-    
+    // Set current point    
     pjt.points.push_back(jt);
     pjt.poses.push_back(p);
 
-
-    pjt.points[0].time_from_start = ros::Duration().fromSec(dt);
-
+    if( i > 0 ) {
+       pjt.points[1].time_from_start = ros::Duration().fromSec(dt);
+     
     // Publish it
     animPub.publish( pjt );
     // Spin
     ros::spinOnce();
+
     // Sleep for a little while so we don't send stuff too quickly
     ros::Duration(dt).sleep();
+    
+
+    // Store
+    prevJointTrajPoint = jt;
+    prevPose = p;
+    }
   
   }
   
