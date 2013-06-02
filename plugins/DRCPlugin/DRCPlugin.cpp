@@ -7,6 +7,9 @@
 #include <string>
 #include <stdlib.h>
 
+#include <new>
+#include <iostream>
+
 #include "DRCPlugin.h"
 
 // Gazebo Animation 
@@ -127,7 +130,7 @@ void DRCPlugin::DeferredLoad()
   this->updateConnection = event::Events::ConnectWorldUpdateBegin(
      boost::bind(&DRCPlugin::UpdateStates, this));
 
-  ROS_INFO("[DRCPlugin] End of Deferred Load \n");
+  //ROS_INFO("[DRCPlugin] End of Deferred Load \n");
 }
 
 
@@ -138,34 +141,43 @@ void DRCPlugin::DeferredLoad()
 // Play the trajectory, update states
 void DRCPlugin::UpdateStates()
 {
-    std::map<std::string, double> m;
-  double curTime = this->world->GetSimTime().Double();
+
+    try
+    {
+        std::map<std::string, double> m;
+        double curTime = this->world->GetSimTime().Double();
 
   
-  if (curTime > this->lastUpdateTime) {
-    double dt = curTime - this->lastUpdateTime;
+        if (curTime > this->lastUpdateTime) {
+            double dt = curTime - this->lastUpdateTime;
     
     
-    if( dt > 0 ) {
-      // If we are animating don't do any action. Let the animation stop
-      if( this->onJointAnimation == true || this->onPoseAnimation == true ) {
-      return;
-    }
+            if( dt > 0 ) {
+                // If we are animating don't do any action. Let the animation stop
+                if( this->onJointAnimation == true || this->onPoseAnimation == true ) {
+                    return;
+                }
       
-      // Will try to keep at the joint configuration last sent through drc/configuration
-      if( this->drchubo.modeType == ON_STAY_DOG_MODE ) {
+                // Will try to keep at the joint configuration last sent through drc/configuration
+                if( this->drchubo.modeType == ON_STAY_DOG_MODE ) {
       
-	// Set joint pose
-	drchubo.model->SetJointPositions( defaultJointState_p ); 
-	// Set world pose   
-	this->drchubo.model->SetWorldPose( defaultPose_p );    
+                    // Set joint pose
+                    drchubo.model->SetJointPositions( defaultJointState_p ); 
+                    // Set world pose   
+                    this->drchubo.model->SetWorldPose( defaultPose_p );    
 	
-      }
+                }
       
-    // Publish joint states
-    //jointStatesPub.publish( defaultJointState );
+                // Publish joint states
+                //jointStatesPub.publish( defaultJointState );
+            }
+        }
     }
-  }
+    catch (std::bad_alloc& ba)
+    {
+        printf("CAUGHT BAD ALLOC!!!\n");
+        std::cerr << "bad_alloc caught!: " << ba.what() << std::endl;
+    }
 }
 
 
@@ -184,13 +196,13 @@ void DRCPlugin::UpdateStates()
 				   ->GetValueString("model_name"));
   }
   else {
-    ROS_INFO("[DRCPLUGIN - Load] Can't find <drchubo><model_name> blocks. using default.");
+    //ROS_INFO("[DRCPLUGIN - Load] Can't find <drchubo><model_name> blocks. using default.");
     this->model = _world->GetModel("drchubo");
   }
   
   if (!this->model)
     {
-    ROS_INFO("[DRCPLUGIN - Load] drchubo model not found.");
+    //ROS_INFO("[DRCPLUGIN - Load] drchubo model not found.");
     return;
   }
 
@@ -217,7 +229,7 @@ void DRCPlugin::UpdateStates()
       mJoints[i] = this->model->GetJoint( DRCPlugin::mJointNames[i] );
     }
     else {
-      printf("[DRCPlugin - RobotLoad] Joint %s did NOT load correctly for messaging \n", DRCPlugin::mJointNames[i].c_str() );
+      //printf("[DRCPlugin - RobotLoad] Joint %s did NOT load correctly for messaging \n", DRCPlugin::mJointNames[i].c_str() );
     }
   }
 
@@ -338,20 +350,20 @@ void DRCPlugin::SetRobotConfiguration(const sensor_msgs::JointState::ConstPtr &_
   
   getCurrentJointState();
 
-    ROS_INFO("[DRCPlugin] SET ROBOT CONFIGURATION SEE DEFAULTS \n");
+    //ROS_INFO("[DRCPlugin] SET ROBOT CONFIGURATION SEE DEFAULTS \n");
     this->drchubo.modeType = ON_STAY_DOG_MODE;
 
     // Print the stay mode stuff
-    printf("[SET ROBOT CONFIGURATION] Robot is going to stay in position: %f %f %f rotation: %f, %f, %f, %f \n", 
-	   defaultPose_p.pos.x,
-	   defaultPose_p.pos.y, 
-	   defaultPose_p.pos.z, 
-	   defaultPose_p.rot.x, 
-	   defaultPose_p.rot.y, 
-	   defaultPose_p.rot.z, 
-	   defaultPose_p.rot.w );
+    //printf("[SET ROBOT CONFIGURATION] Robot is going to stay in position: %f %f %f rotation: %f, %f, %f, %f \n", 
+	   // defaultPose_p.pos.x,
+	   // defaultPose_p.pos.y, 
+	   // defaultPose_p.pos.z, 
+	   // defaultPose_p.rot.x, 
+	   // defaultPose_p.rot.y, 
+	   // defaultPose_p.rot.z, 
+	   // defaultPose_p.rot.w );
 
-    printf("[SET ROBOT CONFIGURATION] Joints: : \n" );
+    //printf("[SET ROBOT CONFIGURATION] Joints: : \n" );
     for( std::map<std::string,double>::iterator iter=defaultJointState_p.begin();
 	 iter != defaultJointState_p.end(); ++iter ) {
       std::cout << (*iter).first << ": "<<(*iter).second << std::endl;
@@ -365,7 +377,7 @@ void DRCPlugin::SetRobotConfiguration(const sensor_msgs::JointState::ConstPtr &_
   // SetRobotPoseAnimation
   //******************************
   void DRCPlugin::SetRobotPoseAnimation(const DRC_msgs::PoseStampedArray::ConstPtr &_cmd ) {
-    printf("Setting Pose animation \n");
+    //printf("Setting Pose animation \n");
     
     // Set flag
     onPoseAnimation = true;
@@ -394,7 +406,7 @@ void DRCPlugin::SetRobotConfiguration(const sensor_msgs::JointState::ConstPtr &_
     
     // Attach the animation to the model
     this->drchubo.model->SetAnimation( pose_anim, poseAnim_callback );
-    printf("End loading Pose animation \n");
+    //printf("End loading Pose animation \n");
     
   }
   
@@ -403,7 +415,7 @@ void DRCPlugin::SetRobotConfiguration(const sensor_msgs::JointState::ConstPtr &_
    */
   void DRCPlugin::SetRobotPoseJointAnimation(const DRC_msgs::PoseJointTrajectory::ConstPtr &_cmd ) {
     
-    printf("Setting Robot pose + joint animation \n");
+    //printf("Setting Robot pose + joint animation \n");
 
     // Set flag
     onJointAnimation = true;
@@ -455,7 +467,7 @@ void DRCPlugin::SetRobotConfiguration(const sensor_msgs::JointState::ConstPtr &_
     this->drchubo.model->SetJointAnimation( joint_anim, jointAnim_callback );
     this->drchubo.model->SetAnimation( pose_anim, poseAnim_callback );
 
-    printf("End loading Joint + Pose animation \n");
+    //printf("End loading Joint + Pose animation \n");
     
   }
 
@@ -478,25 +490,25 @@ void DRCPlugin::SetRobotMode(const std::string &_str)
   }
   // Gravity only in left and right robot's feet
   else if( _str == "feet" ) {
-    printf("[INFO] Setting GRAVITY to true for feet \n");
+    //printf("[INFO] Setting GRAVITY to true for feet \n");
     physics::Link_V links = this->drchubo.model->GetLinks();
     for( unsigned int i = 0; i < links.size(); ++i ) {
       // Probably not going to work with leftFoot and rightFoot since they are static
       if( links[i]->GetName() == "leftFoot" ) {
-	printf("Setting left Foot WITH GRAVITY! \n");
+	//printf("Setting left Foot WITH GRAVITY! \n");
 	links[i]->SetGravityMode( true );
       }
       else if( links[i]->GetName() == "rightFoot" ) {
-	printf("Setting right Foot WITH GRAVITY! \n");
+	//printf("Setting right Foot WITH GRAVITY! \n");
 	links[i]->SetGravityMode( true );
       }      
       // This is more likely to work
       else if( links[i]->GetName() == "Body_LAR" ) {
-	printf("Setting Body_LAR WITH GRAVITY! \n");
+	//printf("Setting Body_LAR WITH GRAVITY! \n");
 	links[i]->SetGravityMode( true );
       }      
       else if( links[i]->GetName() == "Body_RAR" ) {
-	printf("Setting Body_RAR WITH GRAVITY! \n");
+	//printf("Setting Body_RAR WITH GRAVITY! \n");
 	links[i]->SetGravityMode( true );
       }      
 
@@ -514,36 +526,36 @@ void DRCPlugin::SetRobotMode(const std::string &_str)
 
   // Stay at the current ModelState (pose + joints)
   else if (_str == "stay_dog") {
-    ROS_INFO("[DRCPlugin] Set STAY_DOG mode \n");
+    //ROS_INFO("[DRCPlugin] Set STAY_DOG mode \n");
     this->drchubo.modeType = ON_STAY_DOG_MODE;
 
     // Print the stay mode stuff
-    printf("[STAY-DOG] Robot is going to stay in position: %f %f %f rotation: %f, %f, %f, %f \n", 
-	   defaultPose_p.pos.x,
-	   defaultPose_p.pos.y, 
-	   defaultPose_p.pos.z, 
-	   defaultPose_p.rot.x, 
-	   defaultPose_p.rot.y, 
-	   defaultPose_p.rot.z, 
-	   defaultPose_p.rot.w );
+    // printf("[STAY-DOG] Robot is going to stay in position: %f %f %f rotation: %f, %f, %f, %f \n", 
+	//    defaultPose_p.pos.x,
+	//    defaultPose_p.pos.y, 
+	//    defaultPose_p.pos.z, 
+	//    defaultPose_p.rot.x, 
+	//    defaultPose_p.rot.y, 
+	//    defaultPose_p.rot.z, 
+	//    defaultPose_p.rot.w );
 
-    printf("[STAY-DOG] Joints: : \n" );
+    // printf("[STAY-DOG] Joints: : \n" );
     for( std::map<std::string,double>::iterator iter=defaultJointState_p.begin();
 	 iter != defaultJointState_p.end(); ++iter ) {
-      std::cout << (*iter).first << ": "<<(*iter).second << std::endl;
+        // std::cout << (*iter).first << ": "<<(*iter).second << std::endl;
     }
 
   }
   
   else {
-    ROS_INFO("available modes:no_gravity, nominal (with gravity), feet (gravity only on both feet - SO FAR THIS GIVES STRANGE RESULTS. TRY USING NO_GRAVITY FOR ANIMATIONS)");
+    //ROS_INFO("available modes:no_gravity, nominal (with gravity), feet (gravity only on both feet - SO FAR THIS GIVES STRANGE RESULTS. TRY USING NO_GRAVITY FOR ANIMATIONS)");
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void DRCPlugin::SetRobotJointAnimation(const trajectory_msgs::JointTrajectory::ConstPtr &_cmd )
 {
-  printf("Setting Robot animation \n");
+  //printf("Setting Robot animation \n");
   
   // Set flag
   onJointAnimation = true;
@@ -573,7 +585,7 @@ void DRCPlugin::SetRobotJointAnimation(const trajectory_msgs::JointTrajectory::C
     
   // Attach the animation to the model
   this->drchubo.model->SetJointAnimation( joint_anim, jointAnim_callback );
-  printf("End loading Joint animation \n");
+  //printf("End loading Joint animation \n");
 
 }
 
@@ -614,12 +626,12 @@ void DRCPlugin::getCurrentPose() {
    * @brief
    */
   void DRCPlugin::jointAnimation_callback() {
-    printf("[DRCPlugin - INFO] Joint Animation is OVER, set vels to zero \n");
+    //printf("[DRCPlugin - INFO] Joint Animation is OVER, set vels to zero \n");
     math::Vector3 linvel  = this->drchubo.model->GetWorldLinearVel();
     math::Vector3 angvel = this->drchubo.model->GetWorldAngularVel();
 
-    printf( "[DRCPlugin - INFO] Before zeroeing, the linear vel of drchubo was: %f %f %f \n", linvel.x, linvel.y, linvel.z );
-    printf( "[DRCPlugin - INFO] Before zeroeing, the angular vel: %f %f %f \n", angvel.x, angvel.y, angvel.z );
+    //printf( "[DRCPlugin - INFO] Before zeroeing, the linear vel of drchubo was: %f %f %f \n", linvel.x, linvel.y, linvel.z );
+    //printf( "[DRCPlugin - INFO] Before zeroeing, the angular vel: %f %f %f \n", angvel.x, angvel.y, angvel.z );
     
     this->drchubo.model->SetLinearVel( math::Vector3( 0, 0, 0 ) );
     this->drchubo.model->SetAngularVel( math::Vector3( 0, 0, 0 ) );
@@ -637,12 +649,12 @@ void DRCPlugin::getCurrentPose() {
 // poseAnimation_callback
 //*************************************** 
 void DRCPlugin::poseAnimation_callback() {
-  printf("Pose Animation is OVER \n");
+  //printf("Pose Animation is OVER \n");
   math::Vector3 linvel  = this->drchubo.model->GetWorldLinearVel();
   math::Vector3 angvel = this->drchubo.model->GetWorldAngularVel();
   
-  printf( "[DRCPlugin - INFO] Before zeroeing, the linear vel of drchubo was: %f %f %f \n", linvel.x, linvel.y, linvel.z );
-  printf( "[DRCPlugin - INFO] Before zeroeing, the angular vel: %f %f %f \n", angvel.x, angvel.y, angvel.z );    
+  //printf( "[DRCPlugin - INFO] Before zeroeing, the linear vel of drchubo was: %f %f %f \n", linvel.x, linvel.y, linvel.z );
+  //printf( "[DRCPlugin - INFO] Before zeroeing, the angular vel: %f %f %f \n", angvel.x, angvel.y, angvel.z );    
 
   this->drchubo.model->SetLinearVel( math::Vector3( 0, 0, 0 ) );
   this->drchubo.model->SetAngularVel( math::Vector3( 0, 0, 0 ) );
@@ -674,24 +686,24 @@ void DRCPlugin::ROSQueueThread()
    * @function Robot::SetFootParallelToFloor
    */
   void DRCPlugin::Robot::SetFootParallelToFloor() {
-    printf("[DRCPlugin] Set foot parallel to floor \n");
+    //printf("[DRCPlugin] Set foot parallel to floor \n");
     // Get World Pose
     math::Pose worldPose = this->model->GetWorldPose();
        
     math::Pose leftFootPose;
     // Get foot pose (let's assume left and right feet both have the same pose)
     if( !this->model->GetLink("leftFoot") ) {
-      printf(" [DRCPLUGIN - ParallelToFloor] Gazebo does not recognize fixed legFoot link as a proper link, let's try with Body_LAR...\n");
+      //printf(" [DRCPLUGIN - ParallelToFloor] Gazebo does not recognize fixed legFoot link as a proper link, let's try with Body_LAR...\n");
       if( this->model->GetLink("Body_LAR") ) {
-	printf("[DRCPLUGIN - ParallelToFloor] OK. LAR worked. This is upper than the real foot, so you know \n");
+	//printf("[DRCPLUGIN - ParallelToFloor] OK. LAR worked. This is upper than the real foot, so you know \n");
 	leftFootPose = this->model->GetLink("Body_LAR")->GetWorldPose();
       }
       else {
-	printf( "[DRCPLUGIN - ParallelToFloor] None of them works, not setting foot parallel to floor \n");
+	//printf( "[DRCPLUGIN - ParallelToFloor] None of them works, not setting foot parallel to floor \n");
 	return;
       }
     } else { 
-      printf(" [DRCPLUGIN - ParallelToFloor] Using leftFoot as link of reference for setting foot parallel to floor"); 
+      //printf(" [DRCPLUGIN - ParallelToFloor] Using leftFoot as link of reference for setting foot parallel to floor"); 
 	leftFootPose = this->model->GetLink("leftFoot")->GetWorldPose();
     } 
   
@@ -704,7 +716,7 @@ void DRCPlugin::ROSQueueThread()
     math::Vector3 worldPos( worldPose.pos.x, worldPose.pos.y, worldPose.pos.z + this->ankleOffset );
     flatPose.Set( worldPos, invLeftFoot );
     this->model->SetWorldPose( flatPose );
-    printf( "[DRCPLUGIN - ParallelToFloor] Done  - setting foot up %f to account for ankle offset\n", this->ankleOffset );
+    //printf( "[DRCPLUGIN - ParallelToFloor] Done  - setting foot up %f to account for ankle offset\n", this->ankleOffset );
   }  
 
 
