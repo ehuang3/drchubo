@@ -68,8 +68,3 @@ Topics to which drchubo is subscribed
    with type: DRC_msgs::PoseStampedArray>
 
 
-ToDo
------
-
-I hardcoded orientation in poseAnimation to 0,0,0 - for some reason the quaternions are not being read fine
-will check that later today
