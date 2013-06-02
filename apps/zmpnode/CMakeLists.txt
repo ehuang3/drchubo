@@ -32,3 +32,7 @@ target_link_libraries (zmpnode hubozmp hubomz mzcommon expat ${DART_LIBRARIES} $
 set_target_properties( zmpnode PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
 
 
+#rosbuild_add_executable ( continuousWalk continuousWalk.cpp )  
+#target_link_libraries (continuousWalk hubozmp hubomz mzcommon expat ${DART_LIBRARIES} ${DARTExt_LIBRARIES} ${Boost_LIBRARIES}) 
+#set_target_properties( continuousWalk PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
+
