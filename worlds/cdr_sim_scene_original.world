@@ -1,0 +1,292 @@
+<?xml version="1.0" ?>
+<gazebo version="1.2">
+  <world name="default">
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose>4.225160 -5.352470 15.488500 0.000000 1.187640 1.624200</pose>
+        <view_controller>orbit</view_controller>
+      </camera>
+    </gui>
+    <physics type="ode">
+      <!-- Gravity-->	
+      <gravity>0 0 -9.8</gravity>
+      <update_rate>1000</update_rate>
+      <ode>
+        <solver>
+          <type>quick</type>
+          <dt>0.001</dt>
+          <iters>50</iters>
+          <sor>1.4</sor>
+        </solver>
+        <constraints>
+          <cfm>0.0</cfm>
+          <erp>0.2</erp>
+          <contact_max_correcting_vel>100.0</contact_max_correcting_vel>
+          <contact_surface_layer>0.0</contact_surface_layer>
+        </constraints>
+      </ode>
+    </physics>
+    <!-- A global light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <!-- Asphalt Plane -->	
+    <include>
+      <uri>model://asphalt_plane</uri>
+      <pose>0.0 0.0 -0.05 0.0 0.0 0.0</pose>
+    </include>
+
+    <!-- Mud Box -->	
+    <include>
+      <uri>model://mud_box2</uri>
+      <pose>2.5 -2.5 -0.05 0.0 0.0 0.0</pose>
+    </include>
+
+    <!-- Drill -->
+    <include>
+      <uri>model://cordless_drill</uri>
+      <name>drill</name>
+          <pose> 5.006370 -0.258000 0.80 0.000000 0.000000 0.000000</pose>
+    </include>
+
+    <!-- Fallen Table -->
+    <include>
+      <uri>model://table2</uri>
+      <name>table_b</name>
+      <static>false</static>
+      <pose>-0.42 2.0 1.16 3.1416 0.9 0.0</pose>
+    </include>
+
+    <!-- Fallen Bookshelf -->
+    <include>
+      <uri>model://bookshelf</uri>
+      <name>bookshelf_a</name>
+      <static>false</static>
+      <pose> 2.0 -0.6 0.5 1.57 -2.37 -1.92</pose>
+    </include>
+
+    <!-- Grey Brick Wall -->
+    <include>
+      <uri>model://grey_brick_box_3x1x3</uri>
+      <name>grey_brick_wall_a</name>
+      <static>true</static>
+      <pose>0 3.0 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://grey_brick_box_3x1x3</uri>
+      <name>grey_brick_wall_b</name>
+      <static>true</static>
+      <pose>3.0 3.0 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://grey_brick_box_3x1x3</uri>
+      <name>grey_brick_wall_c</name>
+      <static>true</static>
+      <pose>6.0 3.0 0 0 0 0</pose>
+    </include>
+
+    <!-- Entrance Grey Brick Wall -->
+    <include>
+      <uri>model://grey_brick_box_3x1x3</uri>
+      <name>grey_brick_wall_d</name>
+      <static>true</static>
+      <pose>-2.00 2.0 0 0 0 1.57</pose>
+    </include>
+
+    <include>
+      <uri>model://grey_brick_box_2x1x3</uri>
+      <scale> 0.5 1 1 </scale>
+      <name>grey_brick_wall_e</name>
+      <static>true</static>
+      <pose>-2.0 -2.5 0 0 0 1.57</pose>
+    </include>
+
+    <!-- End Brick Wall -->
+    <include>
+      <uri>model://grey_brick_box_3x1x3</uri>
+      <name>grey_brick_wall_f</name>
+      <static>true</static>
+      <pose>7.0 1.0 0 0 0 1.57</pose>
+    </include>
+
+    <include>
+      <uri>model://grey_brick_box_3x1x3</uri>
+      <name>grey_brick_wall_g</name>
+      <static>true</static>
+      <pose>7.0 -2.0 0 0 0 1.57</pose>
+    </include>
+
+    <!-- Cinder blocks -->
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_1</name>
+      <pose>2.0 -1.0 0.1 0 0 0</pose>
+    </include>
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_2</name>
+      <pose>2.000000 1.554800 0.15 1.57 0.000000 1.0</pose>
+    </include>
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_3</name>
+      <pose>5.000000 2.25 0.000000 0.000000 0.000000 0.20</pose>
+    </include>
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_4</name>
+      <pose>5.000000 -0.800000 0.25 0.000000 1.57 -1.30</pose>
+    </include>
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_5</name>
+      <pose>0.500 -1.400 0.25 0.000 0.0 0.20</pose>
+    </include>
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_6</name>
+      <pose>4.2 2.250 0.2 0.000 1.57 0.800</pose>
+    </include>
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_7</name>
+      <pose>4.000 1.487 0.000 0.000 0.000 2.000</pose>
+    </include>
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_8</name>
+      <pose>5.000 -3.0 0.100 0.000 0.000 3.000</pose>
+    </include>
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_9</name>
+      <pose>2.000 -3.0 0.25 0.000 1.57 -2.000</pose>
+    </include>
+    <include>
+      <uri>model://cinder_block</uri>
+      <name>cinder_10</name>
+      <pose>3.700 -2.00 0.000 0.000 0.000 2.600</pose>
+    </include>
+
+
+    <!-- Piping -->
+    <include>
+      <uri>model://piping</uri>
+      <name>piping</name>
+      <static>true</static>
+     <pose>-0.500000 -2.500000 0.000000 0.000000 0.000000 0.200000</pose>
+    </include>
+
+    <!-- Oil drum laid down-->
+    <include>
+      <uri>model://barrel_50</uri>
+      <name>oil drum 1</name>
+      <static>true</static>
+      <pose> 2.0 -2.0 0 0 0 0.2</pose>
+    </include>
+    <include>
+      <uri>model://barrel_50</uri>
+      <name>oil drum 2</name>
+      <static>true</static>
+      <pose>3.000000 -2.000000 0.000000 0.000000 0.000000 0.000000</pose>
+    </include>
+    <include>
+      <uri>model://barrel_50</uri>
+      <name>oil drum 3</name>
+      <pose>3.311180 1.580800 0.000000 0.000000 0.000000 -0.400000</pose>
+    </include>
+
+    <!-- Oil drum up-->
+    <include>
+      <uri>model://barrel</uri>
+      <name>oil drum 4</name>
+      <static>true</static>
+      <pose>4.000000 -1.533100 0.000000 0.000000 0.000000 0.000000</pose>
+    </include>
+    <include>
+      <uri>model://barrel</uri>
+      <name>oil drum 5</name>
+      <static>true</static>
+      <pose> 0.700000 -2.5000000 0.000000 0.000000 0.000000 0.000000</pose>
+    </include>
+
+    <!-- Cabinet-->
+    <include>
+      <uri>model://cabinet</uri>
+      <name>cabinet 1</name>
+      <pose>1.000000 0.3000 0.000000 0.000000 0.000000 0.000000</pose>
+    </include>
+
+    <include>
+      <uri>model://cabinet</uri>
+      <name>cabinet 2</name>
+      <pose>5.000000 -0.500000 0.000000 0.0 0.0 0.0</pose>
+    </include>
+
+    <!-- Heat exchanger -->
+    <include>
+      <uri>model://heatexchanger</uri>
+      <name>heatexchanger</name>
+      <static>true</static>
+      <pose>4.534370 2.000000 0.000000 0.000000 0.000000 0.300000</pose>
+    </include>
+
+    <!-- Broken Grey Brickwall -->
+    <include>
+      <uri>model://grey_brickwall</uri>
+      <name>broken Grey Brickwall</name>
+      <pose>5.534370 1.300000 0.000000 0.000000 0.000000 -1.3000</pose>
+    </include>
+
+    <!-- Small Jersey Barrier -->
+    <include>
+      <uri>model://jersey_barrier_small</uri>
+      <name>small jersey barrier</name>
+      <pose> 0.8 1.3000 0.000000 -1.57000 0.000000 -0.200</pose>
+    </include>
+
+    <!-- VRC fire hose long -->
+    <include>
+      <uri>model://vrc_firehose_long</uri>
+      <name>long fire hose 1</name>
+      <pose> 2.5 -0.7000 0.1000000 0.000 0.000000  0.300 </pose>
+    </include>
+    <include>
+      <uri>model://vrc_firehose_long</uri>
+      <name>long fire hose 2</name>
+      <pose> 6.3  1.0000 0.1000000 0.000 0.000000 -1.500</pose>
+    </include>
+
+    <!-- VRC Valve -->
+    <include>
+      <uri>model://vrc_valve</uri>
+      <name>valve1</name>
+      <pose> 6.0 1.000 1.000000 0.000  1.570000 -0.000</pose>
+    </include>
+    <include>
+      <uri>model://vrc_valve</uri>
+      <name>valve2</name>
+      <pose> 6.0 0.2000 1.000000 0.000 1.570000 -0.000</pose>
+    </include>
+
+    <!-- DRC Hubo -->
+    <include>
+      <uri>model://drchubo</uri>
+      <pose>-0.0315 -0.011 0.93 0 0 0</pose>
+      <!-- Code used when working with pure gazebo -->	
+      <!-- <plugin filename="libdrchubo_MattCode.so" name="mattCode"/> -->	
+    </include>
+
+    <!-- DRC Plugin -->
+    <plugin filename="libDRCPlugin.so" name="drc_plugin">
+      <drchubo>
+         <model_name>drchubo</model_name>
+         <pin_link>Body_Torso</pin_link>
+      </drchubo>
+    </plugin>
+
+  </world>
+</gazebo>

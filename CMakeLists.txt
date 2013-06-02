@@ -1,3 +1,7 @@
+# ***********************************************************************
+# DRC 
+# ROS package to simulate DRC-Hubo using animation of joints + poses
+# ***********************************************************************
 cmake_minimum_required (VERSION 2.8)
 include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 project (drchubo)
@@ -6,7 +10,7 @@ project (drchubo)
 # set(ROSBUILD_DONT_REDEFINE_PROJECT True)
 # rosbuild_init()
 
-# find gazebo include (FindPkgConfig)
+# find Gazebo dependency
 include (FindPkgConfig)
 if (PKG_CONFIG_FOUND)
   pkg_check_modules(GAZEBO gazebo)
@@ -14,11 +18,11 @@ else()
   message(FATAL_ERROR "pkg-config is required; please install it")
 endif()
 
-# depends on DRCVehiclePlugin
+# Set Gazebo include/lib paths
 include_directories(${GAZEBO_INCLUDE_DIRS})
 link_directories(${GAZEBO_LIBRARY_DIRS})
 
-# VRC-GOLEM setup
+# drchubo helpful messsages
 message(STATUS "Creating Makefile for drchubo")
 message(STATUS "CMAKE_SOURCE_DIR = ${CMAKE_SOURCE_DIR}")
 message(STATUS "CMAKE_BINARY_DIR = ${CMAKE_BINARY_DIR}")
@@ -64,27 +68,34 @@ set(PATH_HEADER_DIR ${CMAKE_SOURCE_DIR}/src/utils/data_paths.h)
 message(STATUS "Generate the path header file to ${PATH_HEADER_DIR}")
 configure_file(${PATH_HEADER_DIR}.in ${PATH_HEADER_DIR} @ONLY)
 
-# Link with DART and GRIP
+#set the default path for built executables to the "bin" directory
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin/)
+#set the default path for built libraries to the "lib" directory
+set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/lib/)
+
+# Link with DART 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_INSTALL_PREFIX}/share/dart")
-#set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_INSTALL_PREFIX}/share/grip")
 
 find_package(DARTExt REQUIRED)
 find_package(DART REQUIRED)
-#find_package(GRIP REQUIRED)
 
 include_directories(${DARTExt_INCLUDEDIR})
 include_directories(${DART_INCLUDEDIR})
-#include_directories(${GRIP_INCLUDEDIR})
 link_directories(${DART_LIBRARY_DIRS})
-#link_directories(${GRIP_LIBRARY_DIRS})
 
 # Build source
-message(STATUS "Building drchubo source")
-include_directories(BEFORE src)
-link_directories(${CMAKE_SOURCE_DIR}/lib)
+# 1. Create main DRCPlugin
+add_subdirectory( plugins )
+
+# 2. Generate apps (ROS nodes) which mostly depend on DRCPlugin
+add_subdirectory( apps )
+
+#message(STATUS "Building drchubo source")
+#include_directories(BEFORE src)
+#link_directories(${CMAKE_SOURCE_DIR}/lib)
 #add_subdirectory(src)
 
-enable_testing()
+#enable_testing()
 #add_subdirectory(test)
 #add_subdirectory(apps)
-add_subdirectory( plugins )
+

@@ -1,9 +1,0 @@
-<launch>
-
-  <arg name="gzname" default="gazebo"/>
-  <arg name="gzworld" default="$(find DRC)/worlds/drchubo_rubble.world"/>
-  <arg name="extra_gazebo_args" default="" />
-
-  <node name="gazebo" pkg="DRC" type="run_$(arg gzname)" args="$(arg gzworld) $(arg extra_gazebo_args)" output="screen" />
-
-</launch>

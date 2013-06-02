@@ -1,0 +1,17 @@
+material vrc/grey_brick_box
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture grey_brick_box.jpg
+				filtering anistropic
+				max_anisotropy 16
+				scale 1 1
+			}
+		}
+	}
+}

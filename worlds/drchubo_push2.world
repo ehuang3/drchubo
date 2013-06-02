@@ -91,9 +91,17 @@
     <include>
       <uri>model://drchubo</uri>
       <pose>0 0 0.95 0 0 0</pose>
-      <plugin filename="libdrchubo_AnimationPush.so" name="push"/>
+      <!-- Code used when working with pure gazebo -->	
+      <!-- <plugin filename="libdrchubo_AnimationPush.so" name="push"/> -->	
     </include>
 
+    <!-- DRC Plugin -->
+    <plugin filename="libDRCPlugin.so" name="drc_plugin">
+      <drchubo>
+         <model_name>drchubo</model_name>
+         <pin_link>Body_Torso</pin_link>
+      </drchubo>
+    </plugin>
 
   </world>
 </gazebo>
