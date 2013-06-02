@@ -68,19 +68,4 @@ int main( int argc, char* argv[] ) {
   
   // Wait
   ros::Duration(10).sleep();
-  /*
-  printf("Send stay dog \n");
-  // Send stayDog mode
-  // First send the configuration you want stay dog to stay in
-
-  confPub.publish( lastState );
-  ros::spinOnce();
-  ros::Duration(0.5).sleep(); 
-
-  std_msgs::String mode_msg;
-  mode_msg.data = "stay_dog";
-  modePub.publish( mode_msg );
-  ros::Duration(1.0).sleep();
-  printf("End \n");
-  */
 }

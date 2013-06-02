@@ -450,6 +450,10 @@ void DRCPlugin::LoadRobotROSAPI()
 void DRCPlugin::SetRobotJointAnimation(const trajectory_msgs::JointTrajectory::ConstPtr &_cmd )
 {
   printf("Setting Robot animation \n");
+
+  // Set flag
+  onJointAnimation = true;
+
   std::map<std::string, common::NumericAnimationPtr> joint_anim;
   common::NumericKeyFrame *joint_key;
     
@@ -537,6 +541,9 @@ geometry_msgs::Pose DRCPlugin::getCurrentPose() {
     this->SetRobotMode("stay_dog");
     // Set current configuration (last animation joint configuration) for the robot to stay
     defaultJointState = this->getCurrentJointState();
+
+    // Joint Animation is off
+    this->onJointAnimation = false;
   }
 
   /**
@@ -558,12 +565,19 @@ geometry_msgs::Pose DRCPlugin::getCurrentPose() {
     this->SetRobotMode("stay_dog");
     // Set current configuration (last animation joint configuration) for the robot to stay
     defaultPose = this->getCurrentPose();
+
+    // Pose Animation is OFF
+    this->onPoseAnimation = false;
+
   }
 
   ////////////////////////////////////////////////////////////////////////////////
   void DRCPlugin::SetRobotPoseAnimation(const DRC_msgs::PoseStampedArray::ConstPtr &_cmd )
   {
   printf("Setting Pose animation \n");
+
+  // Set flag
+  onPoseAnimation = true;
 
   // Fill
   int numTrajPoints = _cmd->poses.size();
@@ -599,7 +613,11 @@ geometry_msgs::Pose DRCPlugin::getCurrentPose() {
   void DRCPlugin::SetRobotPoseJointAnimation(const DRC_msgs::PoseJointTrajectory::ConstPtr &_cmd ) {
     
     printf("Setting Robot pose + joint animation \n");
-    
+
+    // Set flag
+    onJointAnimation = true;
+    onPoseAnimation = true;
+
     // Fill joint initialization
     int numTrajPoints = _cmd->points.size();
     double T = _cmd->points[numTrajPoints - 1].time_from_start.toSec();
@@ -650,8 +668,9 @@ geometry_msgs::Pose DRCPlugin::getCurrentPose() {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void DRCPlugin::SetRobotConfiguration(const sensor_msgs::JointState::ConstPtr &_cmd )
-{printf("[DRCPLUGIN - SetRobotConfiguration] \n");
+void DRCPlugin::SetRobotConfiguration(const sensor_msgs::JointState::ConstPtr &_cmd ) {
+  
+  printf("[DRCPLUGIN - SetRobotConfiguration] \n");
   // Store defaultJointConfiguration (in case we need to call stay dog)
   defaultJointState = *( _cmd );
   
@@ -722,8 +741,6 @@ void DRCPlugin::SetRobotMode(const std::string &_str)
     ROS_INFO("[DRCPlugin] Set STAY_DOG mode \n");
     this->drchubo.modeType = ON_STAY_DOG_MODE;
   }
-
-
 
   else {
     ROS_INFO("available modes:no_gravity, nominal (with gravity), feet (gravity only on both feet - SO FAR THIS GIVES STRANGE RESULTS. TRY USING NO_GRAVITY FOR ANIMATIONS)");
