@@ -14,11 +14,23 @@ namespace control {
         // 1. Setup
         kinematics::Skeleton* robot = data->robot;
         robot::robot_kinematics_t* robot_kin = data->kin;
-        Eigen::Isometry3d Twhand = data->manip_xform[data->manip_index];
-        int mi = data->manip_index;
+        int ms = data->manip_side;
+        int mi = ms ? robot::MANIP_L_HAND : robot::MANIP_R_HAND;
+        Eigen::Isometry3d Twhand = data->manip_xform[mi];
+
+        // 2. Add delta transform
+        Twhand.linear() = Twhand.linear() * data->joy_rotation;
+        Twhand.translation() += data->joy_position;
 
         // 2. Run IK
-        bool ok = robot_kin->arm_ik(Twhand, mi == robot::MANIP_L_HAND, target);
+        bool ok = robot_kin->arm_ik(Twhand, ms, target);
+
+        // 23. Save new manip
+        data->manip_xform[mi] = Twhand;
+
+        // 3. Visualize target
+        data->manip_target = Twhand;
+
         return ok;
     }
 

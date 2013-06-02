@@ -64,8 +64,8 @@ namespace hubo {
 
         limb2s[robot::LIMB_L_LEG] = {"LHY", "LHR", "LHP", "LKP", "LAP", "LAR"};
         limb2s[robot::LIMB_R_LEG] = {"RHY", "RHR", "RHP", "RKP", "RAP", "RAR"};
-        limb2s[robot::LIMB_L_ARM] = {"LSP", "LSR", "LSY", "LEP", "LWY", "LWP", "LWR"};
-        limb2s[robot::LIMB_R_ARM] = {"RSP", "RSR", "RSY", "REP", "RWY", "RWP", "RWR"};
+        limb2s[robot::LIMB_L_ARM] = {"LSP", "LSR", "LSY", "LEP", "LWY", "LWP"};//, "LWR"};
+        limb2s[robot::LIMB_R_ARM] = {"RSP", "RSR", "RSY", "REP", "RWY", "RWP"};//, "RWR"};
         limb2s[robot::LIMB_HEAD] = {"NKY", "NKP"};
         limb2s[robot::LIMB_TORSO] = {"TSY"};
         limb2s[robot::LIMB_L_HAND] = {"LF1", "LF2", "LF3"};

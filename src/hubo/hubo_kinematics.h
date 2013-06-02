@@ -14,8 +14,8 @@ public:
 
 	virtual void init(kinematics::Skeleton *_hubo);
 
-    virtual void xform_w_dsy(Eigen::Isometry3d& B, bool left, robot::robot_state_t& state) { }
-    virtual void xform_dh_wrist(Eigen::Isometry3d& R, bool left) { }
+    virtual void xform_w_dsy(Eigen::Isometry3d& B, bool left, robot::robot_state_t& state);
+    virtual void xform_dh_wrist(Eigen::Isometry3d& R, bool left);
 
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

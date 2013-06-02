@@ -159,6 +159,8 @@ void do_keyboard(robot::robot_state_t& state, control::control_data_t* data)
     spnav_keys['a'] = "GRASP";
     spnav_keys['s'] = "BODY_XZP_FIX_LEGS";
     spnav_keys['d'] = "JOINT";
+    spnav_keys['f'] = "ARM_JIT";
+    spnav_keys['g'] = "ARM_AIK";
     spnav_keys['q'] = "NULL";
     //... add more controllers
 
