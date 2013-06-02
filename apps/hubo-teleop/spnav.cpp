@@ -90,6 +90,13 @@ namespace teleop {
             invalid_input |= isnan(joy_movement[0]);
             invalid_input |= isinf(joy_movement[0]);
         }
+        if(invalid_input) {
+            std::cout << "Invalid SPACENAV readings" << std::endl;
+            std::cout << "movement = " << joy_movement.transpose() << std::endl;
+            std::cout << "raw = " << joy_raw.transpose() << std::endl;
+            std::cout << "dt = " << dT.toSec() << std::endl;
+        }
+
         // 4. Are we ok?
         joystick_ok = !invalid_input && !allBelow;
 

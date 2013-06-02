@@ -19,6 +19,8 @@ REGISTER_CONTROLLER(control::BODY_ZY_FIX_LEGS_T, BODY_ZY_FIX_LEGS)
 #include "joints.h"
 REGISTER_CONTROLLER(control::JOINT_T, JOINT)
 REGISTER_CONTROLLER(control::GRASP_T, GRASP)
+#include "null.h"
+REGISTER_CONTROLLER(control::NULL_T, NULL)
 
 
 //############################################################
