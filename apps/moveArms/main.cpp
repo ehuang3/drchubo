@@ -69,12 +69,13 @@ int main( int argc, char* argv[] ) {
   }
 
   // Set stay dog
+/*
   mode_msg.data = "stay_dog";
 
   modePub.publish( mode_msg );
   ros::spinOnce();
   ros::Duration(0.2).sleep();
-  
+  */
   printf("Start loop of commands \n");
   
   // Do it
@@ -82,7 +83,7 @@ int main( int argc, char* argv[] ) {
 
     conf_msg.header.stamp = ros::Time::now();
     printf(" i: %d \n", i );
-    double angle = -0.8 / (double) numSteps;
+    double angle = -1.57 / (double) numSteps;
     double val = angle*i;
 
     // Generate the message

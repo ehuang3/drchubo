@@ -43,6 +43,8 @@ int main( int argc, char* argv[] ) {
 
   // Convert it to a message
   pjt_msg = zd.getPoseJointTrajMsg();
+  // Give it a time
+  pjt_msg.header.stamp = ros::Time::now();
 
   // Send it
   printf("Publishing pose animation \n");
@@ -54,5 +56,20 @@ int main( int argc, char* argv[] ) {
   ros::spinOnce();
   
   // Wait
+  ros::Duration(30).sleep();
+
+	// Send it again
+  // Give it a time
+  pjt_msg.header.stamp = ros::Time::now();
+  printf("Publishing pose animation again! \n");
+  poseJointTrajPub.publish( pjt_msg );
+
+  // Spin
+  ros::spinOnce();
+  
+  // Wait
   ros::Duration(10).sleep();
+
+
+
 }
