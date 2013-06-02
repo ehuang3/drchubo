@@ -254,7 +254,7 @@ void DRCPlugin::LoadRobotROSAPI()
   // Topic to set configuration
   std::string configuration_topic_name = "drchubo/configuration";
   ros::SubscribeOptions configuration_so =
-    ros::SubscribeOptions::create<sensor_msgs::JointState>( configuration_topic_name, 1,
+    ros::SubscribeOptions::create<sensor_msgs::JointState>( configuration_topic_name, 100,
 							    boost::bind(&DRCPlugin::SetRobotConfiguration, this, _1),
 							    ros::VoidPtr(), &this->rosQueue );
   this->drchubo.subConfiguration = this->rosNode->subscribe(configuration_so);
@@ -408,6 +408,8 @@ void DRCPlugin::SetRobotConfiguration(const sensor_msgs::JointState::ConstPtr &_
     // Set flag
     onJointAnimation = true;
     onPoseAnimation = true;
+
+    // Set starting time
 
     // Fill joint initialization
     int numTrajPoints = _cmd->points.size();

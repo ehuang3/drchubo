@@ -6,7 +6,7 @@
  */
 #include <ros/ros.h>
 #include <std_msgs/String.h>
-#include <sensor_msgs/JointState.h>
+#include <DRC_msgs/PoseJointTrajectory.h>
 
 
 const int gNumBodyDofs = 24; // Left Arm, Right Arm, Left Leg, Right Leg
@@ -18,6 +18,7 @@ std::string gJointNames[] = {"drchubo::LSP", "drchubo::LSR", "drchubo::LSY", "dr
 			     "drchubo::TSY", "drchubo::NKY", "drchubo::NKP",
 			     "drchubo::LF1", "drchubo::LF2", "drchubo::LF3",
 			     "drchubo::RF1", "drchubo::RF2", "drchubo::RF3"};
+
 
 
 int main( int argc, char* argv[] ) {
@@ -39,9 +40,9 @@ int main( int argc, char* argv[] ) {
 
   // For mode
   ros::Publisher modePub = node->advertise<std_msgs::String>( "drchubo/mode", 1, false );
-  // And for robot configuration 
-  ros::Publisher confPub = node->advertise<sensor_msgs::JointState>( "drchubo/configuration",
-								     10, false );
+  ros::Publisher animPub = node->advertise<DRC_msgs::PoseJointTrajectory>( "drchubo/poseJointAnimation", 
+										    1,
+										    false );
 
   // Give time
   ros::Duration(1.0).sleep();
@@ -59,51 +60,64 @@ int main( int argc, char* argv[] ) {
   double dt = 0.01;
   double T = 5.0;
   int numSteps = (int)( T/dt );
-
-  sensor_msgs::JointState conf_msg;
-
-  // Set defaults
-  for( int i = 0; i < gNumJoints; ++i ) {
-    conf_msg.name.push_back( gJointNames[i] );
-    conf_msg.position.push_back( 0.0 );
-  }
-
-  // Set stay dog
-/*
-  mode_msg.data = "stay_dog";
-
-  modePub.publish( mode_msg );
-  ros::spinOnce();
-  ros::Duration(0.2).sleep();
-  */
-  printf("Start loop of commands \n");
   
+  printf("Start loop of commands \n");
+  double t = 0;
   // Do it
   for( int i = 0; i < numSteps; ++i ) {
 
-    conf_msg.header.stamp = ros::Time::now();
-    printf(" i: %d \n", i );
+    // Set the default animation message
+    DRC_msgs::PoseJointTrajectory pjt;
+    pjt.header.stamp = ros::Time::now();
+    pjt.header.frame_id = "drchubo::Body_Torso";
+    
+    for( int i = 0; i < gNumJoints; ++i ) {
+      pjt.joint_names.push_back( gJointNames[i] );  
+    }
+    
+    // Only one point
+    trajectory_msgs::JointTrajectoryPoint jt;
+    geometry_msgs::Pose p;
+
     double angle = -1.57 / (double) numSteps;
     double val = angle*i;
+    
 
+    jt.positions.resize( gNumJoints );
     // Generate the message
     for( int j = 0; j < gNumJoints; ++j ) {
-      conf_msg.position[j] = 0.0;
+      jt.positions[j] = 0.0;
       // If left shoulder pitch
-      if( strcmp( conf_msg.name[j].c_str(), "drchubo::LSP" ) == 0 ) {
-	conf_msg.position[j] = val;
+      if( strcmp( pjt.joint_names[j].c_str(), "drchubo::LSP" ) == 0 ) {
+	jt.positions[j] = val;
       } 
-      else if( strcmp( conf_msg.name[j].c_str(), "drchubo::RSP" ) == 0 ) {
-	conf_msg.position[j] = val;
+      else if( strcmp( pjt.joint_names[j].c_str(), "drchubo::RSP" ) == 0 ) {
+	jt.positions[j] = val;
       } 
     }
 
+    // Set poses
+    p.position.x = 0.0;
+    p.position.y = 0.0;
+    p.position.z = 1.5;
+    p.orientation.x = 0;
+    p.orientation.y = 0;
+    p.orientation.z = 0;
+    p.orientation.w = 1.0;
+
+    
+    pjt.points.push_back(jt);
+    pjt.poses.push_back(p);
+
+
+    pjt.points[0].time_from_start = ros::Duration().fromSec(dt);
+
     // Publish it
-    confPub.publish( conf_msg );
+    animPub.publish( pjt );
     // Spin
     ros::spinOnce();
     // Sleep for a little while so we don't send stuff too quickly
-    //ros::Duration(dt).sleep();
+    ros::Duration(dt).sleep();
   
   }
   

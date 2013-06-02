@@ -209,7 +209,7 @@ namespace gazebo
     private: ros::Subscriber subTrajectory;
     private: ros::Subscriber subPose;
     private: ros::Subscriber subConfiguration;
-    private: ros::Subscriber subMode;;
+    private: ros::Subscriber subMode;
 
       // Store joint pointers
     private: std::vector<physics::JointPtr> mJoints;
