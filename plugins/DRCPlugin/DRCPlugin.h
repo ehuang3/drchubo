@@ -209,10 +209,13 @@ namespace gazebo
     private: ros::Subscriber subTrajectory;
     private: ros::Subscriber subPose;
     private: ros::Subscriber subConfiguration;
-    private: ros::Subscriber subMode;
+    private: ros::Subscriber subMode;;
       
       friend class DRCPlugin;
     } drchubo;
+
+    /// \brief drchubo's Publishers
+  private: ros::Publisher jointStatesPub;
 
 
     /// \brief Are we animating?
@@ -228,6 +231,7 @@ namespace gazebo
     /// \brief Joint and pose current state getters
   private:  sensor_msgs::JointState getCurrentJointState();
   private:  geometry_msgs::Pose getCurrentPose();
+
 
     ////////////////////////////////////////////////////////////////////////////
     //                                                                        //

@@ -270,6 +270,9 @@ void DRCPlugin::UpdateStates()
 
   }
   
+  // Publish joint states
+  jointStatesPub.publish( defaultJointState );
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -432,6 +435,15 @@ void DRCPlugin::LoadRobotROSAPI()
 								  boost::bind(&DRCPlugin::SetRobotPoseJointAnimation, this, _1),
 								  ros::VoidPtr(), &this->rosQueue);
   this->drchubo.subPoseJointAnimation = this->rosNode->subscribe(poseJointAnimation_so);  
+
+  ////////////////////
+  //// Publishers
+  
+  // Publish joint state information
+  jointStatesPub = this->rosNode->advertise<sensor_msgs::JointState>( "drchubo/joint_states",
+								      1,
+								      false );
+  
 }
 
 ////////////////////////////////////////////////////////////////////////////////
