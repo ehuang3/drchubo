@@ -81,6 +81,24 @@ gui::params_t gui_params;
 //# HUBO driver functions
 //############################################################
 
+void init_world_pose(robot::robot_state_t& robot)
+{
+    kinematics::Skeleton* hubo_skel = robot.robot();
+    hubo_skel->setPose(robot.dart_pose());
+
+    kinematics::BodyNode* left_foot = hubo_skel->getNode("leftFoot");
+    kinematics::Shape* left_shoe = left_foot->getCollisionShape();
+
+    Eigen::Matrix4d Twlf = left_foot->getWorldTransform();
+    
+    double pelvis_height = fabs(Twlf(2,3));
+
+    Eigen::Isometry3d Twb;
+    robot.get_body(Twb);
+    Twb(2,3) = pelvis_height;
+    robot.set_body(Twb);
+}
+
 bool init_sensors(const sensor_msgs::Joy::ConstPtr& joy, control::control_data_t* data)
 {
     if(!spnav.sensor_update(joy))
@@ -100,6 +118,9 @@ void init_hubo(robot::robot_state_t& state, control::control_data_t* data)
     // 1. Zeroing HUBO
     hubo_dofs.setZero();
     state.set_dart_pose(hubo_dofs);
+
+    // 3. Set world pose
+    init_world_pose(state);
 
     // 2. Get HUBO out of the singularity.
     std::vector<int> manip_enum = { robot::MANIP_L_HAND, robot::MANIP_R_HAND };

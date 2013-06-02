@@ -77,7 +77,7 @@ namespace gui {
         // invert to get height below left ankle
         foot2ground *= -1;
         // set into ground
-        dofs(2) = foot2ground - ground_z;
+        dofs(2) = -ground_z;
         ground->setPose(dofs);
 
         // 4. Initialize GL stuff
@@ -109,8 +109,8 @@ namespace gui {
         glEnable(GL_NORMALIZE);
         //glEnable(GL_COLOR_MATERIAL);
         //glDisable(GL_CULL_FACE);
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_FRONT);
+        //glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT_AND_BACK);
 
         // 
         glShadeModel(GL_SMOOTH);
@@ -151,7 +151,7 @@ namespace gui {
         bool draw_limits = gui_params->draw_limits;
         Eigen::Isometry3d goal = *gui_params->goal;
         // 2. Set up state
-        robotSkel->setPose( current_state->dart_pose() );
+        robotSkel->setPose( target_state->dart_pose() );
     
         //############################################################
         //### Gl rendering
@@ -163,12 +163,12 @@ namespace gui {
         ground->draw(mRI);
 
         // 2. Render robots
-        glClear(GL_DEPTH_BUFFER_BIT);
+        // glClear(GL_DEPTH_BUFFER_BIT);
         // current state
-        robotSkel->setPose( current_state->dart_pose() );
-        robotSkel->draw(mRI, Vector4d(0.5, 0.5, 0.5, 0.5), false); // he's the grey one
+        // robotSkel->setPose( current_state->dart_pose() );
+        // robotSkel->draw(mRI, Vector4d(0.5, 0.5, 0.5, 0.5), false); // he's the grey one
         // target state
-        glClear(GL_DEPTH_BUFFER_BIT);
+        // glClear(GL_DEPTH_BUFFER_BIT);
         robotSkel->setPose( target_state->dart_pose() );
         // robotSkel->draw(mRI, Vector4d(0, 1, 0, 0.7), false); // he's green and transparents
         render_skel(robotSkel, *target_state, Vector4d(0,1,0,1), false, true);
@@ -307,7 +307,7 @@ namespace gui {
         Vector3d com = robot->getWorldCOM();
         glPushMatrix();
         glTranslated(com(0), com(1), foot2ground);
-        gluSphere(quadObj, radius, 16, 16);
+        gluDisk(quadObj, 0, radius, 16, 16);
         glPopMatrix();    
     }
 
