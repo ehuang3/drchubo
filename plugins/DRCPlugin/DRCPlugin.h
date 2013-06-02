@@ -210,6 +210,9 @@ namespace gazebo
     private: ros::Subscriber subPose;
     private: ros::Subscriber subConfiguration;
     private: ros::Subscriber subMode;;
+
+      // Store joint pointers
+    private: std::vector<physics::JointPtr> mJoints;
       
       friend class DRCPlugin;
     } drchubo;
@@ -229,8 +232,8 @@ namespace gazebo
   private: void poseAnimation_callback();
 
     /// \brief Joint and pose current state getters
-  private:  sensor_msgs::JointState getCurrentJointState();
-  private:  geometry_msgs::Pose getCurrentPose();
+  private:  void getCurrentJointState();
+  private:  void getCurrentPose();
 
 
     ////////////////////////////////////////////////////////////////////////////
@@ -239,8 +242,10 @@ namespace gazebo
     //                                                                        //
     ////////////////////////////////////////////////////////////////////////////
   private: double lastUpdateTime;
-  private: sensor_msgs::JointState defaultJointState;    
-  private: geometry_msgs::Pose defaultPose;
+    //private: sensor_msgs::JointState defaultJointState;    
+    //private: geometry_msgs::Pose defaultPose;
+  private: std::map<std::string, double> defaultJointState_p;
+  private: math::Pose defaultPose_p;
     
     /// \brief Pointer to parent world.
   private: physics::WorldPtr world;
@@ -256,6 +261,11 @@ namespace gazebo
     // items below are used for deferred load in case ros is blocking
     private: sdf::ElementPtr sdf;
     private: boost::thread deferredLoadThread;
+
+    // Should be in Robot but let's be practical by now
+    static const int mNumJoints;
+    static std::string mFullJointNames[];
+    static std::string mJointNames[];
 
   };
 /** \} */

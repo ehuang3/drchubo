@@ -44,19 +44,6 @@ int main( int argc, char* argv[] ) {
   // Convert it to a message
   pjt_msg = zd.getPoseJointTrajMsg();
 
-  // Store the last joint configuration to set the robot at the end of the animation 
-  //(to avoid him from flying and hitting himself)
-  sensor_msgs::JointState lastState;
-  trajectory_msgs::JointTrajectoryPoint lastPoint;
-  int numPoints = pjt_msg.points.size();
-  lastPoint = pjt_msg.points[numPoints - 1];
-
-  for( int i = 0; i < pjt_msg.joint_names.size(); ++i ) {
-    lastState.name.push_back( pjt_msg.joint_names[i] );
-    lastState.position.push_back( lastPoint.positions[i] );
-  }
-
-
   // Send it
   printf("Publishing pose animation \n");
   poseJointTrajPub.publish( pjt_msg );
