@@ -59,11 +59,6 @@
     </include>
 
     <!-- Beer -->
-    <include>
-      <uri>model://beer</uri>
-      <name>beer_a</name>
-      <pose>6.10 -0.535 0.82 0 0 0</pose>
-    </include>
 
     <!-- Fallen Table -->
     <include>
