@@ -206,10 +206,10 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
   p0.position.x = _initPose->position.x;
   p0.position.y = _initPose->position.y;
   p0.position.z = _initPose->position.z;  // + 1.18 - DEFAULT FROM FLOOR
-  p0.orientation.x = _initPose->rotation.x;
-  p0.orientation.y = _initPose->rotation.y;
-  p0.orientation.z = _initPose->rotation.z;
-  p0.orientation.w = _initPose->rotation.w;
+  p0.orientation.x = _initPose->orientation.x;
+  p0.orientation.y = _initPose->orientation.y;
+  p0.orientation.z = _initPose->orientation.z;
+  p0.orientation.w = _initPose->orientation.w;
   
   // Append to trajectory
   pjt.points.push_back(jt0);
@@ -287,7 +287,11 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
  * @brief Executes Matt's code
  */
   void zmpnode::generateZMPGait( size_t _max_step_count,
-                                 double _step_length ) {
+                                 double _step_length,
+				 double _double_support_time,
+				 double _single_support_time,
+				 double _startup_time,
+				 double _shutdown_time ) {
   printf(" Generate ZMP Gait \n");
   bool show_gui = false;
   bool use_ach = false;
@@ -309,15 +313,13 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
 
   double lookahead_time = 2.5;
 
-  double startup_time = 1.0;
-  double shutdown_time = 1.0;
-  double double_support_time = 0.05;
-  double single_support_time = 0.70;
-
   // Values set by arguments
   double max_step_count = _max_step_count;
   double step_length = _step_length;
-
+  double startup_time = _startup_time;
+  double shutdown_time = _shutdown_time;
+  double double_support_time = _double_support_time;
+  double single_support_time = _single_support_time;
 
   double zmp_jerk_penalty = 1e-8; // jerk penalty on ZMP controller
 

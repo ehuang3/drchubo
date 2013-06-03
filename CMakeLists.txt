@@ -83,12 +83,13 @@ include_directories(${DARTExt_INCLUDEDIR})
 include_directories(${DART_INCLUDEDIR})
 link_directories(${DART_LIBRARY_DIRS})
 
+
 # Build source
 # 0. 
 message(STATUS "Building drchubo source")
 include_directories(BEFORE src)
 link_directories(${CMAKE_SOURCE_DIR}/lib)
-add_subdirectory(src)
+#add_subdirectory(src)
 
 # 1. Create main DRCPlugin
 add_subdirectory( plugins )

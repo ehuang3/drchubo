@@ -1,7 +1,16 @@
 <launch>
   <param name="/walk_max_steps" type="int" value="5" />
   <param name="/walk_step_length" type="double" value="0.3" />
-  <param name="/walk_transition_time" type="double" value="0.5" />
+  <param name="/walk_transition_time" type="double" value="1.0" />
+
+  <!-- Double support time: Default 0.05 -->
+  <param name="/walk_double_support_time" type="double" value="0.05" />
+  <!-- Single support time: Default 0.70 -->
+  <param name="/walk_single_support_time" type="double" value="0.7" />
+  <!-- Startup time: Default 1.0 -->
+  <param name="/walk_startup_time" type="double" value="1.0" />
+  <!-- Shutdown time: Default 1.0 -->
+  <param name="/walk_shutdown_time" type="double" value="1.0" />
 
   <node pkg="drchubo" type="walkNode" name="walkNode_instance" output="screen" />	
 </launch>
