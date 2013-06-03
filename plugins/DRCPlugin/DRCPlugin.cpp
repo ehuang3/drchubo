@@ -191,7 +191,14 @@ void DRCPlugin::RobotGrabDrill(const geometry_msgs::Pose::ConstPtr &_cmd)
    this->drchubo.model->GetLink("Body_RF2")->SetSelfCollide(false);  
    this->drchubo.model->GetLink("Body_RF2")->SetCollideMode("none"); 
    this->drchubo.model->GetLink("Body_RF3")->SetSelfCollide(false); 
-   this->drchubo.model->GetLink("Body_RF3")->SetCollideMode("none"); 
+   this->drchubo.model->GetLink("Body_RF3")->SetCollideMode("none");
+
+   this->drchubo.model->GetLink("Body_LF1")->SetSelfCollide(false); 
+   this->drchubo.model->GetLink("Body_LF1")->SetCollideMode("none");
+   this->drchubo.model->GetLink("Body_LF2")->SetSelfCollide(false);  
+   this->drchubo.model->GetLink("Body_LF2")->SetCollideMode("none"); 
+   this->drchubo.model->GetLink("Body_LF3")->SetSelfCollide(false); 
+   this->drchubo.model->GetLink("Body_LF3")->SetCollideMode("none"); 
 
     // Set drillModel to no collision
     this->drill.drillModel->GetLink("link")->SetSelfCollide(false);
