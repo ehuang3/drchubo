@@ -21,6 +21,7 @@ TEST(KINEMATICS, TEST_LEG_WORLD_TO_DH)
 {
     robot_kinematics_t *rk = PREPARE_ROBOT_KINEMATICS();
     robot_state_t *rs = PREPARE_ROBOT_STATE();
+    Skeleton *robot= rs->robot();
 
     rs->dofs().setZero();
     
@@ -30,7 +31,7 @@ TEST(KINEMATICS, TEST_LEG_WORLD_TO_DH)
 
     rs->set_manip(q, LIMB_L_LEG);
 
-    rs->copy_into_robot();
+    robot->setPose(rs->dart_pose());
     Isometry3d B;
     Isometry3d Bdh;
     B = rs->robot()->getNode(ROBOT_LEFT_FOOT)->getWorldTransform();
@@ -45,31 +46,32 @@ TEST(KINEMATICS, TEST_LEG_IK)
 {
     robot_kinematics_t *rk = PREPARE_ROBOT_KINEMATICS();
     robot_state_t *rs = PREPARE_ROBOT_STATE();
+    Skeleton *robot = rs->robot();
     
     VectorXd q(6);
     q << 0, -1, 2, -3, 4, -5;
 
     rs->set_manip(q, LIMB_L_LEG);
     rs->clamp_manip(MANIP_L_FOOT, false);
-    rs->copy_into_robot();
+    robot->setPose(rs->dart_pose());
 
     Isometry3d Twb;
     Twb.rotate(AngleAxisd(1, Vector3d::UnitX()));
     Twb.translate(Vector3d(0,1,3));
     Twb.rotate(AngleAxisd(-1, Vector3d::UnitZ()));
     rs->set_body(Twb);
-    rs->copy_into_robot();
+    robot->setPose(rs->dart_pose());
     
     Isometry3d B;
     B = rs->robot()->getNode(ROBOT_LEFT_FOOT)->getWorldTransform();
     
     rs->dofs().setZero();
     rs->set_body(Twb);
-    rs->copy_into_robot();
+    robot->setPose(rs->dart_pose());
 
     rk->leg_ik(B, true, *rs);
 
-    rs->copy_into_robot();
+    robot->setPose(rs->dart_pose());
 
     ASSERT_MATRIX_EQ(B.matrix(), rs->robot()->getNode(ROBOT_LEFT_FOOT)->getWorldTransform());
 
@@ -83,12 +85,13 @@ TEST(KINEMATICS, TEST_STANCE_IK)
 
     robot_kinematics_t* rk = PREPARE_ROBOT_KINEMATICS();
     robot_state_t* rs = PREPARE_ROBOT_STATE();
+    Skeleton* robot = rs->robot();
 
     BodyNode* left_foot = rs->robot()->getNode(ROBOT_LEFT_FOOT);
     BodyNode* right_foot = rs->robot()->getNode(ROBOT_RIGHT_FOOT);
 
     rs->dofs().setZero();
-    rs->copy_into_robot();
+    robot->setPose(rs->dart_pose());
 
     end_effectors[MANIP_L_FOOT] = rs->robot()->getNode(ROBOT_LEFT_FOOT)->getWorldTransform();
     end_effectors[MANIP_R_FOOT] = rs->robot()->getNode(ROBOT_RIGHT_FOOT)->getWorldTransform();
@@ -126,9 +129,10 @@ TEST(KINEMATICS, TEST_COM_IK)
 
     BodyNode* left_foot = rs->robot()->getNode(ROBOT_LEFT_FOOT);
     BodyNode* right_foot = rs->robot()->getNode(ROBOT_RIGHT_FOOT);
+    Skeleton* robot = rs->robot();
 
     rs->dofs().setZero();
-    rs->copy_into_robot();
+    robot->setPose(rs->dart_pose());
 
     end_effectors[MANIP_L_FOOT] = rs->robot()->getNode(ROBOT_LEFT_FOOT)->getWorldTransform();
     end_effectors[MANIP_R_FOOT] = rs->robot()->getNode(ROBOT_RIGHT_FOOT)->getWorldTransform();

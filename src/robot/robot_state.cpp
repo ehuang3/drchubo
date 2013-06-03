@@ -160,7 +160,7 @@ namespace robot {
         _dofs(5) = u3; // roll
     }
 
-    void robot_state_t::get_body(Matrix4d& Twb) {
+    void robot_state_t::get_body(Matrix4d& Twb) const {
         Isometry3d _Twb;
         get_body(_Twb);
         Twb = _Twb.matrix();
@@ -170,17 +170,12 @@ namespace robot {
         set_body(Twb.matrix());
     }
 
-    void robot_state_t::get_body(Isometry3d& Twb) {
+    void robot_state_t::get_body(Isometry3d& Twb) const {
         Twb = Matrix4d::Identity();
         Twb.translate( _dofs.block<3,1>(0,0) );
         Twb.rotate( AngleAxisd( _dofs(3), Vector3d::UnitZ()) );
         Twb.rotate( AngleAxisd( _dofs(4), Vector3d::UnitY()) );
         Twb.rotate( AngleAxisd( _dofs(5), Vector3d::UnitX()) );
-    }
-
-    void robot_state_t::copy_into_robot()
-    {
-        _robot->setPose(_dofs);
     }
 
     void robot_state_t::set_manip(const VectorXd& q, int mi) 
@@ -191,7 +186,7 @@ namespace robot {
         }
     }
 
-    void robot_state_t::get_manip(VectorXd& q, int mi)
+    void robot_state_t::get_manip(VectorXd& q, int mi) const
     {
         const vector<int>& mmap = g_d_limb[mi];
         q.resize(mmap.size(), 1);
@@ -207,19 +202,27 @@ namespace robot {
         }
     }
 
-    void robot_state_t::get_ros_pose(VectorXd& q)
+    void robot_state_t::get_ros_pose(VectorXd& q) const
     {
-        for(auto iter = g_r2d.begin(); iter != g_d2r.end(); ++iter) {
+        q.resize(g_r2d.size());
+        for(auto iter = g_r2d.begin(); iter != g_r2d.end(); ++iter) {
             q(iter->first) = _dofs(iter->second);
         }
     }
 
-    void robot_state_t::get_manip_indexes(vector<int>& indexes, int mi)
+    const Eigen::VectorXd robot_state_t::ros_pose() const
+    {
+        VectorXd ros;
+        get_ros_pose(ros);
+        return ros;
+    }
+
+    void robot_state_t::get_manip_indexes(vector<int>& indexes, int mi) const
     {
         indexes = g_d_limb[mi];
     }
 
-    void robot_state_t::get_dofs(VectorXd& q, const vector<int>& indexes)
+    void robot_state_t::get_dofs(VectorXd& q, const vector<int>& indexes) const
     {
         for(int i=0; i < indexes.size(); ++i) {
             q(i) = _dofs(indexes[i]);
@@ -233,7 +236,7 @@ namespace robot {
         }
     }
     
-    void robot_state_t::print_nodes(const vector<int>& indexes)
+    void robot_state_t::print_nodes(const vector<int>& indexes) const
     {
         DEBUG_PRINT("Links associated with indexes\n");
         for(int i=0; i < indexes.size(); ++i) {
@@ -243,7 +246,7 @@ namespace robot {
         }
     }
     
-    void robot_state_t::print_joints(const vector<int>& indexes)
+    void robot_state_t::print_joints(const vector<int>& indexes) const 
     {
         DEBUG_PRINT("Joints associated with indexes\n");
         for(int i=0; i < indexes.size(); ++i) {
@@ -251,7 +254,7 @@ namespace robot {
         }
     }
 
-    void robot_state_t::print_limits(const vector<int>& indexes)
+    void robot_state_t::print_limits(const vector<int>& indexes) const
     {
         DEBUG_PRINT("Limits associated with indexes\n");
         for(int i=0; i < indexes.size(); ++i) {
@@ -262,7 +265,7 @@ namespace robot {
         }
     }
 
-    void robot_state_t::print_children(const vector<int>& indexes)
+    void robot_state_t::print_children(const vector<int>& indexes) const
     {
         DEBUG_PRINT("Children associated with indexes\n");
         for(int i=0; i < indexes.size(); ++i) {
@@ -276,7 +279,7 @@ namespace robot {
         }
     }
 
-    void robot_state_t::print_backchain(int i)
+    void robot_state_t::print_backchain(int i) const
     {
         int index = i;
         Joint *joint = robot()->getDof(index)->getJoint();
@@ -294,7 +297,7 @@ namespace robot {
         printf("\n");
     }
 
-    void robot_state_t::print_dependent_dofs(int i)
+    void robot_state_t::print_dependent_dofs(int i) const
     {
         int index = i;
         Joint *joint = robot()->getDof(index)->getJoint();
@@ -310,7 +313,14 @@ namespace robot {
         printf("\n");
     }
 
-    bool robot_state_t::check_limits(const vector<int>& indexes, double zero_tol)
+    bool robot_state_t::check_limits(double zero_tol) const
+    {
+        std::vector<int> full_indexes;
+        get_full_indexes(full_indexes);
+        return check_limits(full_indexes, zero_tol);
+    }
+
+    bool robot_state_t::check_limits(const vector<int>& indexes, double zero_tol) const
     {
         bool any_exceed = false;
         bool exceed = false;
@@ -332,6 +342,12 @@ namespace robot {
             }
         }
         return !any_exceed;
+    }
+
+    Eigen::Vector2d robot_state_t::get_limits(int i) const
+    {
+        Dof* dof = _robot->getDof(i);
+        return Eigen::Vector2d(dof->getMin(), dof->getMax());
     }
 
     bool robot_state_t::clamp_all(bool err_msg, double zero_tol)
@@ -380,7 +396,7 @@ namespace robot {
         return !exceed;
     }
 
-    vector<int> robot_state_t::set_intersect(const vector<int> &a, const vector<int> &b)
+    vector<int> robot_state_t::set_intersect(const vector<int> &a, const vector<int> &b) const
     {
         vector<int> A, B;
         A = a;
@@ -396,7 +412,7 @@ namespace robot {
         return ret;
     }
     
-    vector<int> robot_state_t::set_union(const vector<int>&a, const vector<int>&b)
+    vector<int> robot_state_t::set_union(const vector<int>&a, const vector<int>&b) const
     {
         vector<int> A, B;
         A = a;
@@ -412,12 +428,12 @@ namespace robot {
         return ret;        
     }
 
-    int robot_state_t::get_index(const string& joint)
+    int robot_state_t::get_index(const string& joint) const
     {
         return g_s2d[joint];
     }
     
-    void robot_state_t::get_branch_indexes(vector<int>& indexes, BodyNode *end_effector)
+    void robot_state_t::get_branch_indexes(vector<int>& indexes, BodyNode *end_effector) const
     {
         indexes.clear();
         for(int i=0; i < end_effector->getNumDependentDofs(); ++i) {
@@ -427,7 +443,7 @@ namespace robot {
         }
     }
 
-    void robot_state_t::get_chain_indexes(vector<int>& indexes, BodyNode* base, BodyNode *end_effector) 
+    void robot_state_t::get_chain_indexes(vector<int>& indexes, BodyNode* base, BodyNode *end_effector) const
     {
         // Translate to DART indexes
         int b_index = g_s2d[base->getParentJoint()->getName()];
@@ -453,7 +469,7 @@ namespace robot {
         }
     }
 
-    void robot_state_t::get_full_indexes(vector<int>& indexes)
+    void robot_state_t::get_full_indexes(vector<int>& indexes) const
     {
         indexes.clear();
         for(auto iter = g_r2d.begin(); iter != g_r2d.end(); ++iter) {

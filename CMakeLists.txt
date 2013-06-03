@@ -54,7 +54,7 @@ if(WIN32)
   set (CMAKE_MODULE_LINKER_FLAGS "/LTCG")
 else ()
   set(CMAKE_INSTALL_PREFIX /usr )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2 -std=gnu++0x")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2 -std=gnu++0x -g")
   set(CMAKE_CXX_FLAGS_RELEASE "-O3")
   set(CMAKE_CXX_FLAGS_DEBUG "-g -fno-omit-frame-pointer -fno-inline-functions -fno-inline-functions-called-once -fno-optimize-sibling-calls")
   set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELEASE} ${CMAKE_CXX_FLAGS_DEBUG}")
@@ -84,6 +84,12 @@ include_directories(${DART_INCLUDEDIR})
 link_directories(${DART_LIBRARY_DIRS})
 
 # Build source
+# 0. 
+message(STATUS "Building drchubo source")
+include_directories(BEFORE src)
+link_directories(${CMAKE_SOURCE_DIR}/lib)
+add_subdirectory(src)
+
 # 1. Create main DRCPlugin
 add_subdirectory( plugins )
 
@@ -98,4 +104,3 @@ add_subdirectory( apps )
 #enable_testing()
 #add_subdirectory(test)
 #add_subdirectory(apps)
-

@@ -4,8 +4,8 @@
 
 //#define ATLAS_SANDIA_CONFIG
 //#define ATLAS_IROBOT_CONFIG
-#define ATLAS_CONFIG
-//#define HUBO_CONFIG
+//#define ATLAS_CONFIG
+#define HUBO_CONFIG
 
 #ifdef ATLAS_CONFIG
 
@@ -41,10 +41,10 @@
 #endif
 #define __ROBOT_HEAD "Body_NKP"
 #define __ROBOT_BODY "Body_Hip"
-#define __ROBOT_LEFT_HAND "leftPalm"
-#define __ROBOT_RIGHT_HAND "rightPalm"
-#define __ROBOT_LEFT_FOOT "leftFoot"
-#define __ROBOT_RIGHT_FOOT "rightFoot"
+#define __ROBOT_LEFT_HAND "Body_LWR"
+#define __ROBOT_RIGHT_HAND "Body_RWR"
+#define __ROBOT_LEFT_FOOT "Body_LAR"
+#define __ROBOT_RIGHT_FOOT "Body_RAR"
 #define ROBOT_JACOBIAN_T hubo::hubo_jacobian_t
 #define ROBOT_STATE_T hubo::hubo_state_t
 #define ROBOT_KINEMATICS_T hubo::hubo_kinematics_t
