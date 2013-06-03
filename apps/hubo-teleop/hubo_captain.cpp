@@ -329,7 +329,7 @@ void run(robot::robot_state_t& robot, const sensor_msgs::Joy::ConstPtr& joy, con
     
     do_control(robot, data);
 
-    //send_animation(robot);
+    send_animation(robot);
 }
 
 //############################################################
@@ -403,14 +403,14 @@ int main(int argc, char *argv[])
 
     //############################################################
     //# Animation initialization
-    // ros::Publisher modePub = ros_node->advertise<std_msgs::String>( "drchubo/mode", 1, false );
-    // animation_publisher = ros_node->advertise<DRC_msgs::PoseJointTrajectory>( "drchubo/poseJointAnimation", 
-    //                                                                       1,
-    //                                                                       false );
+    ros::Publisher modePub = ros_node->advertise<std_msgs::String>( "drchubo/mode", 1, false );
+    animation_publisher = ros_node->advertise<DRC_msgs::PoseJointTrajectory>( "drchubo/poseJointAnimation", 
+                                                                          1,
+                                                                          false );
 
-    // std_msgs::String mode_msg;
-    // mode_msg.data = "no_gravity";
-    // modePub.publish( mode_msg );
+    std_msgs::String mode_msg;
+    mode_msg.data = "no_gravity";
+    modePub.publish( mode_msg );
     
     
 

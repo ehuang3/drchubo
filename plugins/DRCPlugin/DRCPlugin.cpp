@@ -161,8 +161,8 @@ void DRCPlugin::RobotGrabDrill(const geometry_msgs::Pose::ConstPtr &_cmd)
                                 _cmd->position.y,
                                 _cmd->position.z), q);
   /// \todo: get these from incoming message
-  std::string gripperName = "Body_LWR";
-  math::Pose relPose(math::Vector3(0.0, 0.0, -0.5),
+  std::string gripperName = "Body_RWR";
+  math::Pose relPose(math::Vector3(0.0, 0.0, 0),
                math::Quaternion(0, 0, 0));
 
   if (this->drill.drillModel && this->drill.couplingLink)
@@ -190,7 +190,8 @@ void DRCPlugin::RobotGrabDrill(const geometry_msgs::Pose::ConstPtr &_cmd)
 ////////////////////////////////////////////////////////////////////////////////
 void DRCPlugin::RobotReleaseLink(const geometry_msgs::Pose::ConstPtr &/*_cmd*/)
 {
-  this->RemoveJoint(this->grabJoint);
+    if(this->grabJoint)
+        this->RemoveJoint(this->grabJoint);
 }
 
   // ******************************************

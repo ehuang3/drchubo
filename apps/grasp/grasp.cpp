@@ -9,6 +9,8 @@
 #include <sensor_msgs/JointState.h>
 #include <geometry_msgs/Pose.h>
 
+#include <Eigen/Dense>
+
 const int gNumBodyDofs = 24; // Left Arm, Right Arm, Left Leg, Right Leg
 const int gNumJoints = 35;
 std::string gJointNames[] = {"drchubo::LSP", "drchubo::LSR", "drchubo::LSY", "drchubo::LEP", "drchubo::LWY", "drchubo::LWP", "drchubo::LWR",
@@ -59,6 +61,28 @@ int main( int argc, char* argv[] ) {
   // Send grasp
   printf( "Sent grab \n" );
   geometry_msgs::Pose drillPose;
+
+  drillPose.position.x = 0;
+  drillPose.position.y = 0;
+  drillPose.position.z = -.4;
+
+  Eigen::Isometry3d Tf;
+  Tf = Eigen::Matrix4d::Identity();
+  Tf.rotate(Eigen::AngleAxisd(M_PI/2, Eigen::Vector3d::UnitY()));
+  Tf.rotate(Eigen::AngleAxisd(-M_PI/2, Eigen::Vector3d::UnitZ()));
+      
+  Eigen::Quaterniond quat;
+  quat = Tf.linear();
+
+  drillPose.orientation.w = quat.w();
+  drillPose.orientation.x = quat.x();
+  drillPose.orientation.y = quat.y();
+  drillPose.orientation.z = quat.z();
+
+  releasePub.publish( drillPose );
+
+  ros::Duration(0.2).sleep();
+
   grabPub.publish( drillPose );
   
 
