@@ -1,0 +1,10 @@
+<launch>
+
+  <arg name="gzname" default="gazebo"/>
+  <arg name="gzworld" default="$(find drchubo)/worlds/cdr_sim_scene_walking.world"/>
+  <arg name="extra_gazebo_args" default="" />
+
+  <param name="/walk_max_steps" type="int" value="26" />
+  <node name="gazebo" pkg="drchubo" type="run_$(arg gzname)" args="$(arg gzworld) $(arg extra_gazebo_args)" output="screen" />
+
+</launch>
