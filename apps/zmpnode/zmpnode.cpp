@@ -53,7 +53,7 @@ std::string zmpnode::mJointNames[] = {"drchubo::LSP", "drchubo::LSR", "drchubo::
  */
 zmpnode::zmpnode() {
   mdt = 0.005;
-  ankleOffset = 0.3;
+  ankleOffset = 0.20; // 0.18
 }
 
 /**
@@ -139,7 +139,7 @@ DRC_msgs::PoseStampedArray zmpnode::getPoseTrajMsg() {
     geometry_msgs::PoseStamped p;
     p.pose.position.x = mRootX[i];
     p.pose.position.y = mRootY[i];
-    p.pose.position.z = mRootZ[i] + 1.17;
+    p.pose.position.z = mRootZ[i];
     p.pose.orientation.x = 0;
     p.pose.orientation.y = 0;
     p.pose.orientation.z = 0;
@@ -163,7 +163,8 @@ DRC_msgs::PoseStampedArray zmpnode::getPoseTrajMsg() {
  * @function getPoseJointTrajMsg
  */
 DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::PosePtr _initPose,
-							     sensor_msgs::JointStatePtr _initJointState ) {
+							     sensor_msgs::JointStatePtr _initJointState,
+                                                             double _smoothTransitionTime ) {
 
   //**********************************
   // JOINT AND POSE ANIMATION
@@ -175,14 +176,13 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
     pjt.joint_names.push_back( mJointNames[i] );  
   }
 
-
   double t = 0;
   // ----------------------------------------------------------------
   // Set the first smooth transition
   printf("Setting the first smooth transition \n");
   trajectory_msgs::JointTrajectoryPoint jt0;
   geometry_msgs::Pose p0;
-  double smoothT = 3.0; // Time for it to get to initial position
+  double smoothT = _smoothTransitionTime; // Time for it to get to initial position
 
   // Get angle values
   std::vector<double> vals0( mNumJoints, 0 );
@@ -255,7 +255,7 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
     //** Set poses
     p.position.x = mRootX[i] + _initPose->position.x;
     p.position.y = mRootY[i] + _initPose->position.y;
-    p.position.z = mRootZ[i]; //_zi; // + 1.18 - DEFAULT FROM FLOOR
+    p.position.z = mRootZ[i]; // + 1.18 - DEFAULT FROM FLOOR
     p.orientation.x = 0;
     p.orientation.y = 0;
     p.orientation.z = 0;
@@ -559,13 +559,15 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
   }
 
     rootT = footT*jointTinv;
-      
+    //Get initial offset x and y and apply it
+    double offx = rootT(0,3);
+    double offy = rootT(1,3);  
 
-    mRootX.push_back( rootT(0,3) );
-    mRootY.push_back( rootT(1,3) );
+    mRootX.push_back( rootT(0,3) - offx );
+    mRootY.push_back( rootT(1,3) - offy );
     mRootZ.push_back( Zrelative + ankleOffset );
  
-    printf("0 Location: %f %f %f \n", rootT(0,3), rootT(1,3), rootT(2,3) );
+    printf("0 Location: %f %f %f \n", rootT(0,3), rootT(1,3), Zrelative + ankleOffset );
 
     // Rest of values
   for( int i = 1; i < walker.traj.size(); ++i ) {
@@ -592,8 +594,8 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
     }
     
     rootT = footT*jointTinv;
-    mRootX.push_back( rootT(0,3) );
-    mRootY.push_back( rootT(1,3) );
+    mRootX.push_back( rootT(0,3) - offx );
+    mRootY.push_back( rootT(1,3) - offy );
     mRootZ.push_back( Zrelative + ankleOffset );
   }
     

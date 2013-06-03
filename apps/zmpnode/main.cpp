@@ -13,14 +13,23 @@
 #include "zmpnode.h"
 
 double xi, yi, zi, qxi, qyi, qzi, qwi;
+sensor_msgs::JointStatePtr initJointState;
+geometry_msgs::PosePtr initPose;
 
+/**
+ * @function poseCallback
+ */
 void poseCallback( const geometry_msgs::PosePtr &_pose ) {
 
-  xi = _pose->position.x;
-  yi = _pose->position.y;
-  zi = _pose->position.z;
+  initPose = _pose;
 } 
 
+/**
+ * @function jointCallback
+ */
+void jointCallback( const sensor_msgs::JointStatePtr &_jointState ) {  
+  initJointState = _jointState;
+}
 
 int main( int argc, char* argv[] ) {
 
@@ -40,12 +49,15 @@ int main( int argc, char* argv[] ) {
 
   // For current robot pose
   ros::Subscriber poseSub = node->subscribe( "drchubo/pose", 1, poseCallback );
+  // For current joint state
+  ros::Subscriber jointStateSub = node->subscribe( "drchubo/jointStates", 1, jointCallback );
 
   // Give time
   ros::Duration(1.0).sleep();
 
   // Spin
   ros::spinOnce();
+  ros::Duration(0.1).sleep();
 
   // Get the gait
   zmpnode zd;
@@ -63,40 +75,30 @@ int main( int argc, char* argv[] ) {
      max_steps = walk_max_steps;
   } else { printf("No /walk_max_steps parameter set. SET IT NOW OR I WON'T WALK! \n"); }	
 
+   max_steps = 5;
   zd.generateZMPGait( max_steps );
-
-  // Convert it to a message
-  pjt_msg = zd.getPoseJointTrajMsg( xi,
-				    yi,
-				    zi);
-  // Give it a time
-  pjt_msg.header.stamp = ros::Time::now();
-
+  ros::spinOnce();
+  ros::Duration(0.1).sleep();
 
   // Send it
-  printf("Publishing pose animation \n");
-  poseJointTrajPub.publish( pjt_msg );
-
-  printf("SPIN NOW \n");
-
-  // Spin
-  ros::spinOnce();
+  double transitionTime = 1.0;
+  for( int i = 0; i < 4; ++i ) {
+  // Convert it to a message
+    pjt_msg = zd.getPoseJointTrajMsg( initPose, initJointState, transitionTime );
+    printf("Publishing pose animation: [%d] Time \n", i );
+    pjt_msg.header.stamp = ros::Time::now();
+    poseJointTrajPub.publish( pjt_msg );
   
   // Wait
-  ros::Duration(30).sleep();
-
-	// Send it again
-  // Give it a time
-  pjt_msg.header.stamp = ros::Time::now();
-  printf("Publishing pose animation again! \n");
-  poseJointTrajPub.publish( pjt_msg );
+  ros::Duration(7).sleep();
 
   // Spin
+  printf("Spin \n");
   ros::spinOnce();
-  
-  // Wait
-  ros::Duration(10).sleep();
+ 
+  }
 
+  printf("We are done - Getting out of node \n");
 
 
 }

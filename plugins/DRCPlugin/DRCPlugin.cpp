@@ -356,7 +356,7 @@ void DRCPlugin::Drill::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf)
         this->isInitialized = true;
 
         // Set ankleOffset
-        this->ankleOffset = 0.3;
+        this->ankleOffset = 0.20; //0.18;
 
         // Store joints
         this->mJoints.resize( mNumJoints );
