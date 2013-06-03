@@ -52,6 +52,11 @@
 #include <control/control_factory.h>
 #include <control/arms.h>
 
+// DRC stuff
+#include <DRC_msgs/PoseJointTrajectory.h>
+#include <std_msgs/String.h>
+
+
 //############################################################
 //# Globals
 //############################################################
@@ -76,6 +81,9 @@ fastrak_t fastrak;
 pthread_t gui_thread;
 gui::teleop_gui_t gui_window;
 gui::params_t gui_params;
+
+// DRC
+ros::Publisher animation_publisher;
 
 //############################################################
 //# HUBO driver functions
@@ -250,6 +258,40 @@ void do_control(robot::robot_state_t& target, control::control_data_t* data)
     // FIXME: reset arms to match target location?
 }
 
+void send_animation(robot::robot_state_t& target)
+{
+    DRC_msgs::PoseJointTrajectory pjt;
+    trajectory_msgs::JointTrajectoryPoint jt;
+    geometry_msgs::Pose p;
+
+    std::map<std::string, int> s2r = target.get_s2r();
+    Eigen::VectorXd points = target.ros_pose();
+
+    jt.positions.resize( points.size() );
+
+    for(auto iter = s2r.begin(); iter != s2r.end(); ++iter) {
+        pjt.joint_names.push_back( iter->first );
+        jt.positions[ iter->second ] = points[ iter->second ];
+    }
+
+    p.position.x = 0.0;
+    p.position.y = 0.0;
+    p.position.z = 1.5;
+    p.orientation.x = 0;
+    p.orientation.y = 0;
+    p.orientation.z = 0;
+    p.orientation.w = 1.0;
+    
+    pjt.points.push_back(jt);
+    pjt.poses.push_back(p);
+
+    pjt.points[0].time_from_start = ros::Duration().fromSec(0.01);
+
+
+    animation_publisher.publish( pjt );
+    
+}
+
 //############################################################
 //# Main loop
 //############################################################
@@ -272,6 +314,8 @@ void run(robot::robot_state_t& robot, const sensor_msgs::Joy::ConstPtr& joy, con
     update_sensors(joy, data);
     
     do_control(robot, data);
+
+    send_animation(robot);
 }
 
 //############################################################
@@ -291,7 +335,7 @@ int main(int argc, char *argv[])
     //###########################################################
     //# DART initialization
     DartLoader dart_loader;
-    simulation::World* mWorld = dart_loader.parseWorld(VRC_DATA_PATH ROBOT_URDF);
+    simulation::World* mWorld = dart_loader.parseWorld(DRC_DATA_PATH ROBOT_URDF);
     dynamics::SkeletonDynamics *hubo_skel = mWorld->getSkeleton(ROBOT_NAME); // grab pointer to robot
     hubo_target.init(hubo_skel);                     // init states
     hubo_current.init(hubo_skel);                    // init states
@@ -342,6 +386,19 @@ int main(int argc, char *argv[])
 
     spnav_options.transport_hints = ros::TransportHints().unreliable();
     ros::Subscriber spnav_subscriber = ros_node->subscribe(spnav_options);
+
+    //############################################################
+    //# Animation initialization
+    ros::Publisher modePub = ros_node->advertise<std_msgs::String>( "drchubo/mode", 1, false );
+    animation_publisher = ros_node->advertise<DRC_msgs::PoseJointTrajectory>( "drchubo/poseJointAnimation", 
+                                                                          1,
+                                                                          false );
+
+    std_msgs::String mode_msg;
+    mode_msg.data = "no_gravity";
+    modePub.publish( mode_msg );
+    
+    
 
     //############################################################
     //# Loop

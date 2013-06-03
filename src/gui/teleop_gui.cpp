@@ -53,14 +53,14 @@ namespace gui {
 
         // 1. Load a local copy of Atlas
         DartLoader dart_loader;
-        simulation::World *mWorld = dart_loader.parseWorld(VRC_DATA_PATH ROBOT_URDF);
+        simulation::World *mWorld = dart_loader.parseWorld(DRC_DATA_PATH ROBOT_URDF);
         robotSkel = mWorld->getSkeleton(ROBOT_NAME);
         VectorXd dofs = robotSkel->getPose();
         robotSkel->setPose(dofs);
 
         // 2. Load the ground
         FileInfoSkel<SkeletonDynamics> model;
-        model.loadFile(VRC_DATA_PATH"/models/skel/ground1.skel", SKEL);
+        model.loadFile(DRC_DATA_PATH"/models/skel/ground1.skel", SKEL);
         ground = dynamic_cast<SkeletonDynamics *>(model.getSkel());
         ground->setName("ground");
         mWorld->addSkeleton(ground);
