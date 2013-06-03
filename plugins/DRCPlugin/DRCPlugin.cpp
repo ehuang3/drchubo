@@ -110,6 +110,9 @@ namespace gazebo
         // Load Robot
         this->drchubo.Load(this->world, this->sdf);
 
+	// Load drill
+	this->drill.Load( this->world, this->sdf );
+
         // Setup ROS interfaces for robot
         this->LoadRobotROSAPI();
     
@@ -148,64 +151,168 @@ namespace gazebo
 
 
 
+////////////////////////////////////////////////////////////////////////////////
+void DRCPlugin::RobotGrabDrill(const geometry_msgs::Pose::ConstPtr &_cmd)
+{
+  math::Quaternion q(_cmd->orientation.w, _cmd->orientation.x,
+                     _cmd->orientation.y, _cmd->orientation.z);
+  q.Normalize();
+  math::Pose pose(math::Vector3(_cmd->position.x,
+                                _cmd->position.y,
+                                _cmd->position.z), q);
+  /// \todo: get these from incoming message
+  std::string gripperName = "Body_LWR";
+  math::Pose relPose(math::Vector3(0.0, 0.0, -0.5),
+               math::Quaternion(0, 0, 0));
 
+  if (this->drill.drillModel && this->drill.couplingLink)
+  {
+    physics::LinkPtr gripper = this->drchubo.model->GetLink(gripperName);
+    if (gripper)
+    {
+      // teleports the object being attached together
+      pose = pose + relPose + gripper->GetWorldPose();
+      this->drill.drillModel->SetLinkWorldPose(pose,
+        this->drill.couplingLink);
+
+      if (!this->grabJoint)
+        this->grabJoint = this->AddJoint(this->world, this->drill.drillModel,
+                                         gripper,
+                                         this->drill.couplingLink,
+                                         "revolute",
+                                         math::Vector3(0, 0, 0),
+                                         math::Vector3(0, 0, 1),
+                                         0.0, 0.0);
+    }
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void DRCPlugin::RobotReleaseLink(const geometry_msgs::Pose::ConstPtr &/*_cmd*/)
+{
+  this->RemoveJoint(this->grabJoint);
+}
+
+  // ******************************************
+  // DRILL FUNCTIONS
+void DRCPlugin::Drill::SetInitialConfiguration()
+{
+  // this does not work yet, because SetAngle only works for Hinge and Slider
+  // joints, and fire hose is made of universal and ball joints.
+  for (unsigned int i = 0; i < this->drillJoints.size(); ++i)
+    {
+      // gzerr << "joint [" << this->fireHoseJoints[i]->GetName() << "]\n";
+      this->drillJoints[i]->SetAngle(0u, 0.0);
+  }
+}
+
+  /**
+   * @function DRILL Load
+   */
+void DRCPlugin::Drill::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf)
+{
+  this->isInitialized = false;
+
+  sdf::ElementPtr sdf = _sdf->GetElement("drill");
+  // Get special coupling links (on the firehose side)
+  std::string drillModelName = sdf->GetValueString("drill_model");
+  this->drillModel = _world->GetModel(drillModelName);
+  if (!this->drillModel)
+  {
+    ROS_INFO("Drill [%s] not found", drillModelName.c_str());
+    return;
+  }
+  this->initialDrillPose = this->drillModel->GetWorldPose();
+
+  // Get coupling link
+  std::string couplingLinkName = sdf->GetValueString("coupling_link");
+  this->couplingLink = this->drillModel->GetLink(couplingLinkName);
+  if (!this->couplingLink)
+  {
+    ROS_ERROR("coupling link [%s] not found", couplingLinkName.c_str());
+    return;
+  }
+
+  // Get joints
+  this->drillJoints = this->drillModel->GetJoints();
+
+  // Get links
+  this->drillLinks = this->drillModel->GetLinks();
+
+  
+  //this->threadPitch = sdf->GetValueDouble("thread_pitch");
+
+  this->couplingRelativePose = sdf->GetValuePose("coupling_relative_pose");
+
+  // Set initial configuration
+  this->SetInitialConfiguration();
+
+  this->isInitialized = true;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Play the trajectory, update states
     void DRCPlugin::UpdateStates()
     {
         boost::mutex::scoped_lock lock(this->update_mutex);
-
+    
         double curTime = this->world->GetSimTime().Double();
-
-        if (curTime > this->lastUpdateTime) {
-            double dt = curTime - this->lastUpdateTime;
     
-    
-            if( dt > 0 ) {
-                // If we are animating don't do any action. Let the animation stop
-                if( this->onJointAnimation == true || this->onPoseAnimation == true ) {
-                    return;
-                }
-      
-                // Will try to keep at the joint configuration last sent through drc/configuration
-                if( this->drchubo.modeType == ON_STAY_DOG_MODE ) {
-                    
-                    for(auto iter = defaultJointState_p.begin(); iter != defaultJointState_p.end(); ++iter) {
-                        
-                        std::cout << "Force at " << iter->first << " = " << 
-                            drchubo.model->GetJoint(iter->first)->GetForceTorque(0).body1Torque
-                                  << std::endl;
-                    }
-                    
-                    for(auto iter = defaultJointState_p.begin(); iter != defaultJointState_p.end(); ++iter) {
-                        double val = iter->second;
-                        
-                        if (val > M_PI || val < -M_PI) {
-                            std::cout << "CLAMPING " << iter->first << " = " << val << std::endl;
-                        }
-
-                        val = clamp2pi(val);
-                        
-                        iter->second = val;
-                    }
-      
-                    // Set joint pose
-                    drchubo.model->SetJointPositions( defaultJointState_p );
-                
-                    // Set world pose   
-                    this->drchubo.model->SetWorldPose( defaultPose_p );    
-	
-                }
-      
-                // Publish joint states
-                //jointStatesPub.publish( defaultJointState );
-            }
+        // If we are animating don't do any action. Let the animation stop
+        if( this->onJointAnimation == true || this->onPoseAnimation == true ) {
+            return;
         }
+      
+        // Will try to keep at the joint configuration last sent through drc/configuration
+        if( this->drchubo.modeType == ON_STAY_DOG_MODE ) {
+            // Set joint pose
+            drchubo.model->SetJointPositions( defaultJointState_p );
+                
+            // Set world pose   
+            this->drchubo.model->SetWorldPose( defaultPose_p );
+        }
+      
+        // **************************************************
+        // PUBLISH ROBOT STATE
+
+        // Pose
+        geometry_msgs::Pose pose_msg;
+
+        math::Pose p = this->drchubo.model->GetWorldPose();
+        math::Pose lf = this->drchubo.model->GetLink("Body_LAR")->GetWorldPose();
+        pose_msg.position.x = p.pos.x;
+        pose_msg.position.y = p.pos.y;
+        pose_msg.position.z = ( p.pos.z - lf.pos.z )+ this->drchubo.ankleOffset;
+
+        pose_msg.orientation.x = p.rot.x;
+        pose_msg.orientation.y = p.rot.y;
+        pose_msg.orientation.z = p.rot.z;
+        pose_msg.orientation.w = p.rot.w;
+	
+        // Joints
+        sensor_msgs::JointState jointState_msg;
+	
+        // Get joints
+        // To set Message form we need the FULL NAME
+        jointState_msg.name.resize( mNumJoints );
+        jointState_msg.position.resize( mNumJoints );
+        for( int i = 0; i < mNumJoints; ++i ) {
+            jointState_msg.name[i] = mFullJointNames[i];
+            jointState_msg.position[i] = this->drchubo.mJoints[i]->GetAngle(0).Radian();
+        }
+
+
+        // Send them out
+        posePub.publish( pose_msg );
+        jointStatesPub.publish( jointState_msg );
+
+        // **************************************************
+
     }
 
-
-    /**
+  
+  
+  /**
      * @function Robot::Load
      */
     void DRCPlugin::Robot::Load( physics::WorldPtr _world, 
@@ -244,7 +351,7 @@ namespace gazebo
         this->isInitialized = true;
 
         // Set ankleOffset
-        this->ankleOffset = 0.08;
+        this->ankleOffset = 0.3;
 
         // Store joints
         this->mJoints.resize( mNumJoints );
@@ -263,15 +370,23 @@ namespace gazebo
 ////////////////////////////////////////////////////////////////////////////////
     void DRCPlugin::LoadDRCROSAPI()
     {
-        /*
-          std::string robot_exit_car_topic_name = "drc_world/robot_exit_car";
-          ros::SubscribeOptions robot_exit_car_so =
-          ros::SubscribeOptions::create<geometry_msgs::Pose>(
-          robot_exit_car_topic_name, 100,
-          boost::bind(&VRCPlugin::RobotExitCar, this, _1),
-          ros::VoidPtr(), &this->rosQueue);
-          this->subRobotExitCar = this->rosNode->subscribe(robot_exit_car_so);
-        */
+
+      std::string robot_grab_topic_name = "drc_world/robot_grab_link";
+      ros::SubscribeOptions robot_grab_so =
+	ros::SubscribeOptions::create<geometry_msgs::Pose>(
+							   robot_grab_topic_name, 100,
+							   boost::bind(&DRCPlugin::RobotGrabDrill, this, _1),
+							   ros::VoidPtr(), &this->rosQueue);
+      this->subRobotGrab = this->rosNode->subscribe(robot_grab_so);
+      
+      std::string robot_release_topic_name = "drc_world/robot_release_link";
+      ros::SubscribeOptions robot_release_so =
+	ros::SubscribeOptions::create<geometry_msgs::Pose>(
+							   robot_release_topic_name, 100,
+							   boost::bind(&DRCPlugin::RobotReleaseLink, this, _1),
+							   ros::VoidPtr(), &this->rosQueue);
+      this->subRobotRelease = this->rosNode->subscribe(robot_release_so);
+      
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -328,20 +443,22 @@ namespace gazebo
                                                                           ros::VoidPtr(), &this->rosQueue);
         this->drchubo.subPoseJointAnimation = this->rosNode->subscribe(poseJointAnimation_so);  
 
-        ////////////////////
+	// ************************
         //// Publishers
-  
+	// ************************
         // Publish joint state information
-        /*jointStatesPub = this->rosNode->advertise<sensor_msgs::JointState>( "drchubo/joint_states",
-          1,
-          false );
-        */
+        jointStatesPub = this->rosNode->advertise<sensor_msgs::JointState>( "drchubo/jointStates",
+									    100,
+									    false );
+        posePub = this->rosNode->advertise<geometry_msgs::Pose>( "drchubo/pose",
+								 100, false );
+
     }
 
 
-//********************************************
-// SetRobotPose
-//********************************************
+  //********************************************
+  // SetRobotPose
+  //********************************************
     void DRCPlugin::SetRobotPose(const geometry_msgs::Pose::ConstPtr &_pose) {
 
         math::Quaternion q(_pose->orientation.w, _pose->orientation.x,
@@ -392,8 +509,6 @@ namespace gazebo
              iter != defaultJointState_p.end(); ++iter ) {
             std::cout << (*iter).first << ": "<<(*iter).second << std::endl;
         }
-
-
 
     }
 
@@ -553,7 +668,7 @@ namespace gazebo
 
         // Stay at the current ModelState (pose + joints)
         else if (_str == "stay_dog") {
-            ROS_INFO("[DRCPlugin] Set STAY_DOG mode \n");
+	  //ROS_INFO("[DRCPlugin] Set STAY_DOG mode \n");
             this->drchubo.modeType = ON_STAY_DOG_MODE;
 
             // Print the stay mode stuff
@@ -567,10 +682,11 @@ namespace gazebo
                    // defaultPose_p.rot.w );
 
             //printf("[STAY-DOG] Joints: : \n" );
+	    /*
             for( std::map<std::string,double>::iterator iter=defaultJointState_p.begin();
                  iter != defaultJointState_p.end(); ++iter ) {
                 std::cout << (*iter).first << ": "<<(*iter).second << std::endl;
-            }
+		}*/
 
         }
   
@@ -637,10 +753,10 @@ namespace gazebo
     void DRCPlugin::getCurrentPose() {
   
         math::Pose pose = this->drchubo.model->GetWorldPose();
-  
+	math::Pose leftFootPose = this->drchubo.model->GetLink("Body_LAR")->GetWorldPose();
         defaultPose_p.pos.x = pose.pos.x;
         defaultPose_p.pos.y = pose.pos.y;
-        defaultPose_p.pos.z = pose.pos.z;
+        defaultPose_p.pos.z = (pose.pos.z - leftFootPose.pos.z) + this->drchubo.ankleOffset;
 
         defaultPose_p.rot.x = pose.rot.x;
         defaultPose_p.rot.y = pose.rot.y;
@@ -746,18 +862,13 @@ namespace gazebo
         math::Quaternion newPoseWorld = invLeftFoot*worldPose.rot;
         math::Pose flatPose;
         // Set foot up from floor (since it is relative to ankle)
-        math::Vector3 worldPos( worldPose.pos.x, worldPose.pos.y, worldPose.pos.z + this->ankleOffset );
+        math::Vector3 worldPos( worldPose.pos.x, worldPose.pos.y, (worldPose.pos.z - leftFootPose.pos.z) + this->ankleOffset );
         flatPose.Set( worldPos, invLeftFoot );
         this->model->SetWorldPose( flatPose );
         //printf( "[DRCPLUGIN - ParallelToFloor] Done  - setting foot up %f to account for ankle offset\n", this->ankleOffset );
     }  
 
 
-////////////////////////////////////////////////////////////////////////////////
-    void DRCPlugin::RobotReleaseLink(const geometry_msgs::Pose::ConstPtr &/*_cmd*/)
-    {
-        //  this->RemoveJoint(this->grabJoint);
-    }
 
 ////////////////////////////////////////////////////////////////////////////////
 // dynamically add joint between 2 links

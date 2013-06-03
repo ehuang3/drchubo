@@ -18,7 +18,7 @@ void poseCallback( const geometry_msgs::PosePtr &_pose ) {
 
   xi = _pose->position.x;
   yi = _pose->position.y;
-  zi = _pose->position.z;
+  zi = _pose->position.z + 0.25;
 } 
 
 
@@ -55,20 +55,13 @@ int main( int argc, char* argv[] ) {
 
   // Generate ZMP trajectories
   // Default variables
-  size_t max_steps;
-
-  // Get params from server (if no default)
-  int walk_max_steps;
-  if( node->getParam("/walk_max_steps", walk_max_steps ) ){
-     max_steps = walk_max_steps;
-  } else { printf("No /walk_max_steps parameter set. SET IT NOW OR I WON'T WALK! \n"); }	
+  size_t max_steps = 5;
 
   zd.generateZMPGait( max_steps );
 
   // Convert it to a message
-  pjt_msg = zd.getPoseJointTrajMsg( xi,
-				    yi,
-				    zi);
+   // Add an offset to zi
+  pjt_msg = zd.getPoseJointTrajMsg( xi, yi, zi );
   // Give it a time
   pjt_msg.header.stamp = ros::Time::now();
 
@@ -83,9 +76,13 @@ int main( int argc, char* argv[] ) {
   ros::spinOnce();
   
   // Wait
-  ros::Duration(30).sleep();
+  ros::Duration(8).sleep();
 
-	// Send it again
+  // Send it again but update the position
+  printf("Run again from current position \n");
+  ros::spinOnce();
+  ros::Duration(0.2).sleep();
+  pjt_msg = zd.getPoseJointTrajMsg( xi, yi, zi );
   // Give it a time
   pjt_msg.header.stamp = ros::Time::now();
   printf("Publishing pose animation again! \n");

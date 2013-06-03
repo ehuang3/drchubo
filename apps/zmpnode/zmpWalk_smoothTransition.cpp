@@ -1,5 +1,5 @@
 /**
- * @file main.cpp
+ * @file zmpWalk_smoothTransition.cpp
  */
 #include <ros/ros.h>
 #include <trajectory_msgs/JointTrajectory.h>
@@ -13,15 +13,29 @@
 #include "zmpnode.h"
 
 double xi, yi, zi, qxi, qyi, qzi, qwi;
+sensor_msgs::JointStatePtr initJointState;
+geometry_msgs::PosePtr initPose;
 
 void poseCallback( const geometry_msgs::PosePtr &_pose ) {
 
   xi = _pose->position.x;
   yi = _pose->position.y;
   zi = _pose->position.z;
+  initPose = _pose;
 } 
 
 
+
+/**
+ * @function jointCallback
+ */
+void jointCallback( const sensor_msgs::JointStatePtr &_jointState ) {  
+  initJointState = _jointState;
+}
+
+/**
+ * @function main
+ */
 int main( int argc, char* argv[] ) {
 
   ros::init( argc, argv, "zmp_walk_gait" );
@@ -40,6 +54,8 @@ int main( int argc, char* argv[] ) {
 
   // For current robot pose
   ros::Subscriber poseSub = node->subscribe( "drchubo/pose", 1, poseCallback );
+  // For current joint state
+  ros::Subscriber jointStateSub = node->subscribe( "drchubo/jointStates", 1, jointCallback );
 
   // Give time
   ros::Duration(1.0).sleep();
@@ -66,9 +82,10 @@ int main( int argc, char* argv[] ) {
   zd.generateZMPGait( max_steps );
 
   // Convert it to a message
-  pjt_msg = zd.getPoseJointTrajMsg( xi,
-				    yi,
-				    zi);
+  pjt_msg = zd.getPoseJointTrajMsg( initPose, initJointState );
+  
+
+
   // Give it a time
   pjt_msg.header.stamp = ros::Time::now();
 

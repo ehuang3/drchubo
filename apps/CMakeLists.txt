@@ -7,7 +7,8 @@ foreach(APPDIR
       zmpnode
       moveArms
       animateArms
-      hubo-teleop
+      grasp
+      #hubo-teleop
     )
     add_subdirectory(${APPDIR})
 endforeach(APPDIR)

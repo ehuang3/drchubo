@@ -39,19 +39,21 @@ using namespace fakerave;
 
 
 const int zmpnode::mNumBodyDofs = 24; // Left Arm, Right Arm, Left Leg, Right Leg
-const int zmpnode::mNumJoints = 29;
+const int zmpnode::mNumJoints = 35;
 std::string zmpnode::mJointNames[] = {"drchubo::LSP", "drchubo::LSR", "drchubo::LSY", "drchubo::LEP", "drchubo::LWY", "drchubo::LWP", "drchubo::LWR",
 				      "drchubo::RSP", "drchubo::RSR", "drchubo::RSY", "drchubo::REP", "drchubo::RWY", "drchubo::RWP", "drchubo::RWR",
 				      "drchubo::LHY", "drchubo::LHR", "drchubo::LHP", "drchubo::LKP", "drchubo::LAP", "drchubo::LAR",
 				      "drchubo::RHY", "drchubo::RHR", "drchubo::RHP", "drchubo::RKP", "drchubo::RAP", "drchubo::RAR",
-				      "drchubo::TSY", "drchubo::NKY", "drchubo::NKP"};
-
+				      "drchubo::TSY", "drchubo::NKY", "drchubo::NKP",
+				      "drchubo::LF1", "drchubo::LF2", "drchubo::LF3",
+				      "drchubo::RF1", "drchubo::RF2", "drchubo::RF3"};
 /**
  * @function zmpnode
  * @brief Constructor
  */
 zmpnode::zmpnode() {
   mdt = 0.005;
+  ankleOffset = 0.3;
 }
 
 /**
@@ -97,7 +99,7 @@ trajectory_msgs::JointTrajectory zmpnode::getJointTrajMsg() {
       vals[j] = mMzJointTraj[i](j-1);
     }
     // Left and Right Legs
-    for( int j = 14; j <= 25; ++j ) {
+    for( int j = 14; j <= mNumJoints; ++j ) {
       vals[j] = mMzJointTraj[i](j-2);
     }
     // Set all joints
@@ -160,24 +162,72 @@ DRC_msgs::PoseStampedArray zmpnode::getPoseTrajMsg() {
 /**
  * @function getPoseJointTrajMsg
  */
-DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg() {
+DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::PosePtr _initPose,
+							     sensor_msgs::JointStatePtr _initJointState ) {
 
   //**********************************
   // JOINT AND POSE ANIMATION
   //**********************************
   // Append names
   DRC_msgs::PoseJointTrajectory pjt;
-  pjt.header.stamp = ros::Time::now();
-  pjt.header.frame_id = "drchubo::Body_Torso";
   
   for( int i = 0; i < mNumJoints; ++i ) {
     pjt.joint_names.push_back( mJointNames[i] );  
   }
-  
-  int numTrajPoints = mMzJointTraj.size();
-  double t = 0;
-  
 
+
+  double t = 0;
+  // ----------------------------------------------------------------
+  // Set the first smooth transition
+  printf("Setting the first smooth transition \n");
+  trajectory_msgs::JointTrajectoryPoint jt0;
+  geometry_msgs::Pose p0;
+  double smoothT = 3.0; // Time for it to get to initial position
+
+  // Get angle values
+  std::vector<double> vals0( mNumJoints, 0 );
+  for( int i = 0; i < mNumJoints; ++i ) {
+
+    for( int j = 0; j < _initJointState->name.size(); ++j ) {
+      if( strcmp( mJointNames[i].c_str(), _initJointState->name[j].c_str()) == 0 ) {
+	vals0[i] = _initJointState->position[j];
+	//	printf("Setting %s joint with value in joint state of index %d - Size state: %d  \n", mJointNames[i].c_str(), j, );
+	break;
+      }
+    }
+
+  }
+  printf("Setting first animation step \n");
+  // Set first animation step
+  for( int j = 0; j < mNumJoints; ++j ) {
+    jt0.positions.push_back( vals0[j] );
+  }
+
+  p0.position.x = _initPose->position.x;
+  p0.position.y = _initPose->position.y;
+  p0.position.z = _initPose->position.z;  // + 1.18 - DEFAULT FROM FLOOR
+  p0.orientation.x = 0;
+  p0.orientation.y = 0;
+  p0.orientation.z = 0;
+  p0.orientation.w = 1;
+  
+  // Append to trajectory
+  pjt.points.push_back(jt0);
+  pjt.poses.push_back(p0);
+  
+  // Set duration
+  pjt.points[0].time_from_start = ros::Duration().fromSec(0);
+  
+  // Add transition time
+  t += smoothT;
+
+  // --------------------------------------------------
+  // Normal animation
+  printf("Normal animation start procedure\n");
+
+  int numTrajPoints = mMzJointTraj.size();
+
+  
   for( int i = 0; i < numTrajPoints; ++i ) {
     
     trajectory_msgs::JointTrajectoryPoint jt;
@@ -192,7 +242,7 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg() {
     for( int j = 7; j <= 12; ++j ) {
       vals[j] = mMzJointTraj[i](j-1);
     }
-    // Left and Right Legs
+    // Left and Right Legs (do not change the 25 - MATT CODE RETURNS 26 values)
     for( int j = 14; j <= 25; ++j ) {
       vals[j] = mMzJointTraj[i](j-2);
     }
@@ -203,9 +253,9 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg() {
     }
 
     //** Set poses
-    p.position.x = mRootX[i];
-    p.position.y = mRootY[i];
-    p.position.z = mRootZ[i] + 1.18; //1.17
+    p.position.x = mRootX[i] + _initPose->position.x;
+    p.position.y = mRootY[i] + _initPose->position.y;
+    p.position.z = mRootZ[i]; //_zi; // + 1.18 - DEFAULT FROM FLOOR
     p.orientation.x = 0;
     p.orientation.y = 0;
     p.orientation.z = 0;
@@ -215,22 +265,29 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg() {
     pjt.points.push_back(jt);
     pjt.poses.push_back(p);
     
-    // Set duration
-    pjt.points[i].time_from_start = ros::Duration().fromSec(t);
+    // Set duration (+1 for the initial smooth time)
+    pjt.points[i+1].time_from_start = ros::Duration().fromSec(t);
     
     // Advance one time step
     t+=mdt;
   }
 
+  // Set this info at the end, just to be in order
+  pjt.header.stamp = ros::Time::now();
+  pjt.header.frame_id = "drchubo::Body_Torso";
+
+  printf("End of animation processing, returning \n");
+
   return pjt;
 }
+
 
 /**
  * @function generateZMPGait
  * @brief Executes Matt's code
  */
-  void zmpnode::generateZMPGait() {
-    printf(" Generate ZMP Gait \n");
+  void zmpnode::generateZMPGait( size_t _max_step_count ) {
+  printf(" Generate ZMP Gait \n");
   bool show_gui = false;
   bool use_ach = false;
 
@@ -257,7 +314,7 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg() {
   double double_support_time = 0.05;
   double single_support_time = 0.70;
 
-  size_t max_step_count = 30;
+  double max_step_count = _max_step_count;
 
   double zmp_jerk_penalty = 1e-8; // jerk penalty on ZMP controller
 
@@ -484,7 +541,8 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg() {
   Eigen::Matrix4d footT;
   Eigen::Matrix4d jointTinv;
   Eigen::Matrix4d rootT;
-  
+  double Zrelative;
+
   // i = 0 - First value
   stance = walker.ref[0].stance;
 
@@ -492,17 +550,20 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg() {
     footT = tf2Mx( walker.ref[0].feet[0] );   
     captain->setConfig( mBodyDofs, mMzJointTraj[0] );
     jointTinv = captain->getNode("Body_LAR")->getWorldInvTransform();
+    Zrelative = captain->getNode("Body_Torso")->getWorldTransform()(2,3) - captain->getNode("Body_LAR")->getWorldTransform()(2,3);
   } else {
     footT = tf2Mx( walker.ref[0].feet[1] );   
     captain->setConfig( mBodyDofs, mMzJointTraj[0] );
     jointTinv = captain->getNode("Body_RAR")->getWorldInvTransform();
+    Zrelative = captain->getNode("Body_Torso")->getWorldTransform()(2,3) - captain->getNode("Body_RAR")->getWorldTransform()(2,3);
   }
 
     rootT = footT*jointTinv;
-        
+      
+
     mRootX.push_back( rootT(0,3) );
     mRootY.push_back( rootT(1,3) );
-    mRootZ.push_back( rootT(2,3) );
+    mRootZ.push_back( Zrelative + ankleOffset );
  
     printf("0 Location: %f %f %f \n", rootT(0,3), rootT(1,3), rootT(2,3) );
 
@@ -514,23 +575,26 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg() {
     if( stance == SINGLE_LEFT || stance == DOUBLE_LEFT ) {
       if( stance == DOUBLE_LEFT ) {
 	footT = rootT*captain->getNode("Body_LAR")->getWorldTransform();
+	Zrelative = captain->getNode("Body_Torso")->getWorldTransform()(2,3) - captain->getNode("Body_LAR")->getWorldTransform()(2,3);
       }
       captain->setConfig( mBodyDofs, mMzJointTraj[i] );
       jointTinv = captain->getNode("Body_LAR")->getWorldInvTransform();
+      Zrelative = captain->getNode("Body_Torso")->getWorldTransform()(2,3) - captain->getNode("Body_LAR")->getWorldTransform()(2,3);
     } else {
       if( stance == DOUBLE_RIGHT ) {
 	footT = rootT*captain->getNode("Body_RAR")->getWorldTransform();
+    Zrelative = captain->getNode("Body_Torso")->getWorldTransform()(2,3) - captain->getNode("Body_RAR")->getWorldTransform()(2,3);
       }
       captain->setConfig( mBodyDofs, mMzJointTraj[i] );
       jointTinv = captain->getNode("Body_RAR")->getWorldInvTransform();
+    Zrelative = captain->getNode("Body_Torso")->getWorldTransform()(2,3) - captain->getNode("Body_RAR")->getWorldTransform()(2,3);
       
     }
     
     rootT = footT*jointTinv;
-        
     mRootX.push_back( rootT(0,3) );
     mRootY.push_back( rootT(1,3) );
-    mRootZ.push_back( rootT(2,3) );
+    mRootZ.push_back( Zrelative + ankleOffset );
   }
     
   std::cout << "Done and ready to step back and forth!" << std::endl;
