@@ -146,6 +146,11 @@ namespace gazebo
         this->updateConnection = event::Events::ConnectWorldUpdateBegin(
             boost::bind(&DRCPlugin::UpdateStates, this));
 
+        for(int i=0; i < mNumJoints; i++) {
+            std::cout << drchubo.mJoints[i]->GetName() << " limits = " <<
+                drchubo.mJoints[i]->GetLowerLimit(0) << ", " << drchubo.mJoints[i]->GetUpperLimit(0) << std::endl;
+        }
+
         ROS_INFO("[DRCPlugin] End of Deferred Load \n");
     }
 
@@ -167,13 +172,31 @@ void DRCPlugin::RobotGrabDrill(const geometry_msgs::Pose::ConstPtr &_cmd)
 
   if (this->drill.drillModel && this->drill.couplingLink)
   {
+    // Set drillModel to no collision
+    this->drill.drillModel->GetLink("link")->SetSelfCollide(false);
+    this->drill.drillModel->GetLink("link")->SetCollideMode("none"); 
+
     physics::LinkPtr gripper = this->drchubo.model->GetLink(gripperName);
     if (gripper)
-    {
+    {  printf("[DRCPlugin] Set gripper to %s \n", gripperName.c_str() );
       // teleports the object being attached together
       pose = pose + relPose + gripper->GetWorldPose();
       this->drill.drillModel->SetLinkWorldPose(pose,
         this->drill.couplingLink);
+
+    // Disable collision of fingers
+    // Should we put collision back once we let the drill go?
+   this->drchubo.model->GetLink("Body_RF1")->SetSelfCollide(false); 
+   this->drchubo.model->GetLink("Body_RF1")->SetCollideMode("none");
+   this->drchubo.model->GetLink("Body_RF2")->SetSelfCollide(false);  
+   this->drchubo.model->GetLink("Body_RF2")->SetCollideMode("none"); 
+   this->drchubo.model->GetLink("Body_RF3")->SetSelfCollide(false); 
+   this->drchubo.model->GetLink("Body_RF3")->SetCollideMode("none"); 
+
+    // Set drillModel to no collision
+    this->drill.drillModel->GetLink("link")->SetSelfCollide(false);
+    this->drill.drillModel->GetLink("link")->SetCollideMode("none"); 
+
 
       if (!this->grabJoint)
         this->grabJoint = this->AddJoint(this->world, this->drill.drillModel,
@@ -182,9 +205,14 @@ void DRCPlugin::RobotGrabDrill(const geometry_msgs::Pose::ConstPtr &_cmd)
                                          "revolute",
                                          math::Vector3(0, 0, 0),
                                          math::Vector3(0, 0, 1),
-                                         0.0, 0.0);
+                                         0.0, 0.0,true);
     }
-  }
+
+   else {
+      printf("[DRCPlugin] NO Set gripper to %s \n", gripperName.c_str() );
+   }
+
+  } 
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -268,9 +296,13 @@ void DRCPlugin::Drill::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf)
         if( this->drchubo.modeType == ON_STAY_DOG_MODE ) {
             // Set joint pose
             drchubo.model->SetJointPositions( defaultJointState_p );
-                
+
             // Set world pose   
             this->drchubo.model->SetWorldPose( defaultPose_p );
+
+            if(this->grabJoint) {
+                this->drchubo.model->SetJointPosition( this->grabJoint->GetName(), 0 );
+            }
         }
       
         // **************************************************
@@ -352,7 +384,7 @@ void DRCPlugin::Drill::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf)
         this->isInitialized = true;
 
         // Set ankleOffset
-        this->ankleOffset = 0.3;
+        this->ankleOffset = 0.20; //0.18;
 
         // Store joints
         this->mJoints.resize( mNumJoints );

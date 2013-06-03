@@ -1,5 +1,5 @@
 /**
- * @file main.cpp
+ * @file walkNode.cpp
  */
 #include <ros/ros.h>
 #include <trajectory_msgs/JointTrajectory.h>
@@ -66,37 +66,39 @@ int main( int argc, char* argv[] ) {
   DRC_msgs::PoseJointTrajectory pjt_msg;
 
   // Generate ZMP trajectories
-  // Default variables
-  size_t max_steps;
 
-  // Get params from server (if no default)
-  int walk_max_steps;
-  if( node->getParam("/walk_max_steps", walk_max_steps ) ){
-     max_steps = walk_max_steps;
+  // Get params from server
+  int _max_steps; size_t max_steps;
+  double _step_length; double step_length; 
+  double _transition_time; double transitionTime;
+
+  if( node->getParam("/walk_max_steps", _max_steps ) ){
+     max_steps = _max_steps;
   } else { printf("No /walk_max_steps parameter set. SET IT NOW OR I WON'T WALK! \n"); }	
+  if( node->getParam("/walk_step_length", _step_length ) ){
+     step_length = _step_length;
+  } else { printf("No /walk_step_length parameter set. SET IT NOW OR I WON'T WALK! \n"); }	
+  if( node->getParam("/walk_transition_time", _transition_time ) ){
+     transitionTime = _transition_time;
+  } else { printf("No /walk_transition_time parameter set. SET IT NOW OR I WON'T WALK! \n"); }	
 
-   max_steps = 5;
-  zd.generateZMPGait( max_steps );
+  zd.generateZMPGait( max_steps, step_length );
   ros::spinOnce();
   ros::Duration(0.1).sleep();
 
-  // Send it
-  double transitionTime = 1.0;
-  for( int i = 0; i < 4; ++i ) {
   // Convert it to a message
     pjt_msg = zd.getPoseJointTrajMsg( initPose, initJointState, transitionTime );
-    printf("Publishing pose animation: [%d] Time \n", i );
+    printf("Publishing pose animation \n" );
     pjt_msg.header.stamp = ros::Time::now();
     poseJointTrajPub.publish( pjt_msg );
   
   // Wait
-  ros::Duration(7).sleep();
+  ros::Duration(max_steps*1 + 1).sleep();
 
   // Spin
   printf("Spin \n");
   ros::spinOnce();
  
-  }
 
   printf("We are done - Getting out of node \n");
 

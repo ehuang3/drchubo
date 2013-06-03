@@ -27,20 +27,16 @@ link_directories(${DART_LIBRARY_DIRS})
 # Find expat needed for Matt's parsing
 find_library( EXPAT_LIBRARY expat )
 
-#rosbuild_add_executable ( zmpnode main.cpp zmpnode.cpp )  
-#target_link_libraries (zmpnode hubozmp hubomz mzcommon expat ${DART_LIBRARIES} ${DARTExt_LIBRARIES} ${Boost_LIBRARIES}) 
-#set_target_properties( zmpnode PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
-
-#rosbuild_add_executable ( zmpnode_arbitrary main_TestArbitraryStart.cpp zmpnode.cpp )  
-#target_link_libraries (zmpnode_arbitrary hubozmp hubomz mzcommon expat ${DART_LIBRARIES} ${DARTExt_LIBRARIES} ${Boost_LIBRARIES}) 
-#set_target_properties( zmpnode_arbitrary PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
+rosbuild_add_executable ( zmpnode main.cpp zmpnode.cpp )  
+target_link_libraries (zmpnode hubozmp hubomz mzcommon expat ${DART_LIBRARIES} ${DARTExt_LIBRARIES} ${Boost_LIBRARIES}) 
+set_target_properties( zmpnode PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
 
 rosbuild_add_executable ( zmpWalk_smoothTransition zmpWalk_smoothTransition.cpp zmpnode.cpp )  
 target_link_libraries (zmpWalk_smoothTransition hubozmp hubomz mzcommon expat ${DART_LIBRARIES} ${DARTExt_LIBRARIES} ${Boost_LIBRARIES}) 
 set_target_properties( zmpWalk_smoothTransition PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
 
-
-#rosbuild_add_executable ( continuousWalk continuousWalk.cpp )  
-#target_link_libraries (continuousWalk hubozmp hubomz mzcommon expat ${DART_LIBRARIES} ${DARTExt_LIBRARIES} ${Boost_LIBRARIES}) 
-#set_target_properties( continuousWalk PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
+# Use this for walking in general
+rosbuild_add_executable ( walkNode walkNode.cpp zmpnode.cpp )  
+target_link_libraries( walkNode hubozmp hubomz mzcommon expat ${DART_LIBRARIES} ${DARTExt_LIBRARIES} ${Boost_LIBRARIES}) 
+set_target_properties( walkNode PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
 

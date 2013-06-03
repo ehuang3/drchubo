@@ -278,7 +278,8 @@
     <!-- DRC Hubo -->
     <include>
       <uri>model://drchubo</uri>
-      <pose>4.35 -0.022 1.04  0 0 0</pose>
+      <!--<pose>4.35 -0.022 1.04  0 0 0</pose>-->
+      <pose>4.20 -0.022 1.04  0 0 0</pose>
     </include>
 
     <!-- DRC Plugin -->
