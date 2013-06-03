@@ -206,10 +206,10 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
   p0.position.x = _initPose->position.x;
   p0.position.y = _initPose->position.y;
   p0.position.z = _initPose->position.z;  // + 1.18 - DEFAULT FROM FLOOR
-  p0.orientation.x = 0;
-  p0.orientation.y = 0;
-  p0.orientation.z = 0;
-  p0.orientation.w = 1;
+  p0.orientation.x = _initPose->rotation.x;
+  p0.orientation.y = _initPose->rotation.y;
+  p0.orientation.z = _initPose->rotation.z;
+  p0.orientation.w = _initPose->rotation.w;
   
   // Append to trajectory
   pjt.points.push_back(jt0);
