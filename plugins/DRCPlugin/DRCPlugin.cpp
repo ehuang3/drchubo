@@ -286,7 +286,7 @@ void DRCPlugin::Drill::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf)
 	math::Pose lf = this->drchubo.model->GetLink("Body_LAR")->GetWorldPose();
 	pose_msg.position.x = p.pos.x;
 	pose_msg.position.y = p.pos.y;
-	pose_msg.position.z = ( p.pos.z - lf.pos.z )+ this->drchubo.ankleOffset;
+	pose_msg.position.z = p.pos.z; // - lf.pos.z )+ this->drchubo.ankleOffset;
 
 	pose_msg.orientation.x = p.rot.x;
 	pose_msg.orientation.y = p.rot.y;
@@ -769,7 +769,7 @@ void DRCPlugin::Drill::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf)
 	math::Pose leftFootPose = this->drchubo.model->GetLink("Body_LAR")->GetWorldPose();
         defaultPose_p.pos.x = pose.pos.x;
         defaultPose_p.pos.y = pose.pos.y;
-        defaultPose_p.pos.z = (pose.pos.z - leftFootPose.pos.z) + this->drchubo.ankleOffset;
+        defaultPose_p.pos.z = pose.pos.z; // - leftFootPose.pos.z) + this->drchubo.ankleOffset;
 
         defaultPose_p.rot.x = pose.rot.x;
         defaultPose_p.rot.y = pose.rot.y;
