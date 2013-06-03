@@ -70,7 +70,8 @@ class zmpnode {
   DRC_msgs::PoseStampedArray getPoseTrajMsg();
   DRC_msgs::PoseJointTrajectory getPoseJointTrajMsg( geometry_msgs::PosePtr _initPose,
 						     sensor_msgs::JointStatePtr _initJointState,
-                                                     double _smoothTransitionTime = 1.0 );
+                                                     double _smoothTransitionTime = 1.0,			
+						     bool _useInitArmConfig = false );
   // Helpers
   Eigen::Matrix4d tf2Mx( Transform3 _tf );
   

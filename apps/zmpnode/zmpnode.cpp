@@ -164,7 +164,8 @@ DRC_msgs::PoseStampedArray zmpnode::getPoseTrajMsg() {
  */
 DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::PosePtr _initPose,
 							     sensor_msgs::JointStatePtr _initJointState,
-                                                             double _smoothTransitionTime ) {
+                                                             double _smoothTransitionTime,
+                                                             bool _useInitArmConfig ) {
 
   //**********************************
   // JOINT AND POSE ANIMATION
@@ -234,14 +235,28 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
     geometry_msgs::Pose p;
     
     std::vector<double> vals(mNumJoints, 0.0);
-    // Left Arm
-    for( int j = 0; j <= 5; ++j ) {
-      vals[j] = mMzJointTraj[i](j);
+    
+    if( _useInitArmConfig == true ) {
+			// Left Arm
+    	for( int j = 0; j <= 5; ++j ) {
+      	vals[j] = vals0[j];
+    	}
+    	// Right Arm
+    	for( int j = 7; j <= 12; ++j ) {
+      	vals[j] = vals0[j-1];
+    	}
     }
-    // Right Arm
-    for( int j = 7; j <= 12; ++j ) {
-      vals[j] = mMzJointTraj[i](j-1);
-    }
+    else {
+			// Left Arm
+    	for( int j = 0; j <= 5; ++j ) {
+      	vals[j] = mMzJointTraj[i](j);
+    	}
+    	// Right Arm
+    	for( int j = 7; j <= 12; ++j ) {
+      	vals[j] = mMzJointTraj[i](j-1);
+    	}
+		}
+
     // Left and Right Legs (do not change the 25 - MATT CODE RETURNS 26 values)
     for( int j = 14; j <= 25; ++j ) {
       vals[j] = mMzJointTraj[i](j-2);

@@ -1,8 +1,14 @@
+<!-- ******************** -->
+<!-- Walk Node parameters -->
+<!-- ******************** -->
+
 <launch>
   <param name="/walk_max_steps" type="int" value="6" />
-  <param name="/walk_step_length" type="double" value="0.15" />
-  <param name="/walk_sideways" type="bool" value="true" />
+  <param name="/walk_step_length" type="double" value="0.3" />
+  <param name="/walk_sideways" type="bool" value="false" />
   <param name="/walk_transition_time" type="double" value="1.0" />
+  <!-- Use Initial Arm Configuration to walk (no start default) -->
+  <param name="/walk_useInitArmConfig" type="bool" value="false" />
 
   <!-- Double support time: Default 0.05 -->
   <param name="/walk_double_support_time" type="double" value="0.05" />

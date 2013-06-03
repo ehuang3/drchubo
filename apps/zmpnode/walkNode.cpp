@@ -76,6 +76,7 @@ int main( int argc, char* argv[] ) {
   double _startup_time; double startup_time;
   double _shutdown_time; double shutdown_time;
   bool _walk_sideways; bool walk_sideways;
+  bool _useInitArmConfig; bool useInitArmConfig;
 
   // Max steps
   if( node->getParam("/walk_max_steps", _max_steps ) ){
@@ -89,6 +90,11 @@ int main( int argc, char* argv[] ) {
   // Walk sideways
   if( node->getParam("/walk_sideways", _walk_sideways ) ){
      walk_sideways = _walk_sideways;
+  } else { printf("No /walk_sideways parameter set. SET IT NOW OR I WON'T WALK! \n"); }
+
+  // Walk sideways
+  if( node->getParam("/walk_useInitArmConfig", _useInitArmConfig ) ){
+     useInitArmConfig = _useInitArmConfig;
   } else { printf("No /walk_sideways parameter set. SET IT NOW OR I WON'T WALK! \n"); }
 
   // Transition time
@@ -127,7 +133,7 @@ int main( int argc, char* argv[] ) {
   ros::Duration(0.1).sleep();
 
   // Convert it to a message
-    pjt_msg = zd.getPoseJointTrajMsg( initPose, initJointState, transitionTime );
+    pjt_msg = zd.getPoseJointTrajMsg( initPose, initJointState, transitionTime, useInitArmConfig );
     printf("Publishing pose animation \n" );
     pjt_msg.header.stamp = ros::Time::now();
     poseJointTrajPub.publish( pjt_msg );
