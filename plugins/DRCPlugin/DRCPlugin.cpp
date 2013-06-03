@@ -406,8 +406,6 @@ namespace gazebo
             std::cout << (*iter).first << ": "<<(*iter).second << std::endl;
         }
 
-
-
     }
 
     //******************************
@@ -574,7 +572,7 @@ namespace gazebo
 
         // Stay at the current ModelState (pose + joints)
         else if (_str == "stay_dog") {
-            ROS_INFO("[DRCPlugin] Set STAY_DOG mode \n");
+	  //ROS_INFO("[DRCPlugin] Set STAY_DOG mode \n");
             this->drchubo.modeType = ON_STAY_DOG_MODE;
 
             // Print the stay mode stuff
@@ -588,10 +586,11 @@ namespace gazebo
                    // defaultPose_p.rot.w );
 
             //printf("[STAY-DOG] Joints: : \n" );
+	    /*
             for( std::map<std::string,double>::iterator iter=defaultJointState_p.begin();
                  iter != defaultJointState_p.end(); ++iter ) {
                 std::cout << (*iter).first << ": "<<(*iter).second << std::endl;
-            }
+		}*/
 
         }
   
