@@ -58,7 +58,8 @@ class zmpnode {
   zmpnode();
   ~zmpnode();    
   
-  void generateZMPGait(  size_t _max_step_count = 30 ); 
+  void generateZMPGait(  size_t _max_step_count = 30,
+                         double _step_length = 0.3 ); 
 
   trajectory_msgs::JointTrajectory getJointTrajMsg();
   DRC_msgs::PoseStampedArray getPoseTrajMsg();

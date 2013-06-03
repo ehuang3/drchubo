@@ -53,7 +53,7 @@ std::string zmpnode::mJointNames[] = {"drchubo::LSP", "drchubo::LSR", "drchubo::
  */
 zmpnode::zmpnode() {
   mdt = 0.005;
-  ankleOffset = 0.20; // 0.18
+  ankleOffset = 0.20; // 0.18 - IF YOU CHANGE THIS, ALSO CHANGE THE ankleOffset of DRCPlugin
 }
 
 /**
@@ -286,7 +286,8 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
  * @function generateZMPGait
  * @brief Executes Matt's code
  */
-  void zmpnode::generateZMPGait( size_t _max_step_count ) {
+  void zmpnode::generateZMPGait( size_t _max_step_count,
+                                 double _step_length ) {
   printf(" Generate ZMP Gait \n");
   bool show_gui = false;
   bool use_ach = false;
@@ -298,7 +299,6 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
   double footsep_y = 0.10;//0.0985; // half of horizontal separation distance between feet
   double foot_liftoff_z = 0.05; // foot liftoff height
 
-  double step_length = 0.3;
   bool walk_sideways = false;
 
   double com_height = 0.48; // 0.48// height of COM above ANKLE
@@ -314,7 +314,10 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
   double double_support_time = 0.05;
   double single_support_time = 0.70;
 
+  // Values set by arguments
   double max_step_count = _max_step_count;
+  double step_length = _step_length;
+
 
   double zmp_jerk_penalty = 1e-8; // jerk penalty on ZMP controller
 

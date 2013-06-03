@@ -5,6 +5,8 @@
   <arg name="extra_gazebo_args" default="" />
 
   <param name="/walk_max_steps" type="int" value="26" />
+  <param name="/walk_step_length" type="double" value="0.3" />
+  <param name="/walk_transition_time" type="double" value="1.0" />
   <node name="gazebo" pkg="drchubo" type="run_$(arg gzname)" args="$(arg gzworld) $(arg extra_gazebo_args)" output="screen" />
 
 </launch>
