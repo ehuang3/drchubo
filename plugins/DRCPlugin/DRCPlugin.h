@@ -100,11 +100,6 @@ namespace gazebo
   public: void SetRobotMode(const std::string &_str);
 
 
-    /// \brief remove the fixed joint between robot hand link and fire hose.
-    /// \param[in] _cmd not used.
-    public: void RobotReleaseLink(const geometry_msgs::Pose::ConstPtr &_cmd);
-
-
     ////////////////////////////////////////////////////////////////////////////
     //                                                                        //
     //   Generic tools for manipulating models                                //
@@ -147,7 +142,7 @@ namespace gazebo
                                         math::Vector3 _anchor,
                                         math::Vector3 _axis,
                                         double _upper, double _lower,
-                                        bool _disableCollision = false);
+                                        bool _disableCollision = true);
 
     /// \brief Remove a joint.
     /// \param[in] _joint Joint to remove.
@@ -210,9 +205,6 @@ namespace gazebo
     private: ros::Subscriber subPose;
     private: ros::Subscriber subConfiguration;
     private: ros::Subscriber subMode;
-    private: ros::Subscriber subGrab;
-    private: ros::Subscriber subRobotRelease;
-    private: physics::JointPtr grabJoint;
 
       // Store joint pointers
     private: std::vector<physics::JointPtr> mJoints;
@@ -220,16 +212,69 @@ namespace gazebo
       friend class DRCPlugin;
     } drchubo;
 
+    // //////////////////////////////////
+    // GrabJoint stuff
+    private: ros::Subscriber subRobotGrab;
+    private: ros::Subscriber subRobotRelease;
+    private: physics::JointPtr grabJoint;
 
     //////////////////////////////////////////
     // DRILL 
     //////////////////////////////////////////
+  private: class Drill
+    {
+      /// \brief set initial configuration of the fire hose link
+    private: void SetInitialConfiguration();
+      
+      /// \brief Load the drc_fire_hose portion of plugin.
+      /// \param[in] _parent Pointer to parent world.
+      /// \param[in] _sdf Pointer to sdf element.
+    private: void Load(physics::WorldPtr _parent, sdf::ElementPtr _sdf);
+      
+    private: physics::ModelPtr drillModel;
+      // Additional models
+      /*
+    private: physics::ModelPtr standpipeModel;
+    private: physics::ModelPtr valveModel;
+    private: physics::JointPtr valveJoint;
+      */
+      /// joint for pinning a link to the world
+    private: physics::JointPtr fixedJoint;
+      
+      /// joints and links
+    private: physics::Joint_V drillJoints;
+    private: physics::Link_V drillLinks;
+      /// screw joint
+    private: physics::JointPtr screwJoint;
+    private: double threadPitch;
+      
+      /// Pointer to the update event connection
+    private: event::ConnectionPtr updateConnection;
+      
+    private: physics::LinkPtr couplingLink;
+    private: physics::LinkPtr spoutLink;
+    private: math::Pose couplingRelativePose;
+    private: math::Pose initialDrillPose;
+      
+      /// \brief flag for successful initialization of fire hose, standpipe
+    private: bool isInitialized;
+      
+      friend class DRCPlugin;
+    } drill;  
     
-
 
       /// \brief drchubo's Publishers
   private: ros::Publisher jointStatesPub;
   private: ros::Publisher posePub;
+
+    /// Drill callbacks for grabbing or releasing
+    /// \brief Cheats to teleport fire hose to hand and make a fixed joint
+    /// \param[in] _cmd Relative pose offset between the link and the hand.
+  public: void RobotGrabDrill(const geometry_msgs::Pose::ConstPtr &_cmd);
+    
+    /// \brief remove the fixed joint between robot hand link and fire hose.
+    /// \param[in] _cmd not used.
+  public: void RobotReleaseLink(const geometry_msgs::Pose::ConstPtr &_cmd);
 
 
       /// \brief Are we animating?

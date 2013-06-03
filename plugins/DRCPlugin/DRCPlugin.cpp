@@ -99,6 +99,9 @@ namespace gazebo
         // Load Robot
         this->drchubo.Load(this->world, this->sdf);
 
+	// Load drill
+	this->drill.Load( this->world, this->sdf );
+
         // Setup ROS interfaces for robot
         this->LoadRobotROSAPI();
     
@@ -137,7 +140,104 @@ namespace gazebo
 
 
 
+////////////////////////////////////////////////////////////////////////////////
+void DRCPlugin::RobotGrabDrill(const geometry_msgs::Pose::ConstPtr &_cmd)
+{
+  math::Quaternion q(_cmd->orientation.w, _cmd->orientation.x,
+                     _cmd->orientation.y, _cmd->orientation.z);
+  q.Normalize();
+  math::Pose pose(math::Vector3(_cmd->position.x,
+                                _cmd->position.y,
+                                _cmd->position.z), q);
+  /// \todo: get these from incoming message
+  std::string gripperName = "Body_LWR";
+  math::Pose relPose(math::Vector3(0.0, 0.0, -0.5),
+               math::Quaternion(0, 0, 0));
 
+  if (this->drill.drillModel && this->drill.couplingLink)
+  {
+    physics::LinkPtr gripper = this->drchubo.model->GetLink(gripperName);
+    if (gripper)
+    {
+      // teleports the object being attached together
+      pose = pose + relPose + gripper->GetWorldPose();
+      this->drill.drillModel->SetLinkWorldPose(pose,
+        this->drill.couplingLink);
+
+      if (!this->grabJoint)
+        this->grabJoint = this->AddJoint(this->world, this->drill.drillModel,
+                                         gripper,
+                                         this->drill.couplingLink,
+                                         "revolute",
+                                         math::Vector3(0, 0, 0),
+                                         math::Vector3(0, 0, 1),
+                                         0.0, 0.0);
+    }
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void DRCPlugin::RobotReleaseLink(const geometry_msgs::Pose::ConstPtr &/*_cmd*/)
+{
+  this->RemoveJoint(this->grabJoint);
+}
+
+  // ******************************************
+  // DRILL FUNCTIONS
+void DRCPlugin::Drill::SetInitialConfiguration()
+{
+  // this does not work yet, because SetAngle only works for Hinge and Slider
+  // joints, and fire hose is made of universal and ball joints.
+  for (unsigned int i = 0; i < this->drillJoints.size(); ++i)
+    {
+      // gzerr << "joint [" << this->fireHoseJoints[i]->GetName() << "]\n";
+      this->drillJoints[i]->SetAngle(0u, 0.0);
+  }
+}
+
+  /**
+   * @function DRILL Load
+   */
+void DRCPlugin::Drill::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf)
+{
+  this->isInitialized = false;
+
+  sdf::ElementPtr sdf = _sdf->GetElement("drill");
+  // Get special coupling links (on the firehose side)
+  std::string drillModelName = sdf->GetValueString("drill_model");
+  this->drillModel = _world->GetModel(drillModelName);
+  if (!this->drillModel)
+  {
+    ROS_INFO("Drill [%s] not found", drillModelName.c_str());
+    return;
+  }
+  this->initialDrillPose = this->drillModel->GetWorldPose();
+
+  // Get coupling link
+  std::string couplingLinkName = sdf->GetValueString("coupling_link");
+  this->couplingLink = this->drillModel->GetLink(couplingLinkName);
+  if (!this->couplingLink)
+  {
+    ROS_ERROR("coupling link [%s] not found", couplingLinkName.c_str());
+    return;
+  }
+
+  // Get joints
+  this->drillJoints = this->drillModel->GetJoints();
+
+  // Get links
+  this->drillLinks = this->drillModel->GetLinks();
+
+  
+  //this->threadPitch = sdf->GetValueDouble("thread_pitch");
+
+  this->couplingRelativePose = sdf->GetValuePose("coupling_relative_pose");
+
+  // Set initial configuration
+  this->SetInitialConfiguration();
+
+  this->isInitialized = true;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Play the trajectory, update states
@@ -275,15 +375,23 @@ namespace gazebo
 ////////////////////////////////////////////////////////////////////////////////
     void DRCPlugin::LoadDRCROSAPI()
     {
-        /*
-          std::string robot_exit_car_topic_name = "drc_world/robot_exit_car";
-          ros::SubscribeOptions robot_exit_car_so =
-          ros::SubscribeOptions::create<geometry_msgs::Pose>(
-          robot_exit_car_topic_name, 100,
-          boost::bind(&VRCPlugin::RobotExitCar, this, _1),
-          ros::VoidPtr(), &this->rosQueue);
-          this->subRobotExitCar = this->rosNode->subscribe(robot_exit_car_so);
-        */
+
+      std::string robot_grab_topic_name = "drc_world/robot_grab_link";
+      ros::SubscribeOptions robot_grab_so =
+	ros::SubscribeOptions::create<geometry_msgs::Pose>(
+							   robot_grab_topic_name, 100,
+							   boost::bind(&DRCPlugin::RobotGrabDrill, this, _1),
+							   ros::VoidPtr(), &this->rosQueue);
+      this->subRobotGrab = this->rosNode->subscribe(robot_grab_so);
+      
+      std::string robot_release_topic_name = "drc_world/robot_release_link";
+      ros::SubscribeOptions robot_release_so =
+	ros::SubscribeOptions::create<geometry_msgs::Pose>(
+							   robot_release_topic_name, 100,
+							   boost::bind(&DRCPlugin::RobotReleaseLink, this, _1),
+							   ros::VoidPtr(), &this->rosQueue);
+      this->subRobotRelease = this->rosNode->subscribe(robot_release_so);
+      
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -768,11 +876,6 @@ namespace gazebo
     }  
 
 
-////////////////////////////////////////////////////////////////////////////////
-    void DRCPlugin::RobotReleaseLink(const geometry_msgs::Pose::ConstPtr &/*_cmd*/)
-    {
-        //  this->RemoveJoint(this->grabJoint);
-    }
 
 ////////////////////////////////////////////////////////////////////////////////
 // dynamically add joint between 2 links
