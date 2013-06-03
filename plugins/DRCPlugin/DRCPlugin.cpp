@@ -151,18 +151,36 @@ void DRCPlugin::RobotGrabDrill(const geometry_msgs::Pose::ConstPtr &_cmd)
                                 _cmd->position.z), q);
   /// \todo: get these from incoming message
   std::string gripperName = "Body_LWR";
-  math::Pose relPose(math::Vector3(0.0, 0.0, -0.5),
-               math::Quaternion(0, 0, 0));
+  math::Pose relPose(math::Vector3(0.01, -0.125, -0.125),
+               math::Quaternion(3.1416, 1.57, -1.57));
 
   if (this->drill.drillModel && this->drill.couplingLink)
   {
+    // Set drillModel to no collision
+    this->drill.drillModel->GetLink("link")->SetSelfCollide(false);
+    this->drill.drillModel->GetLink("link")->SetCollideMode("none"); 
+
     physics::LinkPtr gripper = this->drchubo.model->GetLink(gripperName);
     if (gripper)
-    {
+    {  printf("[DRCPlugin] Set gripper to %s \n", gripperName.c_str() );
       // teleports the object being attached together
       pose = pose + relPose + gripper->GetWorldPose();
       this->drill.drillModel->SetLinkWorldPose(pose,
         this->drill.couplingLink);
+
+    // Disable collision of fingers
+    // Should we put collision back once we let the drill go?
+   this->drchubo.model->GetLink("Body_LF1")->SetSelfCollide(false); 
+   this->drchubo.model->GetLink("Body_LF1")->SetCollideMode("none");
+   this->drchubo.model->GetLink("Body_LF2")->SetSelfCollide(false);  
+   this->drchubo.model->GetLink("Body_LF2")->SetCollideMode("none"); 
+   this->drchubo.model->GetLink("Body_LF3")->SetSelfCollide(false); 
+   this->drchubo.model->GetLink("Body_LF3")->SetCollideMode("none"); 
+
+    // Set drillModel to no collision
+    this->drill.drillModel->GetLink("link")->SetSelfCollide(false);
+    this->drill.drillModel->GetLink("link")->SetCollideMode("none"); 
+
 
       if (!this->grabJoint)
         this->grabJoint = this->AddJoint(this->world, this->drill.drillModel,
@@ -171,9 +189,14 @@ void DRCPlugin::RobotGrabDrill(const geometry_msgs::Pose::ConstPtr &_cmd)
                                          "revolute",
                                          math::Vector3(0, 0, 0),
                                          math::Vector3(0, 0, 1),
-                                         0.0, 0.0);
+                                         0.0, 0.0,true);
     }
-  }
+
+   else {
+      printf("[DRCPlugin] NO Set gripper to %s \n", gripperName.c_str() );
+   }
+
+  } 
 }
 
 ////////////////////////////////////////////////////////////////////////////////
