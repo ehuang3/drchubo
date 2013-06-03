@@ -99,7 +99,7 @@ trajectory_msgs::JointTrajectory zmpnode::getJointTrajMsg() {
       vals[j] = mMzJointTraj[i](j-1);
     }
     // Left and Right Legs
-    for( int j = 14; j <= mNumJoints; ++j ) {
+    for( int j = 14; j <= 25; ++j ) {
       vals[j] = mMzJointTraj[i](j-2);
     }
     // Set all joints
@@ -217,7 +217,7 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
   
   // Set duration
   pjt.points[0].time_from_start = ros::Duration().fromSec(0);
-  
+  printf("[DEBUG zmpNode] First position of walk (where robot was): %f %f %f \n", p0.position.x, p0.position.y, p0.position.z);
   // Add transition time
   t += smoothT;
 
@@ -276,6 +276,8 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
   pjt.header.stamp = ros::Time::now();
   pjt.header.frame_id = "drchubo::Body_Torso";
 
+  printf("[DEBUG zmpNode] First position of walk after smoothing: %f %f %f \n", pjt.poses[1].position.x, pjt.poses[1].position.y, pjt.poses[1].position.z);
+
   printf("End of animation processing, returning \n");
 
   return pjt;
@@ -288,6 +290,7 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
  */
   void zmpnode::generateZMPGait( size_t _max_step_count,
                                  double _step_length,
+                                 bool _walk_sideways,
 				 double _double_support_time,
 				 double _single_support_time,
 				 double _startup_time,
@@ -302,8 +305,6 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
 
   double footsep_y = 0.10;//0.0985; // half of horizontal separation distance between feet
   double foot_liftoff_z = 0.05; // foot liftoff height
-
-  bool walk_sideways = false;
 
   double com_height = 0.48; // 0.48// height of COM above ANKLE
   double com_ik_ascl = 0;
@@ -320,6 +321,7 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
   double shutdown_time = _shutdown_time;
   double double_support_time = _double_support_time;
   double single_support_time = _single_support_time;
+  bool walk_sideways = _walk_sideways;
 
   double zmp_jerk_penalty = 1e-8; // jerk penalty on ZMP controller
 

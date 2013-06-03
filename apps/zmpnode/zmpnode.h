@@ -60,6 +60,7 @@ class zmpnode {
   
   void generateZMPGait( size_t _max_step_count = 30,
 			double _step_length = 0.3,
+                        bool _walk_sideways = false,
 			double _double_support_time = 0.05,
 			double _single_support_time = 0.70,
 			double _startup_time = 1.0,

@@ -75,6 +75,7 @@ int main( int argc, char* argv[] ) {
   double _single_support_time; double single_support_time;
   double _startup_time; double startup_time;
   double _shutdown_time; double shutdown_time;
+  bool _walk_sideways; bool walk_sideways;
 
   // Max steps
   if( node->getParam("/walk_max_steps", _max_steps ) ){
@@ -84,6 +85,12 @@ int main( int argc, char* argv[] ) {
   if( node->getParam("/walk_step_length", _step_length ) ){
      step_length = _step_length;
   } else { printf("No /walk_step_length parameter set. SET IT NOW OR I WON'T WALK! \n"); }	
+
+  // Walk sideways
+  if( node->getParam("/walk_sideways", _walk_sideways ) ){
+     walk_sideways = _walk_sideways;
+  } else { printf("No /walk_sideways parameter set. SET IT NOW OR I WON'T WALK! \n"); }
+
   // Transition time
   if( node->getParam("/walk_transition_time", _transition_time ) ){
      transitionTime = _transition_time;
@@ -110,6 +117,7 @@ int main( int argc, char* argv[] ) {
 
   zd.generateZMPGait( max_steps, 
 		      step_length,
+                      walk_sideways,
 		      double_support_time,
 		      single_support_time,
 		      startup_time,

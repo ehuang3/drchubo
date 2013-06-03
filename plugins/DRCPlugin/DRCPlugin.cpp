@@ -897,7 +897,10 @@ void DRCPlugin::Drill::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf)
         newPoseWorld.pos.z = newPoseWorld.pos.z + this->ankleOffset; 
 
         this->model->SetWorldPose( newPoseWorld );
-        //printf( "[DRCPLUGIN - ParallelToFloor] Done  - setting foot up %f to account for ankle offset\n", this->ankleOffset );
+        printf( "[DRCPLUGIN - ParallelToFloor] Done  - setting foot up %f to account for ankle offset\n", this->ankleOffset );
+        leftFootPose = this->model->GetLink("Body_LAR")->GetWorldPose();
+        worldPose = this->model->GetWorldPose();
+        printf( "Left foot pos: %f %f %f World pos of torso: %f %f %f \n", leftFootPose.pos.x, leftFootPose.pos.y, leftFootPose.pos.z, worldPose.pos.x, worldPose.pos.y, worldPose.pos.z);
     }  
 
 
