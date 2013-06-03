@@ -141,49 +141,82 @@ namespace gazebo
 
 ////////////////////////////////////////////////////////////////////////////////
 // Play the trajectory, update states
-    void DRCPlugin::UpdateStates()
-    {
-        boost::mutex::scoped_lock lock(this->update_mutex);
-
-        double curTime = this->world->GetSimTime().Double();
-
-        if (curTime > this->lastUpdateTime) {
-            double dt = curTime - this->lastUpdateTime;
+  void DRCPlugin::UpdateStates()
+  {
+    boost::mutex::scoped_lock lock(this->update_mutex);
     
+    double curTime = this->world->GetSimTime().Double();
     
-            if( dt > 0 ) {
-                // If we are animating don't do any action. Let the animation stop
-                if( this->onJointAnimation == true || this->onPoseAnimation == true ) {
-                    return;
-                }
+    if (curTime > this->lastUpdateTime) {
+      double dt = curTime - this->lastUpdateTime;
       
-                // Will try to keep at the joint configuration last sent through drc/configuration
-                if( this->drchubo.modeType == ON_STAY_DOG_MODE ) {
-      
-                    // Set joint pose
-                    try
-                    {
-                        drchubo.model->SetJointPositions( defaultJointState_p ); 
-                    }
-                    catch (std::bad_alloc& ba)
-                    {
-                        std::cout << "bad alloc caught: " << ba.what() << std::endl;
-                        exit(0);
-                    }
-                
-                    // Set world pose   
-                    this->drchubo.model->SetWorldPose( defaultPose_p );    
+    
+      if( dt > 0 ) {
+	// If we are animating don't do any action. Let the animation stop
+	if( this->onJointAnimation == true || this->onPoseAnimation == true ) {
+	  return;
+	}
 	
-                }
-      
-                // Publish joint states
-                //jointStatesPub.publish( defaultJointState );
-            }
+	// Will try to keep at the joint configuration last sent through drc/configuration
+	if( this->drchubo.modeType == ON_STAY_DOG_MODE ) {
+	  
+	  // Set joint pose
+	  try
+	    {
+	      drchubo.model->SetJointPositions( defaultJointState_p ); 
+	    }
+	  catch (std::bad_alloc& ba)
+	    {
+	      std::cout << "bad alloc caught: " << ba.what() << std::endl;
+	      exit(0);
+	    }
+	  
+	  // Set world pose   
+	  this->drchubo.model->SetWorldPose( defaultPose_p );    
+	  
+	}
+
+	// **************************************************
+	// PUBLISH ROBOT STATE
+
+	// Pose
+	geometry_msgs::Pose pose_msg;
+
+	math::Pose p = this->drchubo.model->GetWorldPose();
+	pose_msg.position.x = p.pos.x;
+	pose_msg.position.y = p.pos.y;
+	pose_msg.position.z = p.pos.z;
+
+	pose_msg.orientation.x = p.rot.x;
+	pose_msg.orientation.y = p.rot.y;
+	pose_msg.orientation.z = p.rot.z;
+	pose_msg.orientation.w = p.rot.w;
+	
+	// Joints
+	sensor_msgs::JointState jointState_msg;
+	
+        // Get joints
+        // To set Message form we need the FULL NAME
+	jointState_msg.name.resize( mNumJoints );
+	jointState_msg.position.resize( mNumJoints );
+        for( int i = 0; i < mNumJoints; ++i ) {
+	  jointState_msg.name[i] = mFullJointNames[i];
+	  jointState_msg.position[i] = this->drchubo.mJoints[i]->GetAngle(0).Radian();
         }
+
+
+	// Send them out
+	posePub.publish( pose_msg );
+	jointStatesPub.publish( jointState_msg );
+
+	// **************************************************
+
+      }
     }
-
-
-    /**
+  }
+  
+  
+  /**
      * @function Robot::Load
      */
     void DRCPlugin::Robot::Load( physics::WorldPtr _world, 
@@ -306,20 +339,22 @@ namespace gazebo
                                                                           ros::VoidPtr(), &this->rosQueue);
         this->drchubo.subPoseJointAnimation = this->rosNode->subscribe(poseJointAnimation_so);  
 
-        ////////////////////
+	// ************************
         //// Publishers
-  
+	// ************************
         // Publish joint state information
-        /*jointStatesPub = this->rosNode->advertise<sensor_msgs::JointState>( "drchubo/joint_states",
-          1,
-          false );
-        */
+        jointStatesPub = this->rosNode->advertise<sensor_msgs::JointState>( "drchubo/jointStates",
+									    100,
+									    false );
+        posePub = this->rosNode->advertise<geometry_msgs::Pose>( "drchubo/pose",
+								 100, false );
+
     }
 
 
-//********************************************
-// SetRobotPose
-//********************************************
+  //********************************************
+  // SetRobotPose
+  //********************************************
     void DRCPlugin::SetRobotPose(const geometry_msgs::Pose::ConstPtr &_pose) {
 
         math::Quaternion q(_pose->orientation.w, _pose->orientation.x,

@@ -219,6 +219,7 @@ namespace gazebo
 
       /// \brief drchubo's Publishers
   private: ros::Publisher jointStatesPub;
+  private: ros::Publisher posePub;
 
 
       /// \brief Are we animating?
