@@ -62,14 +62,15 @@ int main( int argc, char* argv[] ) {
   printf( "Sent grab \n" );
   geometry_msgs::Pose drillPose;
 
-  drillPose.position.x = 0;
-  drillPose.position.y = 0;
-  drillPose.position.z = -.4;
+  drillPose.position.x = -0;
+  drillPose.position.y = -0.14;
+  drillPose.position.z = -.16;
 
   Eigen::Isometry3d Tf;
   Tf = Eigen::Matrix4d::Identity();
   Tf.rotate(Eigen::AngleAxisd(M_PI/2, Eigen::Vector3d::UnitY()));
   Tf.rotate(Eigen::AngleAxisd(-M_PI/2, Eigen::Vector3d::UnitZ()));
+  Tf.rotate(Eigen::AngleAxisd(-M_PI/2, Eigen::Vector3d::UnitY()));
       
   Eigen::Quaterniond quat;
   quat = Tf.linear();
