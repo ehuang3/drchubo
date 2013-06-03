@@ -25,6 +25,17 @@ namespace control {
         ~ARM_SENSOR_AIK_T() {}
         virtual bool run(robot::robot_state_t& target, control_data_t* data);
     };
+
+    //############################################################
+    //### Arm: Analytical DUAL Sensor IK
+    //############################################################
+    class ARM_DUAL_AIK_T : public control_t {
+    public:
+    	ARM_DUAL_AIK_T(std::string name) : control_t(name), sensor_aik("") {}
+        ~ARM_DUAL_AIK_T() {}
+        virtual bool run(robot::robot_state_t& target, control_data_t* data);
+        ARM_SENSOR_AIK_T sensor_aik;
+    };
     
     //############################################################
     //### Arm: Analytical + Jacobian IK

@@ -290,7 +290,7 @@
       </drchubo>
       <drill>
         <drill_model>drill</drill_model>
-        <coupling_link>link</coupling_link>       
+        <coupling_link>link</coupling_link>
         <thread_pitch>-1000</thread_pitch>
         <coupling_relative_pose>0.001784 -4.6e-05 0.023 1.56985 1.55991 -0.000936</coupling_relative_pose>
       </drill> 	

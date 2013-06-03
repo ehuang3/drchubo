@@ -44,12 +44,7 @@ namespace control {
         target.dofs(joint_index) += omega;
         bool ok = target.clamp_dof(joint_index, false);
 
-        kinematics::Skeleton* robot = target.robot();
-        robot->setPose(target.dart_pose());
-        Eigen::Isometry3d (&end_effectors)[robot::NUM_MANIPULATORS] = data->manip_xform;
-        robot->setPose(target.dart_pose());
-        end_effectors[robot::MANIP_L_HAND] = robot->getNode(ROBOT_LEFT_HAND)->getWorldTransform();
-        end_effectors[robot::MANIP_R_HAND] = robot->getNode(ROBOT_RIGHT_HAND)->getWorldTransform();        
+        return ok;
     }
 
     bool GRASP_T::run(robot::robot_state_t& target, control_data_t* data)
@@ -77,13 +72,6 @@ namespace control {
 
         assert(target.check_limits());
 
-        robot->setPose(target.dart_pose());
-        data->manip_target = link->getWorldTransform();
-        Eigen::Isometry3d (&end_effectors)[robot::NUM_MANIPULATORS] = data->manip_xform;
-        robot->setPose(target.dart_pose());
-        end_effectors[robot::MANIP_L_HAND] = robot->getNode(ROBOT_LEFT_HAND)->getWorldTransform();
-        end_effectors[robot::MANIP_R_HAND] = robot->getNode(ROBOT_RIGHT_HAND)->getWorldTransform();      
-        
         return ok;
     }
 
@@ -110,16 +98,6 @@ namespace control {
 
         // 3.
         target.set_body(body);
-
-        // 4. save
-        kinematics::Skeleton* robot = data->robot;
-        robot->setPose(target.dart_pose());
-
-        std::vector<int> manip_ids = { robot::MANIP_L_HAND, robot::MANIP_R_HAND, robot::MANIP_L_FOOT, robot::MANIP_R_FOOT };
-        std::vector<const char*> manip_names = { ROBOT_LEFT_HAND, ROBOT_RIGHT_HAND, ROBOT_LEFT_FOOT, ROBOT_RIGHT_FOOT };
-        for(int i=0; i < manip_ids.size(); i++) {
-            data->manip_xform[manip_ids[i]] = robot->getNode(manip_names[i])->getWorldTransform();
-        }
 
         return true;
     }    

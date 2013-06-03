@@ -16,19 +16,20 @@ namespace control {
         robot::robot_kinematics_t* robot_kin = data->kin;
         int ms = data->manip_side;
         int mi = ms ? robot::MANIP_L_HAND : robot::MANIP_R_HAND;
-        Eigen::Isometry3d Twhand = data->manip_xform[mi];
+        Eigen::Isometry3d Twhand;
+        data->get_IK_target(Twhand, mi, data->ik_target);
 
         // 2. Add delta transform
         Twhand.linear() = Twhand.linear() * data->joy_rotation;
         Twhand.translation() += data->joy_position;
 
-        // 2. Run IK
+        // 3. Convert to global frame
+        data->convert_to_global(Twhand, target, mi, data->ik_target);
+
+        // 4.. Run IK
         bool ok = robot_kin->arm_ik(Twhand, ms, target);
 
-        // 23. Save new manip
-        data->manip_xform[mi] = Twhand;
-
-        // 3. Visualize target
+        // 5.. Visualize target
         data->manip_target = Twhand;
 
         return ok;
@@ -44,18 +45,47 @@ namespace control {
         robot::robot_kinematics_t* robot_kin = data->kin;
         int ms = data->manip_side;
         int mi = ms ? robot::MANIP_L_HAND : robot::MANIP_R_HAND;
-        Eigen::Isometry3d Twhand = data->manip_xform[ms];
+        Eigen::Isometry3d Twhand;
+        data->get_IK_target(Twhand, mi, data->ik_target);
 
-        // 2. Run IK
+        // 0. save
+        Eigen::VectorXd q(7);
+        target.get_manip(q, mi);
+
+        // 2. Add delta transform
+        Twhand = Twhand * data->sensor_tf[ms];
+
+        // 3. Convert to global frame
+        data->convert_to_global(Twhand, target, mi, data->ik_target);
+
+        // 4. Run IK
         bool ok = robot_kin->arm_ik(Twhand, ms, target);
-
-        // 23. Save new manip
-        data->manip_xform[mi] = Twhand;
 
         // 3. Visualize target
         data->manip_target = Twhand;
 
-        return ok;
+        // %. fix bad stuff
+        if(!ok)
+            target.set_manip(q, mi);
+
+        return true; //< Never fill IK targets when running fastrak
+    }
+
+    bool ARM_DUAL_AIK_T::run(robot::robot_state_t& target, control::control_data_t* data)
+    {
+        // save
+        int ms = data->manip_side;
+
+        bool ok = true;
+
+        data->manip_side = 0;
+        ok &= sensor_aik.run(target, data);
+        data->manip_side = 1;
+        ok &= sensor_aik.run(target, data);
+
+        data->manip_side = ms;
+
+        return true;
     }
 
     bool ARM_AJIK_T::run(robot::robot_state_t& target, control_data_t* data)

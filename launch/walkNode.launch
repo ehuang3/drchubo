@@ -1,7 +1,7 @@
 <launch>
-  <param name="/walk_max_steps" type="int" value="5" />
+  <param name="/walk_max_steps" type="int" value="30" />
   <param name="/walk_step_length" type="double" value="0.3" />
-  <param name="/walk_transition_time" type="double" value="0.5" />
+  <param name="/walk_transition_time" type="double" value="2" />
 
   <node pkg="drchubo" type="walkNode" name="walkNode_instance" output="screen" />	
 </launch>

@@ -165,8 +165,8 @@ namespace gui {
         // 2. Render robots
         // glClear(GL_DEPTH_BUFFER_BIT);
         // current state
-        // robotSkel->setPose( current_state->dart_pose() );
-        // robotSkel->draw(mRI, Vector4d(0.5, 0.5, 0.5, 0.5), false); // he's the grey one
+        robotSkel->setPose( current_state->dart_pose() );
+        robotSkel->draw(mRI, Vector4d(0.5, 0.5, 0.5, 0.5), false); // he's the grey one
         // target state
         // glClear(GL_DEPTH_BUFFER_BIT);
         robotSkel->setPose( target_state->dart_pose() );
