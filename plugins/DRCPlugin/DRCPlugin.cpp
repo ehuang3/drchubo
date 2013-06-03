@@ -18,6 +18,8 @@
 // For callbacks we use boost::function
 #include <boost/function.hpp>
 
+#include <sys/types.h>
+
 namespace gazebo
 {
     GZ_REGISTER_WORLD_PLUGIN(DRCPlugin)
@@ -141,9 +143,10 @@ namespace gazebo
 // Play the trajectory, update states
     void DRCPlugin::UpdateStates()
     {
+        boost::mutex::scoped_lock lock(this->update_mutex);
+
         double curTime = this->world->GetSimTime().Double();
 
-  
         if (curTime > this->lastUpdateTime) {
             double dt = curTime - this->lastUpdateTime;
     
@@ -354,13 +357,13 @@ namespace gazebo
 
         // Print the stay mode stuff
         //printf("[SET ROBOT CONFIGURATION] Robot is going to stay in position: %f %f %f rotation: %f, %f, %f, %f \n", 
-               defaultPose_p.pos.x,
-               defaultPose_p.pos.y, 
-               defaultPose_p.pos.z, 
-               defaultPose_p.rot.x, 
-               defaultPose_p.rot.y, 
-               defaultPose_p.rot.z, 
-               defaultPose_p.rot.w );
+               // defaultPose_p.pos.x,
+               // defaultPose_p.pos.y, 
+               // defaultPose_p.pos.z, 
+               // defaultPose_p.rot.x, 
+               // defaultPose_p.rot.y, 
+               // defaultPose_p.rot.z, 
+               // defaultPose_p.rot.w );
 
         //printf("[SET ROBOT CONFIGURATION] Joints: : \n" );
         for( std::map<std::string,double>::iterator iter=defaultJointState_p.begin();
@@ -413,6 +416,8 @@ namespace gazebo
      * @function SetRobotPoseJointAnimation
      */
     void DRCPlugin::SetRobotPoseJointAnimation(const DRC_msgs::PoseJointTrajectory::ConstPtr &_cmd ) {
+
+        boost::mutex::scoped_lock lock(this->update_mutex);
     
         //printf("Setting Robot pose + joint animation \n");
 
@@ -539,13 +544,13 @@ namespace gazebo
 
             // Print the stay mode stuff
             //printf("[STAY-DOG] Robot is going to stay in position: %f %f %f rotation: %f, %f, %f, %f \n", 
-                   defaultPose_p.pos.x,
-                   defaultPose_p.pos.y, 
-                   defaultPose_p.pos.z, 
-                   defaultPose_p.rot.x, 
-                   defaultPose_p.rot.y, 
-                   defaultPose_p.rot.z, 
-                   defaultPose_p.rot.w );
+                   // defaultPose_p.pos.x,
+                   // defaultPose_p.pos.y, 
+                   // defaultPose_p.pos.z, 
+                   // defaultPose_p.rot.x, 
+                   // defaultPose_p.rot.y, 
+                   // defaultPose_p.rot.z, 
+                   // defaultPose_p.rot.w );
 
             //printf("[STAY-DOG] Joints: : \n" );
             for( std::map<std::string,double>::iterator iter=defaultJointState_p.begin();

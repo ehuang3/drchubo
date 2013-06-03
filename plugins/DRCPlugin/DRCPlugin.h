@@ -217,55 +217,57 @@ namespace gazebo
       friend class DRCPlugin;
     } drchubo;
 
-    /// \brief drchubo's Publishers
+      /// \brief drchubo's Publishers
   private: ros::Publisher jointStatesPub;
 
 
-    /// \brief Are we animating?
+      /// \brief Are we animating?
   public: bool onJointAnimation;
   public: bool onPoseAnimation;
 
-    /// \brief Animation callbacks
+      /// \brief Animation callbacks
   private:  boost::function<void()> jointAnim_callback;
   private:  boost::function<void()> poseAnim_callback;
   private: void jointAnimation_callback();
   private: void poseAnimation_callback();
 
-    /// \brief Joint and pose current state getters
+      /// \brief Joint and pose current state getters
   private:  void getCurrentJointState();
   private:  void getCurrentPose();
 
+      // Lock
+      private: boost::mutex update_mutex;
 
-    ////////////////////////////////////////////////////////////////////////////
-    //                                                                        //
-    //   Private variables                                                    //
-    //                                                                        //
-    ////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////
+      //                                                                        //
+      //   Private variables                                                    //
+      //                                                                        //
+      ////////////////////////////////////////////////////////////////////////////
   private: double lastUpdateTime;
-    //private: sensor_msgs::JointState defaultJointState;    
-    //private: geometry_msgs::Pose defaultPose;
+      //private: sensor_msgs::JointState defaultJointState;    
+      //private: geometry_msgs::Pose defaultPose;
   private: std::map<std::string, double> defaultJointState_p;
   private: math::Pose defaultPose_p;
     
-    /// \brief Pointer to parent world.
+      /// \brief Pointer to parent world.
   private: physics::WorldPtr world;
 
-    /// \brief Pointer to the update event connection
-    private: event::ConnectionPtr updateConnection;
+      /// \brief Pointer to the update event connection
+  private: event::ConnectionPtr updateConnection;
 
-    // default ros stuff
-    private: ros::NodeHandle* rosNode;
-    private: ros::CallbackQueue rosQueue;
-    private: boost::thread callbackQueueThread;
+      // default ros stuff
+  private: ros::NodeHandle* rosNode;
+  private: ros::CallbackQueue rosQueue;
+  private: boost::thread callbackQueueThread;
 
-    // items below are used for deferred load in case ros is blocking
-    private: sdf::ElementPtr sdf;
-    private: boost::thread deferredLoadThread;
+      // items below are used for deferred load in case ros is blocking
+  private: sdf::ElementPtr sdf;
+  private: boost::thread deferredLoadThread;
 
-    // Should be in Robot but let's be practical by now
-    static const int mNumJoints;
-    static std::string mFullJointNames[];
-    static std::string mJointNames[];
+      // Should be in Robot but let's be practical by now
+      static const int mNumJoints;
+      static std::string mFullJointNames[];
+      static std::string mJointNames[];
 
   };
 /** \} */
