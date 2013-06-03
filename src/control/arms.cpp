@@ -131,7 +131,7 @@ namespace control {
         robot::robot_kinematics_t* robot_kin = data->kin;
         Eigen::Isometry3d Twhand_hubo; //< Get "Hubo" hand location
 
-        robot_kin->arm_fk(Twhand_hubo, ms, target, true);
+        robot_kin->arm_fk(Twhand_hubo, ms, target);
         data->manip_xform[mi] = Twhand_hubo;
         data->manip_target = Twhand_hubo;
 
