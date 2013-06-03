@@ -20,6 +20,17 @@
 
 #include <sys/types.h>
 
+
+double mod(double _x, double _y) {
+    if (0 == _y) return _x;
+    return _x - _y * floor(_x/_y);
+}
+
+double clamp2pi(double _ang) {
+   return mod(_ang + M_PI, 2*M_PI) - M_PI;
+}
+
+
 namespace gazebo
 {
     GZ_REGISTER_WORLD_PLUGIN(DRCPlugin)
@@ -159,17 +170,28 @@ namespace gazebo
       
                 // Will try to keep at the joint configuration last sent through drc/configuration
                 if( this->drchubo.modeType == ON_STAY_DOG_MODE ) {
+                    
+                    for(auto iter = defaultJointState_p.begin(); iter != defaultJointState_p.end(); ++iter) {
+                        
+                        std::cout << "Force at " << iter->first << " = " << 
+                            drchubo.model->GetJoint(iter->first)->GetForceTorque(0).body1Torque
+                                  << std::endl;
+                    }
+                    
+                    for(auto iter = defaultJointState_p.begin(); iter != defaultJointState_p.end(); ++iter) {
+                        double val = iter->second;
+                        
+                        if (val > M_PI || val < -M_PI) {
+                            std::cout << "CLAMPING " << iter->first << " = " << val << std::endl;
+                        }
+
+                        val = clamp2pi(val);
+                        
+                        iter->second = val;
+                    }
       
                     // Set joint pose
-                    try
-                    {
-                        drchubo.model->SetJointPositions( defaultJointState_p ); 
-                    }
-                    catch (std::bad_alloc& ba)
-                    {
-                        std::cout << "bad alloc caught: " << ba.what() << std::endl;
-                        exit(0);
-                    }
+                    drchubo.model->SetJointPositions( defaultJointState_p );
                 
                     // Set world pose   
                     this->drchubo.model->SetWorldPose( defaultPose_p );    
@@ -468,15 +490,7 @@ namespace gazebo
         }
     
         // Attach the animation to the model
-        try
-        {
-            this->drchubo.model->SetJointAnimation( joint_anim, jointAnim_callback );
-        }
-        catch (std::bad_alloc& ba)
-        {
-            std::cout << "bad alloc caught: " << ba.what() << std::endl;
-            exit(0);
-        }
+        this->drchubo.model->SetJointAnimation( joint_anim, jointAnim_callback );
 
         this->drchubo.model->SetAnimation( pose_anim, poseAnim_callback );
 
@@ -639,7 +653,7 @@ namespace gazebo
      * @brief
      */
     void DRCPlugin::jointAnimation_callback() {
-        //printf("[DRCPlugin - INFO] Joint Animation is OVER, set vels to zero \n");
+        //printf("[DRCPlugin - INFO] Joint Animation is OVER, set vel to zero \n");
         math::Vector3 linvel  = this->drchubo.model->GetWorldLinearVel();
         math::Vector3 angvel = this->drchubo.model->GetWorldAngularVel();
 
@@ -648,6 +662,9 @@ namespace gazebo
     
         this->drchubo.model->SetLinearVel( math::Vector3( 0, 0, 0 ) );
         this->drchubo.model->SetAngularVel( math::Vector3( 0, 0, 0 ) );
+
+        this->drchubo.model->SetLinearAccel( math::Vector3( 0, 0, 0 ) );
+        this->drchubo.model->SetAngularAccel( math::Vector3( 0, 0, 0 ) );
 
         // Set robot to stay dog mode
         this->SetRobotMode("stay_dog");
@@ -671,6 +688,9 @@ namespace gazebo
 
         this->drchubo.model->SetLinearVel( math::Vector3( 0, 0, 0 ) );
         this->drchubo.model->SetAngularVel( math::Vector3( 0, 0, 0 ) );
+
+        this->drchubo.model->SetLinearAccel( math::Vector3( 0, 0, 0 ) );
+        this->drchubo.model->SetAngularAccel( math::Vector3( 0, 0, 0 ) );
 
         // Set robot to stay dog mode
         this->SetRobotMode("stay_dog");

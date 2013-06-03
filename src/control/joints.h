@@ -26,4 +26,18 @@ namespace control {
         virtual bool run(robot::robot_state_t& target, control_data_t* data);
     };
 
+    class TORSO_T : public control_t {
+    public:
+    	TORSO_T(std::string name) : control_t(name) {}
+        ~TORSO_T() {}
+        virtual bool run(robot::robot_state_t& target, control_data_t* data);
+    };
+
+    class FLOATING_T : public control_t {
+    public:
+    	FLOATING_T(std::string name) : control_t(name) {}
+        ~FLOATING_T() {}
+        virtual bool run(robot::robot_state_t& target, control_data_t* data);        
+    };
+
 }

@@ -46,7 +46,7 @@
 
     <!-- Drill -->
     <include>
-      <uri>model://cordless_drill</uri>
+      <uri>model://light_drill</uri>
       <name>drill</name>
       <pose>5.64 -0.22 0.81 0 0 0</pose>
     </include>
@@ -138,11 +138,7 @@
       <name>cinder_c</name>
       <pose>5.000000 2.25 0.000000 0.000000 0.000000 0.20</pose>
     </include>
-    <include>
-      <uri>model://cinder_block</uri>
-      <name>cinder_d</name>
-      <pose>5.000000 0.000000 0.25 0.000000 1.57 -1.30</pose>
-    </include>
+
     <include>
       <uri>model://cinder_block</uri>
       <name>cinder_e</name>
@@ -193,7 +189,17 @@
     </include>
 
     <!-- Captain's rubble -->
+    <include>
+      <uri>model://barrier_stand</uri>
+      <name>barrier_right</name>
+      <pose>0.401 -0.3265 0.669813 0 1.570796327 0</pose>
+    </include>
 
+    <include>
+      <uri>model://barrier_stand</uri>
+      <name>barrier_right</name>
+      <pose>0.401 -0.3265 0.669813 0 1.570796327 0</pose>
+    </include>
 
     <!-- DRC Plugin -->
     <plugin filename="libDRCPlugin.so" name="drc_plugin">

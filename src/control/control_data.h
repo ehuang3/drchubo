@@ -13,6 +13,13 @@ namespace control {
     //### want to use. Add fields as needed
     //############################################################
 
+    enum IK_Target {
+        UARM_MANIP = 0x1,
+        BODY_MANIP = 0x2,
+        GLOBAL_MANIP = 0x4,
+        ALL_MANIP = 0x7,
+    };
+
     struct control_data_t {
         //############################################################
         // Teleop fields
@@ -51,11 +58,24 @@ namespace control {
         int manip_index;
         int manip_side; //< left = 1 
 
-        // command character ?? < for joint contorller?
-        int command_char;
+        // IK targets
+        Eigen::Isometry3d Tf_uarm_manip[robot::NUM_MANIPULATORS];
+        Eigen::Isometry3d Tf_body_manip[robot::NUM_MANIPULATORS];
+        Eigen::Isometry3d Tf_global_manip[robot::NUM_MANIPULATORS];
 
+        void fill_IK_targets(robot::robot_state_t& robot, control::IK_Target ik);
+        void get_IK_target(Eigen::Isometry3d& B, int mi, int ik);
+        //void get_IK_target_global(Eigen::Isometry3d& B, int mi, int ik);
+
+        int command_char;
         // last command
         Eigen::VectorXd last_command;
+
+        //############################################################
+        //### Render fields
+        //############################################################
+        Eigen::Isometry3d Tf_render[robot::NUM_MANIPULATORS];
+        Eigen::Isometry3d Tf_render_target;
         
         //############################################################
         // General fields

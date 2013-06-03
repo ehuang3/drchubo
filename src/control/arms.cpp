@@ -34,6 +34,30 @@ namespace control {
         return ok;
     }
 
+    bool ARM_SENSOR_AIK_T::run(robot::robot_state_t& target, control_data_t* data)
+    {
+        if(!data)
+            return false;
+
+        // 1. Setup
+        kinematics::Skeleton* robot = data->robot;
+        robot::robot_kinematics_t* robot_kin = data->kin;
+        int ms = data->manip_side;
+        int mi = ms ? robot::MANIP_L_HAND : robot::MANIP_R_HAND;
+        Eigen::Isometry3d Twhand = data->manip_xform[ms];
+
+        // 2. Run IK
+        bool ok = robot_kin->arm_ik(Twhand, ms, target);
+
+        // 23. Save new manip
+        data->manip_xform[mi] = Twhand;
+
+        // 3. Visualize target
+        data->manip_target = Twhand;
+
+        return ok;
+    }
+
     bool ARM_AJIK_T::run(robot::robot_state_t& target, control_data_t* data)
     {
         if(!data)

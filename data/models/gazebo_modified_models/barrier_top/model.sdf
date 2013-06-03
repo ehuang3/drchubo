@@ -1,0 +1,71 @@
+<?xml version="1.0" ?>
+<sdf version="1.4">
+  <model name="barrier_top">
+    <static>true</static>
+    <link name="link">
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>model://jersey_barrier_small/meshes/jersey_barrier_small.dae</uri>
+	    <scale> 0.2 0.4 0.4 </scale>
+          </mesh> 
+        </geometry> 
+      </visual>
+
+      <collision name="upright">
+        <pose>0 0 0.2286 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.813084 0.12252 0.4572</size>
+          </box>
+        </geometry>
+      </collision>
+
+      <collision name="base">
+        <pose>0 0 0.0129032 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.813084 0.32428 0.0258064</size>
+          </box>
+        </geometry>
+      </collision>
+
+      <collision name="base2">
+        <pose>0 0 0.04 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.813084 0.26 0.04</size>
+          </box>
+        </geometry>
+      </collision>
+
+      <collision name="base3">
+        <pose>0 0 0.08 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.813084 0.2 0.04</size>
+          </box>
+        </geometry>
+      </collision>
+
+      <collision name="left-angle">
+        <pose>0 -0.0896 0.09604 0.36 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.813084 0.2 0.0258064</size>
+          </box>
+        </geometry>
+      </collision>
+
+      <collision name="right-angle">
+        <pose>0 0.0896 0.09604 -0.36 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.813084 0.2 0.0258064</size>
+          </box>
+        </geometry>
+      </collision>
+
+    </link>
+  </model>
+</sdf>

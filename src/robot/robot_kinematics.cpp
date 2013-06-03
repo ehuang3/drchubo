@@ -185,6 +185,8 @@ robot_kinematics_t::~robot_kinematics_t() {
         // Solve analytical IK
         bool ok = armIK(q6, B_dh, qPrev, left ? SIDE_LEFT : SIDE_RIGHT);
 
+        
+
         // Copy solution back into state
         q = q6;
         state.set_manip(q, left ? MANIP_L_HAND : MANIP_R_HAND);

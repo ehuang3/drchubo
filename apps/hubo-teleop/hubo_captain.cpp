@@ -190,10 +190,14 @@ void do_keyboard(robot::robot_state_t& state, control::control_data_t* data)
     spnav_keys['d'] = "JOINT";
     spnav_keys['f'] = "ARM_JIT";
     spnav_keys['g'] = "ARM_AIK";
+    spnav_keys['z'] = "FLOATING";
+    spnav_keys['x'] = "BODY_ZY_FIX_LEGS";
+    spnav_keys['w'] = "TORSO";
     spnav_keys['q'] = "NULL";
     //... add more controllers
 
     fastrak_keys['j'] = "ARM_BOTH_JIT";
+    fastrak_keys['k'] = "ARM_SENSOR_AIK";
     fastrak_keys['y'] = "NULL";
 
     // Do switching
@@ -207,6 +211,7 @@ void do_keyboard(robot::robot_state_t& state, control::control_data_t* data)
         delete fastrak_control;
         fastrak_control = control::get_factory(fastrak_keys[key])->create();
         std::cout << "Switched FASTRAK to " << fastrak_control->name() << std::endl;
+        fastrak.calibrate(state, data);
         return;
     }
     
@@ -256,6 +261,7 @@ void do_control(robot::robot_state_t& target, control::control_data_t* data)
     data->sensor_ok = false; // reset fastrak
 
     // FIXME: reset arms to match target location?
+
 }
 
 void send_animation(robot::robot_state_t& target)
@@ -269,18 +275,26 @@ void send_animation(robot::robot_state_t& target)
 
     jt.positions.resize( points.size() );
 
+    int i=0;
     for(auto iter = s2r.begin(); iter != s2r.end(); ++iter) {
         pjt.joint_names.push_back( iter->first );
-        jt.positions[ iter->second ] = points[ iter->second ];
+        jt.positions[ i++  ] = points[ iter->second ];
     }
 
-    p.position.x = 0.0;
-    p.position.y = 0.0;
-    p.position.z = 1.5;
-    p.orientation.x = 0;
-    p.orientation.y = 0;
-    p.orientation.z = 0;
-    p.orientation.w = 1.0;
+    Eigen::Isometry3d body;
+    target.get_body(body);
+    
+    Eigen::Quaterniond quat;
+    quat = body.linear();
+    
+
+    p.position.x = body(0,3);
+    p.position.y = body(1,3);
+    p.position.z = body(2,3) + 0.05;
+    p.orientation.x = quat.x();
+    p.orientation.y = quat.y();
+    p.orientation.z = quat.z();
+    p.orientation.w = quat.w();
     
     pjt.points.push_back(jt);
     pjt.poses.push_back(p);
@@ -315,7 +329,7 @@ void run(robot::robot_state_t& robot, const sensor_msgs::Joy::ConstPtr& joy, con
     
     do_control(robot, data);
 
-    send_animation(robot);
+    //send_animation(robot);
 }
 
 //############################################################
@@ -353,8 +367,8 @@ int main(int argc, char *argv[])
     control_data->jac = &hubo_jac;
     control_data->manip_index = robot::MANIP_L_HAND;
 
-    spnav_control = control::get_factory("GRASP")->create();
-    fastrak_control = control::get_factory("ARM_BOTH_JIT")->create();
+    spnav_control = control::get_factory("ARM_AIK")->create();
+    fastrak_control = control::get_factory("NULL")->create();
 
     //###########################################################
     //# GUI initialization
@@ -389,14 +403,14 @@ int main(int argc, char *argv[])
 
     //############################################################
     //# Animation initialization
-    ros::Publisher modePub = ros_node->advertise<std_msgs::String>( "drchubo/mode", 1, false );
-    animation_publisher = ros_node->advertise<DRC_msgs::PoseJointTrajectory>( "drchubo/poseJointAnimation", 
-                                                                          1,
-                                                                          false );
+    // ros::Publisher modePub = ros_node->advertise<std_msgs::String>( "drchubo/mode", 1, false );
+    // animation_publisher = ros_node->advertise<DRC_msgs::PoseJointTrajectory>( "drchubo/poseJointAnimation", 
+    //                                                                       1,
+    //                                                                       false );
 
-    std_msgs::String mode_msg;
-    mode_msg.data = "no_gravity";
-    modePub.publish( mode_msg );
+    // std_msgs::String mode_msg;
+    // mode_msg.data = "no_gravity";
+    // modePub.publish( mode_msg );
     
     
 

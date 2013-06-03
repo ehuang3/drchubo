@@ -350,7 +350,7 @@
     <parent link="Body_LWR" />
     <child link="Body_LF3" />
     <axis xyz="0 1 0" />
-    <limit effort="100.0" lower="-1.1" upper=".1" velocity="10.0" />
+    <limit effort="100.0" lower="-0.1" upper="1.1" velocity="10.0" />
   </joint>
   <link name="Body_NKY">
     <inertial>
@@ -1035,7 +1035,7 @@
     <parent link="Body_RWR" />
     <child link="Body_RF3" />
     <axis xyz="0 1 0" />
-    <limit effort="100.0" lower="-1.1" upper=".1" velocity="10.0" />
+    <limit effort="100.0" lower="-0.1" upper="1.1" velocity="10.0" />
   </joint>
   <joint name="RHY" type="revolute">
     <origin rpy="-0 0 -0" xyz="3.2347E-05 -0.088499999999999995 -0.0235" />

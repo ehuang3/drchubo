@@ -19,7 +19,6 @@ private:
 
     Eigen::Matrix3d hand_orient;
 
-    Eigen::Isometry3d hand[2];
     Eigen::Isometry3d raw_frame[2];
     Fastrak fastrak;
 };

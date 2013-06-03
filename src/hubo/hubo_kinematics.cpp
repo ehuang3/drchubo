@@ -37,12 +37,22 @@ namespace hubo {
 
     void hubo_kinematics_t::xform_w_dsy(Isometry3d& B, bool left, robot::robot_state_t& state)
     {
+        Eigen::VectorXd save = state.dart_pose();
+
+        // Set arms to 0 so that we can grab the nominal shoulder transform
+        VectorXd q(6);
+        q.setZero();
+        int mi = left ? robot::MANIP_L_HAND : robot::MANIP_R_HAND;
+        state.set_manip(q, mi);
+
         Skeleton *hubo_skel = state.robot();
         hubo_skel->setPose(state.dart_pose());
 
         BodyNode* msr = hubo_skel->getNode(left?"Body_LSR":"Body_RSR");
         B = msr->getWorldTransform();
-        B.linear() = Matrix3d::Identity();
+
+        // Undo zeroing of arm
+        state.set_dart_pose(save);
     }
 
     void hubo_kinematics_t::init(Skeleton *_hubo) {
