@@ -374,6 +374,7 @@ int main(int argc, char *argv[])
     //# GUI initialization
     control_data->manip_target = Eigen::Matrix4d::Identity();
     gui_params.goal = &control_data->manip_target;
+    gui_params.Tf_global_manips = control_data->manip_xform;
     gui_params.current = &hubo_current;
     gui_params.target = &hubo_target;
     gui_params.draw_limits = true;

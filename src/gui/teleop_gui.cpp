@@ -191,6 +191,11 @@ namespace gui {
         // 6. Render goal
         render_xform_arrows(goal);
 
+        // Draw axes at manipulators
+        for(int i=0; i < robot::NUM_MANIPULATORS; i++) {
+            render_xform_arrows(gui_params->Tf_global_manips[i], 0.5);
+        }
+
         // 99. Post up redisplay and go home
         glutPostRedisplay();
     }
@@ -321,16 +326,16 @@ namespace gui {
         glPopMatrix();    
     }
 
-    void teleop_gui_t::render_xform_arrows(Eigen::Isometry3d xform)
+    void teleop_gui_t::render_xform_arrows(Eigen::Isometry3d xform, double alpha)
     {
         glPushMatrix();
         glMultMatrixd(xform.data());
         Eigen::Vector3d base = Eigen::Vector3d::Zero();
-        glColor4d(1,0,0,0.9);
+        glColor4d(1,0,0,alpha);
         yui::drawArrow3D(base, Eigen::Vector3d::UnitX(), 0.2, 0.01, 0.02);
-        glColor4d(0,1,0,0.9);
+        glColor4d(0,1,0,alpha);
         yui::drawArrow3D(base, Eigen::Vector3d::UnitY(), 0.2, 0.01, 0.02);
-        glColor4d(0,0,1,0.9);
+        glColor4d(0,0,1,alpha);
         yui::drawArrow3D(base, Eigen::Vector3d::UnitZ(), 0.2, 0.01, 0.02);
         glPopMatrix();
     }
