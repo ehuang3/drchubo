@@ -210,12 +210,22 @@ namespace gazebo
     private: ros::Subscriber subPose;
     private: ros::Subscriber subConfiguration;
     private: ros::Subscriber subMode;
+    private: ros::Subscriber subGrab;
+    private: ros::Subscriber subRobotRelease;
+    private: physics::JointPtr grabJoint;
 
       // Store joint pointers
     private: std::vector<physics::JointPtr> mJoints;
       
       friend class DRCPlugin;
     } drchubo;
+
+
+    //////////////////////////////////////////
+    // DRILL 
+    //////////////////////////////////////////
+    
+
 
       /// \brief drchubo's Publishers
   private: ros::Publisher jointStatesPub;

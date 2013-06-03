@@ -16,6 +16,8 @@
 #include <trajectory_msgs/JointTrajectory.h>
 #include <DRC_msgs/PoseStampedArray.h>
 #include <DRC_msgs/PoseJointTrajectory.h>
+#include <geometry_msgs/Pose.h>
+#include <sensor_msgs/JointState.h>
 
 // Print stuff
 #include <stdio.h>
@@ -56,11 +58,12 @@ class zmpnode {
   zmpnode();
   ~zmpnode();    
   
-  void generateZMPGait(); 
-  
+  void generateZMPGait(  size_t _max_step_count = 30 ); 
+
   trajectory_msgs::JointTrajectory getJointTrajMsg();
   DRC_msgs::PoseStampedArray getPoseTrajMsg();
-  DRC_msgs::PoseJointTrajectory getPoseJointTrajMsg();
+  DRC_msgs::PoseJointTrajectory getPoseJointTrajMsg( geometry_msgs::PosePtr _initPose,
+						     sensor_msgs::JointStatePtr _initJointState );
   // Helpers
   Eigen::Matrix4d tf2Mx( Transform3 _tf );
   
@@ -69,6 +72,7 @@ class zmpnode {
   
   // Variables for matt's parsing types
   double mdt;
+  double ankleOffset;
   static const int mNumBodyDofs;
   static const int mNumJoints;
   static std::string mJointNames[];

@@ -12,6 +12,15 @@
 
 #include "zmpnode.h"
 
+double xi, yi, zi, qxi, qyi, qzi, qwi;
+
+void poseCallback( const geometry_msgs::PosePtr &_pose ) {
+
+  xi = _pose->position.x;
+  yi = _pose->position.y;
+  zi = _pose->position.z;
+} 
+
 
 int main( int argc, char* argv[] ) {
 
@@ -29,8 +38,14 @@ int main( int argc, char* argv[] ) {
   ros::Publisher confPub = node->advertise<sensor_msgs::JointState>( "drchubo/configuration",
 								     1, false );
 
+  // For current robot pose
+  ros::Subscriber poseSub = node->subscribe( "drchubo/pose", 1, poseCallback );
+
   // Give time
   ros::Duration(1.0).sleep();
+
+  // Spin
+  ros::spinOnce();
 
   // Get the gait
   zmpnode zd;
@@ -39,12 +54,24 @@ int main( int argc, char* argv[] ) {
   DRC_msgs::PoseJointTrajectory pjt_msg;
 
   // Generate ZMP trajectories
-  zd.generateZMPGait();
+  // Default variables
+  size_t max_steps;
+
+  // Get params from server (if no default)
+  int walk_max_steps;
+  if( node->getParam("/walk_max_steps", walk_max_steps ) ){
+     max_steps = walk_max_steps;
+  } else { printf("No /walk_max_steps parameter set. SET IT NOW OR I WON'T WALK! \n"); }	
+
+  zd.generateZMPGait( max_steps );
 
   // Convert it to a message
-  pjt_msg = zd.getPoseJointTrajMsg();
+  pjt_msg = zd.getPoseJointTrajMsg( xi,
+				    yi,
+				    zi);
   // Give it a time
   pjt_msg.header.stamp = ros::Time::now();
+
 
   // Send it
   printf("Publishing pose animation \n");

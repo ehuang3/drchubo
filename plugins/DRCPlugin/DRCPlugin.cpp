@@ -183,9 +183,10 @@ namespace gazebo
 	geometry_msgs::Pose pose_msg;
 
 	math::Pose p = this->drchubo.model->GetWorldPose();
+	math::Pose lf = this->drchubo.model->GetLink("Body_LAR")->GetWorldPose();
 	pose_msg.position.x = p.pos.x;
 	pose_msg.position.y = p.pos.y;
-	pose_msg.position.z = p.pos.z;
+	pose_msg.position.z = ( p.pos.z - lf.pos.z )+ this->drchubo.ankleOffset;
 
 	pose_msg.orientation.x = p.rot.x;
 	pose_msg.orientation.y = p.rot.y;
@@ -255,7 +256,7 @@ namespace gazebo
         this->isInitialized = true;
 
         // Set ankleOffset
-        this->ankleOffset = 0.08;
+        this->ankleOffset = 0.3;
 
         // Store joints
         this->mJoints.resize( mNumJoints );
@@ -657,10 +658,10 @@ namespace gazebo
     void DRCPlugin::getCurrentPose() {
   
         math::Pose pose = this->drchubo.model->GetWorldPose();
-  
+	math::Pose leftFootPose = this->drchubo.model->GetLink("Body_LAR")->GetWorldPose();
         defaultPose_p.pos.x = pose.pos.x;
         defaultPose_p.pos.y = pose.pos.y;
-        defaultPose_p.pos.z = pose.pos.z;
+        defaultPose_p.pos.z = (pose.pos.z - leftFootPose.pos.z) + this->drchubo.ankleOffset;
 
         defaultPose_p.rot.x = pose.rot.x;
         defaultPose_p.rot.y = pose.rot.y;
@@ -760,7 +761,7 @@ namespace gazebo
         math::Quaternion newPoseWorld = invLeftFoot*worldPose.rot;
         math::Pose flatPose;
         // Set foot up from floor (since it is relative to ankle)
-        math::Vector3 worldPos( worldPose.pos.x, worldPose.pos.y, worldPose.pos.z + this->ankleOffset );
+        math::Vector3 worldPos( worldPose.pos.x, worldPose.pos.y, (worldPose.pos.z - leftFootPose.pos.z) + this->ankleOffset );
         flatPose.Set( worldPos, invLeftFoot );
         this->model->SetWorldPose( flatPose );
         //printf( "[DRCPLUGIN - ParallelToFloor] Done  - setting foot up %f to account for ankle offset\n", this->ankleOffset );
