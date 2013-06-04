@@ -197,6 +197,10 @@ void update_sensors(const sensor_msgs::Joy::ConstPtr& joy, control::control_data
     spnav.sensor_update(joy);
     spnav.get_teleop_data(data);
     // fastrak.update_sensors(data);
+    // Mock up fastrak updates so we can use fixed IK stuff
+    data->sensor_ok = true;
+    data->sensor_tf[0] = Eigen::Matrix4d::Identity();
+    data->sensor_tf[1] = Eigen::Matrix4d::Identity();
 }
 
 bool get_key(char& ch) {
@@ -441,11 +445,16 @@ void run(robot::robot_state_t& robot, const sensor_msgs::Joy::ConstPtr& joy, con
     default: break;
     }
     if(ok) {
-        std::cout << "Command delta = " << (this_command - last_command).norm() << std::endl;
+
+        if((this_command - last_command).norm() > 0.2) {
+            std::cout << "Command delta = " << (this_command - last_command).norm() << std::endl;
+            robot.set_dart_pose( last_command );
+            this_command = last_command;
+        }
 
         send_animation(robot);
         
-        data->last_command;
+        data->last_command = this_command;
     }
 }
 

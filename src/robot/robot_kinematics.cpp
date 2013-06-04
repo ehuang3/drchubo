@@ -640,8 +640,6 @@ robot_kinematics_t::~robot_kinematics_t() {
         return Tf;
     }
 
-
-
     Matrix4d robot_kinematics_t::legT(int _frame, double _u) {
         return _legT(_frame, _u + leg_u_off[_frame-1]);
     }
@@ -869,6 +867,31 @@ robot_kinematics_t::~robot_kinematics_t() {
                         U(j,i) = min(max(U(j,i), leg_u_lim[j][0]), leg_u_lim[j][1]);
                 }
             }
+
+        // Check if any solutions are actually at desired location
+        // Necessary as within limits does not == solution
+        bool withinSol[8];
+        double SOL_TOL = 1e-9;
+        for(int i=0; i<8; i++) {
+            withinSol[i] = true;
+            Eigen::Vector6d q = U.block<6,1>(0,i);
+            Eigen::Isometry3d Bfk;
+            Bfk = legFK(q, _left);
+            // TEMPORARY HACK FOR HUBO
+            Bfk(0,3) += ox;
+            Bfk(2,3) -= oz;
+            for(int r=0; r<4; r++)
+                for(int c=0; c<4; c++)
+                    if(fabs(Bfk(r,c)-_Tf(r,c)) > SOL_TOL) {
+                        withinSol[i] = false;
+                    }
+
+        }
+        bool validSol = false;
+        for(int i=0; i<8; i++)
+            if(withinSol[i])
+                validSol = true;
+
         // // complain if out of workspace
         // if(!any_within) {
         //     cerr << "AtlasKinematics: IK Warning - Out of workspace\n"
@@ -917,7 +940,8 @@ robot_kinematics_t::~robot_kinematics_t() {
         //          << "u delta=" << min_delta << "\n"
         //          << "\n";
         // }
-        return any_within;
+
+        return any_within && validSol;
     }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -19,6 +19,10 @@ namespace control {
         Eigen::Isometry3d Twhand;
         data->get_IK_target(Twhand, mi, data->ik_target);
 
+        // 1 Save joint angles to check for later
+        Eigen::VectorXd q_prev;
+        target.get_manip(q_prev, mi);
+
         // 2. Add delta transform
         Twhand.linear() = Twhand.linear() * data->joy_rotation;
         Twhand.translation() += data->joy_position;
@@ -31,6 +35,15 @@ namespace control {
 
         // 5.. Visualize target
         data->manip_target = Twhand;
+
+        // Check joint angles for large discontinuity
+        Eigen::VectorXd q_new;
+        target.get_manip(q_new, mi);
+
+        std::cout << "AIK delta = " << (q_new-q_prev).norm() << std::endl;
+
+        if((q_new - q_prev).norm() > 0.1)
+            ok = false;
 
         return ok;
     }

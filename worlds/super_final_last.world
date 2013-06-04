@@ -292,43 +292,49 @@
     <include>
       <uri>model://beer</uri>
       <name>beer2</name>
-      <pose> 1.338826 0.231844 0.1 0 0.000008 0.000146</pose>
+      <pose> 1.2286 -0.271844 0.1 0 0.000008 0.000146</pose>
+    </include>
+
+    <include>
+      <uri>model://beer</uri>
+      <name>beer3</name>
+      <pose> 1.495 0.271844 0.1 0 0.000008 0.000146</pose>
     </include>
 
     <include>
       <uri>model://light_cinder</uri>
-      <name>lc_alsdkf</name>
-      <pose> 0.562488 0.258257 5.0 0 0 0.000418</pose>
+      <name>lc_on_beer</name>
+      <pose> 0.562488 0.258257 3.0  1.57 0 0.000418</pose>
     </include>
 
     <include>
       <uri>model://light_cinder</uri>
       <name>lc_b</name>
-      <pose>0.335501 -0.336312 0.5 0 0 0.879999</pose>
+      <pose>0.354266 -0.359155 0.5 0 0 0.879999</pose>
     </include>
 
     <include>
       <uri>model://light_cinder</uri>
       <name>lc_1</name>
-      <pose>0.335501 -0.336312 1.5 0 0 0.879999</pose>
+      <pose>0.354266 -0.35915 1.5 0 0 0.879999</pose>
     </include>    
 
     <include>
       <uri>model://light_cinder</uri>
       <name>lc_2</name>
-      <pose>0.335501 -0.336312 3.0 0 0 0.879999</pose>
+      <pose>0.354266 -0.35915 4.0 0 0 0.879999</pose>
     </include>    
 
     <include>
       <uri>model://light_cinder</uri>
       <name>lc_aosdf</name>
-      <pose>0.848794 -0.54451 1.0 0 0 0.000062</pose>
+      <pose>0.848794 -0.833451 1.0 0 0 0.000062</pose>
     </include>    
 
     <include>
       <uri>model://light_cinder</uri>
       <name>lc_aoasd</name>
-      <pose>0.848794 -0.54451 2.0 0 0 0.02431</pose>
+      <pose>0.848794 -0.88451 2.0 0 0 0.02431</pose>
     </include>    
 
     <!-- DRC Plugin -->
