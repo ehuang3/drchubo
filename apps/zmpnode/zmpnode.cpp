@@ -250,12 +250,12 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
     
     if( _useInitArmConfig == true ) {
 			// Left Arm
-    	for( int j = 0; j <= 5; ++j ) {
+    	for( int j = 0; j <= 6; ++j ) {
       	vals[j] = vals0[j];
     	}
     	// Right Arm
-    	for( int j = 7; j <= 12; ++j ) {
-      	vals[j] = vals0[j-1];
+    	for( int j = 7; j <= 13; ++j ) {
+      	vals[j] = vals0[j];
     	}
     }
     else {
