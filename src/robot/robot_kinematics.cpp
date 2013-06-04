@@ -513,6 +513,26 @@ robot_kinematics_t::~robot_kinematics_t() {
         bool withinLim[8];
         int minInd;
 
+        // Within limits is not sufficient to indicate out-of-workspace
+        // Checks the FK xform to determine if a true solution has been found
+        bool withinSol[8];
+        double SOL_TOL = 1e-9;
+        for(int i=0; i<8; i++) {
+            withinSol[i] = true;
+            Eigen::Vector6d q = qAll.block<6,1>(0,i);
+            Eigen::Isometry3d Bfk;
+            armFK(Bfk, q, side, endEffector);
+            for(int r=0; r<4; r++)
+                for(int c=0; c<4; c++)
+                    if(fabs(Bfk(r,c)-B(r,c)) > SOL_TOL)
+                        withinSol[i] = false;
+        }
+
+        bool validSol = false;
+        for(int i=0; i<8; i++)
+            if(withinSol[i])
+                validSol = true;
+
         // if any joint solution is infintesimal, set it to zero
         for(int i=0; i<8; i++)
             for(int j=0; j<6; j++)
@@ -587,7 +607,7 @@ robot_kinematics_t::~robot_kinematics_t() {
 
         //q = q.cwiseMin(limits.col(1)); //TODO: Put these back
         //q = q.cwiseMax(limits.col(0));
-        return anyWithin;
+        return anyWithin && validSol;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
