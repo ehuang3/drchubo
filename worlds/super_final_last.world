@@ -284,12 +284,14 @@
     <!-- The mess we're going through -->
     <include>
       <uri>model://beer</uri>
+      <name>bear1</name>
       <pose> 0.562488 0.258257 0.7 0 0 0.000418</pose>
     </include>
 
     <include>
       <uri>model://beer</uri>
-      <pose> 1.338826 0.531844 0.1 0 0.000008 0.000146</pose>
+      <name>beer2</name>
+      <pose> 1.338826 0.231844 0.1 0 0.000008 0.000146</pose>
     </include>
 
     <include>
@@ -327,12 +329,6 @@
       <name>lc_aoasd</name>
       <pose>0.748794 -0.44451 2.0 0 0 0.02431</pose>
     </include>    
-
-    <include>
-      <uri>model://barrier_stand</uri>
-      <name>stand_1</name>
-      <pose>1.591320 0.000007 0.050 0 0 0</pose>
-    </include>
 
     <!-- DRC Plugin -->
     <plugin filename="libDRCPlugin.so" name="drc_plugin">

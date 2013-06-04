@@ -99,13 +99,15 @@ void init_world_pose(robot::robot_state_t& robot)
     kinematics::BodyNode* left_foot = hubo_skel->getNode("leftFoot");
     kinematics::Shape* left_shoe = left_foot->getCollisionShape();
 
-    Eigen::Matrix4d Twlf = left_foot->getWorldTransform();
+    Eigen::Isometry3d Twlf;
+    Twlf = left_foot->getWorldTransform();
     
-    double pelvis_height = fabs(Twlf(2,3));
-
     Eigen::Isometry3d Twb;
     robot.get_body(Twb);
-    Twb(2,3) = pelvis_height;
+    
+    Twb = Twlf.inverse() * Twb;
+    Twb(1,3) = 0;
+
     robot.set_body(Twb);
 }
 
@@ -252,6 +254,9 @@ void do_keyboard(robot::robot_state_t& state, control::control_data_t* data)
     {
         std::cout << "Setting pose to current\n";
         init_current_pose(state, hubo_current);
+        for(int i=0; i < robot::NUM_MANIPULATORS; i++) {
+            data->fill_IK_target(state, i, control::ALL_MANIP);
+        }
     }
     case '-':
     case '_':
@@ -337,7 +342,7 @@ void send_animation(robot::robot_state_t& target)
 
     p.position.x = body(0,3);
     p.position.y = body(1,3);
-    p.position.z = body(2,3) + 0.05;
+    p.position.z = body(2,3);
     p.orientation.x = quat.x();
     p.orientation.y = quat.y();
     p.orientation.z = quat.z();
@@ -426,7 +431,7 @@ void pose_handler(const geometry_msgs::PosePtr &_pose)
     q.w() = _pose->orientation.w;
     q.x() = _pose->orientation.x;
     q.y() = _pose->orientation.y;
-    q.z() = _pose->orientation.z - 0.05;
+    q.z() = _pose->orientation.z;
     Tbody.linear() = q.matrix();
     hubo_current.set_body(Tbody);
 }
