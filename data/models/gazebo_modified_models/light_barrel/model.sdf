@@ -1,0 +1,41 @@
+<?xml version="1.0" ?>
+<sdf version="1.4">
+  <model name="barrel_50">
+    <link name="link">
+<!--      <inertial>
+        <mass>0.1</mass>
+      </inertial>-->
+	<!-- Original model did not have inertia matrix I copied the matrix from the beer -->
+    <pose>0 0.2 0.5 1.57 0 0</pose>
+      <inertial>
+        <pose>0 0.3 0 0 0 0</pose>
+        <mass>0.390</mass>
+        <inertia>
+          <ixx>0.00058</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.00058</iyy>
+          <iyz>0</iyz>
+          <izz>0.00019</izz>
+        </inertia>
+      </inertial>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>model://barrel_50/meshes/barrel_50.stl</uri>
+            <scale> 0.01 0.01 0.01 </scale>
+          </mesh>
+        </geometry>
+      </collision>
+
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>model://barrel_50/meshes/barrel_50.stl</uri>
+            <scale> 0.01 0.01 0.01 </scale>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+  </model>
+</sdf>

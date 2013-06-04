@@ -16,6 +16,18 @@ namespace control {
         virtual bool run(robot::robot_state_t& target, control_data_t* data);
     };
 
+    class ARM_MASTER_SLAVE_AIK_T : public control_t {
+    public:
+    	ARM_MASTER_SLAVE_AIK_T(std::string name) : control_t(name) , do_init(1) {}
+        ~ARM_MASTER_SLAVE_AIK_T() {}
+        virtual bool change_mode(int ch, robot::robot_state_t& target);
+        virtual bool run(robot::robot_state_t& target, control_data_t* data);
+
+        int do_init;
+        // Right wrist pitch to left wrist pitch
+        Eigen::Isometry3d Tf_slave;
+    };
+
     //############################################################
     //### Arm: Analytical Sensor IK
     //############################################################

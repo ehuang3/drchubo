@@ -136,7 +136,6 @@ void init_hubo(robot::robot_state_t& state, control::control_data_t* data)
 
     // 3. Set world pose
     init_world_pose(state);
-    init_current_pose(state, hubo_current);
 
     // 2. Get HUBO out of the singularity.
     std::vector<int> manip_enum = { robot::MANIP_L_HAND, robot::MANIP_R_HAND };
@@ -162,6 +161,10 @@ void init_hubo(robot::robot_state_t& state, control::control_data_t* data)
 
     // 6. Calibrate fastrak to agree with this pose.
     fastrak.calibrate(state, data);
+
+    // 7. Feet on ground?
+    data->fill_IK_target(state, robot::MANIP_L_FOOT, control::ALL_MANIP);
+    data->fill_IK_target(state, robot::MANIP_R_FOOT, control::ALL_MANIP);
 }
 
 void update_sensors(const sensor_msgs::Joy::ConstPtr& joy, control::control_data_t* data)
@@ -196,7 +199,7 @@ void do_keyboard(robot::robot_state_t& state, control::control_data_t* data)
     spnav_keys['a'] = "GRASP";
     spnav_keys['s'] = "BODY_XZP_FIX_LEGS";
     spnav_keys['d'] = "JOINT";
-    spnav_keys['f'] = "ARM_JIT";
+    spnav_keys['f'] = "ARM_MASTER_SLAVE_AIK";
     spnav_keys['g'] = "ARM_AIK";
     spnav_keys['z'] = "FLOATING";
     spnav_keys['x'] = "BODY_ZY_FIX_LEGS";
@@ -212,6 +215,7 @@ void do_keyboard(robot::robot_state_t& state, control::control_data_t* data)
     if(spnav_keys.count(key)) {
         delete spnav_control;
         spnav_control = control::get_factory(spnav_keys[key])->create();
+        spnav_control->change_mode(0, state);
         std::cout << "Switched SPNAV to " << spnav_control->name() << std::endl;
         return;
     }
@@ -320,18 +324,10 @@ void send_animation(robot::robot_state_t& target)
 {
     DRC_msgs::PoseJointTrajectory pjt;
     trajectory_msgs::JointTrajectoryPoint jt;
+    trajectory_msgs::JointTrajectoryPoint past;
+
+    // Generate pose trajectory
     geometry_msgs::Pose p;
-
-    std::map<std::string, int> s2r = target.get_s2r();
-    Eigen::VectorXd points = target.ros_pose();
-
-    jt.positions.resize( points.size() );
-
-    int i=0;
-    for(auto iter = s2r.begin(); iter != s2r.end(); ++iter) {
-        pjt.joint_names.push_back( iter->first );
-        jt.positions[ i++  ] = points[ iter->second ];
-    }
 
     Eigen::Isometry3d body;
     target.get_body(body);
@@ -341,18 +337,46 @@ void send_animation(robot::robot_state_t& target)
 
     p.position.x = body(0,3);
     p.position.y = body(1,3);
-    p.position.z = body(2,3);
+    p.position.z = body(2,3) + 0.05;
     p.orientation.x = quat.x();
     p.orientation.y = quat.y();
     p.orientation.z = quat.z();
     p.orientation.w = quat.w();
-    
+
+    static geometry_msgs::Pose past_pose = p;
+
+    // Generate Joint trajectory
+    std::map<std::string, int> s2r = target.get_s2r();
+    Eigen::VectorXd points = target.ros_pose();
+
+    static Eigen::VectorXd past_points = points;
+
+    past.positions.resize( points.size() );
+    jt.positions.resize( points.size() );
+
+    int i=0;
+    for(auto iter = s2r.begin(); iter != s2r.end(); ++iter) {
+        pjt.joint_names.push_back( iter->first );
+
+        past.positions[ i ] = past_points[ iter->second ];
+
+        jt.positions[ i++  ] = points[ iter->second ];
+    }
+
+    pjt.points.push_back(past);
     pjt.points.push_back(jt);
+
+    pjt.poses.push_back(past_pose);
     pjt.poses.push_back(p);
 
-    pjt.points[0].time_from_start = ros::Duration().fromSec(0.01);
+    pjt.points[0].time_from_start = ros::Duration().fromSec(0);
+    pjt.points[1].time_from_start = ros::Duration().fromSec(0.01);
 
     animation_publisher.publish( pjt );
+
+    // Save
+    past_pose = p;
+    past_points = points;
 }
 
 //############################################################
@@ -382,8 +406,8 @@ void run(robot::robot_state_t& robot, const sensor_msgs::Joy::ConstPtr& joy, con
     else 
         do_control(robot,data);
     
-    // if(first_control)
-    //     send_animation(robot);
+    if(first_control)
+        send_animation(robot);
 }
 
 //############################################################
@@ -402,7 +426,7 @@ void pose_handler(const geometry_msgs::PosePtr &_pose)
     q.w() = _pose->orientation.w;
     q.x() = _pose->orientation.x;
     q.y() = _pose->orientation.y;
-    q.z() = _pose->orientation.z;
+    q.z() = _pose->orientation.z - 0.05;
     Tbody.linear() = q.matrix();
     hubo_current.set_body(Tbody);
 }
@@ -444,6 +468,7 @@ int main(int argc, char *argv[])
     control_data->jac = &hubo_jac;
     control_data->manip_index = robot::MANIP_L_HAND;
     control_data->ik_target = control::UARM_MANIP;
+    control_data->command_char = 0;
 
     spnav_control = control::get_factory("NULL")->create();
     fastrak_control = control::get_factory("NULL")->create();

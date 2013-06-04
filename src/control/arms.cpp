@@ -71,6 +71,51 @@ namespace control {
         return true; //< Never fill IK targets when running fastrak
     }
 
+    bool ARM_MASTER_SLAVE_AIK_T::change_mode(int key, robot::robot_state_t& target)
+    {
+        do_init = 1;
+    }
+
+    bool ARM_MASTER_SLAVE_AIK_T::run(robot::robot_state_t& target, control_data_t* data)
+    {
+        assert(data);
+
+        // Require that the slave transform is relative between the fake HUBO wrist pitches
+        if (do_init) {
+            std::cout << "[ARM_MASTER_SLAVE_AIK] Attaching slave to master\n";
+
+            Eigen::Isometry3d Tf_rwp, Tf_lwp;
+            data->get_IK_target(Tf_rwp, robot::MANIP_R_HAND, control::GLOBAL_MANIP);
+            data->get_IK_target(Tf_lwp, robot::MANIP_L_HAND, control::GLOBAL_MANIP);
+
+            Tf_slave = Tf_rwp.inverse() * Tf_lwp;
+
+            do_init = 0;
+        }
+
+        // Master hand
+        Eigen::Isometry3d Tf_left, Tf_right;
+        data->get_IK_target(Tf_right, robot::MANIP_R_HAND, control::GLOBAL_MANIP);
+
+        // Delta motion
+        Tf_right.linear() = Tf_right.linear() * data->joy_rotation;
+        Tf_right.translation() += data->joy_position;
+
+        // Slave hand
+        Tf_left = Tf_right * Tf_slave;
+
+        // Do IK
+        robot::robot_kinematics_t* robot_kin = data->kin;
+        bool ok;
+
+        ok = robot_kin->arm_ik(Tf_right, false, target);
+        ok &= robot_kin->arm_ik(Tf_left, true, target);
+
+        data->manip_target = Tf_right;
+
+        return ok;
+    }
+
     bool ARM_DUAL_AIK_T::run(robot::robot_state_t& target, control::control_data_t* data)
     {
         // save

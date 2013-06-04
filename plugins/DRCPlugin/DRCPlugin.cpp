@@ -204,6 +204,19 @@ void DRCPlugin::RobotGrabDrill(const geometry_msgs::Pose::ConstPtr &_cmd)
     this->drill.drillModel->GetLink("link")->SetSelfCollide(false);
     this->drill.drillModel->GetLink("link")->SetCollideMode("none"); 
 
+    for(int i=0; i < mNumJoints; i++) {
+        std::cout << mJointNames[i] << std::endl;
+        if(mJointNames[i] != "TSY") {
+            this->drchubo.model->GetLink("Body_" + mJointNames[i])->SetSelfCollide(false);
+            this->drchubo.model->GetLink("Body_" + mJointNames[i])->SetCollideMode("none");
+        } else {
+            this->drchubo.model->GetLink("Body_Torso")->SetSelfCollide(false);
+            this->drchubo.model->GetLink("Body_Torso")->SetCollideMode("none");
+        }
+    }
+
+    // Nothing should self collide?
+
 
       if (!this->grabJoint)
         this->grabJoint = this->AddJoint(this->world, this->drill.drillModel,
