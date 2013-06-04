@@ -39,6 +39,7 @@ using namespace fakerave;
 
 
 const int zmpnode::mNumBodyDofs = 24; // Left Arm, Right Arm, Left Leg, Right Leg
+/*
 const int zmpnode::mNumJoints = 35;
 std::string zmpnode::mJointNames[] = {"drchubo::LSP", "drchubo::LSR", "drchubo::LSY", "drchubo::LEP", "drchubo::LWY", "drchubo::LWP", "drchubo::LWR",
 				      "drchubo::RSP", "drchubo::RSR", "drchubo::RSY", "drchubo::REP", "drchubo::RWY", "drchubo::RWP", "drchubo::RWR",
@@ -47,6 +48,17 @@ std::string zmpnode::mJointNames[] = {"drchubo::LSP", "drchubo::LSR", "drchubo::
 				      "drchubo::TSY", "drchubo::NKY", "drchubo::NKP",
 				      "drchubo::LF1", "drchubo::LF2", "drchubo::LF3",
 				      "drchubo::RF1", "drchubo::RF2", "drchubo::RF3"};
+*/
+
+const int zmpnode::mNumJoints = 29;
+std::string zmpnode::mJointNames[] = {"drchubo::LSP", "drchubo::LSR", "drchubo::LSY", "drchubo::LEP", "drchubo::LWY", "drchubo::LWP", "drchubo::LWR",
+				      "drchubo::RSP", "drchubo::RSR", "drchubo::RSY", "drchubo::REP", "drchubo::RWY", "drchubo::RWP", "drchubo::RWR",
+				      "drchubo::LHY", "drchubo::LHR", "drchubo::LHP", "drchubo::LKP", "drchubo::LAP", "drchubo::LAR",
+				      "drchubo::RHY", "drchubo::RHR", "drchubo::RHP", "drchubo::RKP", "drchubo::RAP", "drchubo::RAR",
+				      "drchubo::TSY", "drchubo::NKY", "drchubo::NKP"};
+
+
+
 /**
  * @function zmpnode
  * @brief Constructor
