@@ -87,6 +87,19 @@ ros::Publisher animation_publisher;
 ros::Subscriber pose_subscriber;
 ros::Subscriber joint_subscriber;
 
+// SIMULATION
+const double GROUND_HEIGHT = 0.05;
+
+//############################################################
+//# Utility functions
+//############################################################
+int toggle(bool &b, bool c) {
+    if(b == c)
+        return 0;
+    b = c;
+    return b ? 1 :-1;
+}
+
 //############################################################
 //# HUBO driver functions
 //############################################################
@@ -104,16 +117,24 @@ void init_world_pose(robot::robot_state_t& robot)
     
     Eigen::Isometry3d Twb;
     robot.get_body(Twb);
+
+    Eigen::Vector3d v = Twb.translation();
     
     Twb = Twlf.inverse() * Twb;
-    Twb(1,3) = 0;
+    Twb(0,3) = v(0);
+    Twb(1,3) = v(1);
+    Twb(2,3) += GROUND_HEIGHT;
 
     robot.set_body(Twb);
 }
 
-void init_current_pose(robot::robot_state_t& target, robot::robot_state_t& current)
+void init_current_pose(robot::robot_state_t& target, robot::robot_state_t& current, control::control_data_t* data)
 {
     target.set_dart_pose( current.dart_pose() );
+    for(int i=0; i < robot::NUM_MANIPULATORS; i++) {
+        data->fill_IK_target(target, i, control::ALL_MANIP);
+    }
+    data->last_command = target.dart_pose();
 }
 
 bool init_sensors(const sensor_msgs::Joy::ConstPtr& joy, control::control_data_t* data)
@@ -140,12 +161,12 @@ void init_hubo(robot::robot_state_t& state, control::control_data_t* data)
     init_world_pose(state);
 
     // 2. Get HUBO out of the singularity.
-    std::vector<int> manip_enum = { robot::MANIP_L_HAND, robot::MANIP_R_HAND };
-    Eigen::VectorXd arm_dofs(7);
-    arm_dofs << 0, 0, 0, -M_PI/2, 0, M_PI/2, 0;
-    for(int i=0; i < manip_enum.size(); i++) {
-        state.set_manip(arm_dofs, manip_enum[i]);
-    }
+    // std::vector<int> manip_enum = { robot::MANIP_L_HAND, robot::MANIP_R_HAND };
+    // Eigen::VectorXd arm_dofs(7);
+    // arm_dofs << 0, 0, 0, -M_PI/2, 0, M_PI/2, 0;
+    // for(int i=0; i < manip_enum.size(); i++) {
+    //     state.set_manip(arm_dofs, manip_enum[i]);
+    // }
 
     // 3. Set target com to current
     hubo_skel->setPose( state.dart_pose() );
@@ -162,18 +183,20 @@ void init_hubo(robot::robot_state_t& state, control::control_data_t* data)
     }
 
     // 6. Calibrate fastrak to agree with this pose.
-    fastrak.calibrate(state, data);
+    // fastrak.calibrate(state, data);
 
     // 7. Feet on ground?
     data->fill_IK_target(state, robot::MANIP_L_FOOT, control::ALL_MANIP);
     data->fill_IK_target(state, robot::MANIP_R_FOOT, control::ALL_MANIP);
+
+    data->last_command = state.dart_pose();
 }
 
 void update_sensors(const sensor_msgs::Joy::ConstPtr& joy, control::control_data_t* data)
 {
     spnav.sensor_update(joy);
     spnav.get_teleop_data(data);
-    fastrak.update_sensors(data);
+    // fastrak.update_sensors(data);
 }
 
 bool get_key(char& ch) {
@@ -225,7 +248,7 @@ void do_keyboard(robot::robot_state_t& state, control::control_data_t* data)
         delete fastrak_control;
         fastrak_control = control::get_factory(fastrak_keys[key])->create();
         std::cout << "Switched FASTRAK to " << fastrak_control->name() << std::endl;
-        fastrak.calibrate(state, data);
+        //fastrak.calibrate(state, data);
         return;
     }
     
@@ -241,7 +264,7 @@ void do_keyboard(robot::robot_state_t& state, control::control_data_t* data)
     case 'c':
     {
         std::cout << "Zeroing fastrak" << std::endl;
-        fastrak.calibrate(state, data);
+        //fastrak.calibrate(state, data);
         break;
     }
     case 'r':
@@ -253,10 +276,7 @@ void do_keyboard(robot::robot_state_t& state, control::control_data_t* data)
     case '`':
     {
         std::cout << "Setting pose to current\n";
-        init_current_pose(state, hubo_current);
-        for(int i=0; i < robot::NUM_MANIPULATORS; i++) {
-            data->fill_IK_target(state, i, control::ALL_MANIP);
-        }
+        init_current_pose(state, hubo_current, data);
     }
     case '-':
     case '_':
@@ -318,8 +338,8 @@ bool do_control(robot::robot_state_t& target, control::control_data_t* data)
         data->fill_IK_target(target, robot::MANIP_L_HAND, control::ALL_MANIP);
         data->fill_IK_target(target, robot::MANIP_R_HAND, control::ALL_MANIP);
     }
-    data->fill_IK_target(target, robot::MANIP_L_FOOT, control::ALL_MANIP);
-    data->fill_IK_target(target, robot::MANIP_R_FOOT, control::ALL_MANIP);
+    // data->fill_IK_target(target, robot::MANIP_L_FOOT, control::ALL_MANIP);
+    // data->fill_IK_target(target, robot::MANIP_R_FOOT, control::ALL_MANIP);
 
     // Run only some controller succeeded
     return spnav_ok || fastrak_ok;
@@ -405,14 +425,28 @@ void run(robot::robot_state_t& robot, const sensor_msgs::Joy::ConstPtr& joy, con
 
     update_sensors(joy, data);
     
-    static bool first_control = false;
-    if(!first_control)
-        first_control = do_control(robot, data);
-    else 
-        do_control(robot,data);
+    bool ok = do_control(robot, data);
     
-    if(first_control)
+    Eigen::VectorXd this_command = robot.dart_pose();
+    Eigen::VectorXd last_command = data->last_command;
+
+    // Do check
+
+    // Toggle sending printout
+    static bool sending_animation=false;
+    int t = toggle(sending_animation, ok);
+    switch(t){
+    case 1: std::cout << "Starting animation" << std::endl; break;
+    case -1: std::cout << "Stopping animation" << std::endl; break;
+    default: break;
+    }
+    if(ok) {
+        std::cout << "Command delta = " << (this_command - last_command).norm() << std::endl;
+
         send_animation(robot);
+        
+        data->last_command;
+    }
 }
 
 //############################################################

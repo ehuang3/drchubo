@@ -85,6 +85,7 @@ namespace hubo {
         Matrix4d Tw3 = left[2]->getWorldTransform();
         Matrix4d Tw4 = left[3]->getWorldTransform();
         Matrix4d Tw5 = left[4]->getWorldTransform();
+        Matrix4d Tw6 = left[5]->getWorldTransform();
 
         double ox, oz;
         ox = abs(Tw1(0,3));
@@ -92,7 +93,7 @@ namespace hubo {
 
         double l0, l1, l2, l3, l4;
         // double h3;
-        l0 = abs(Tw1(1,3));
+        l0 = abs(Tw6(1,3));
         l1 = 0;
         l2 = 0;
         l3 = abs(Tw4(2,3)) - oz;

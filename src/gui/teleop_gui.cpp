@@ -168,7 +168,7 @@ namespace gui {
         robotSkel->setPose( current_state->dart_pose() );
         robotSkel->draw(mRI, Vector4d(0.5, 0.5, 0.5, 0.5), false); // he's the grey one
         // target state
-        // glClear(GL_DEPTH_BUFFER_BIT);
+        glClear(GL_DEPTH_BUFFER_BIT);
         robotSkel->setPose( target_state->dart_pose() );
         // robotSkel->draw(mRI, Vector4d(0, 1, 0, 0.7), false); // he's green and transparents
         render_skel(robotSkel, *target_state, Vector4d(0,1,0,1), false, true);

@@ -13,10 +13,10 @@ namespace control {
         // FIXME: This is slow?
         std::vector<int> manip_index = { robot::MANIP_L_HAND, robot::MANIP_R_HAND, robot::MANIP_L_FOOT, robot::MANIP_R_FOOT };
         std::vector<const char*> manip_link(4, "");
-        manip_link[robot::MANIP_L_HAND] = ROBOT_LEFT_HAND;
-        manip_link[robot::MANIP_R_HAND] = ROBOT_RIGHT_HAND;
-        manip_link[robot::MANIP_L_FOOT] = ROBOT_LEFT_FOOT;
-        manip_link[robot::MANIP_R_FOOT] = ROBOT_RIGHT_FOOT;
+        manip_link[0] = ROBOT_LEFT_HAND;
+        manip_link[1] = ROBOT_RIGHT_HAND;
+        manip_link[2] = ROBOT_LEFT_FOOT;
+        manip_link[3] = ROBOT_RIGHT_FOOT;
 
         // Find target transforms of manipulators
         robot::robot_kinematics_t* robot_kin = this->kin;

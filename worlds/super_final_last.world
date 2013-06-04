@@ -277,7 +277,8 @@
 
     <!-- DRC Hubo -->
     <include>
-      <uri>model://drchubo</uri>
+      <uri>model://drchubo_fingersFixed</uri>
+      <name>drchubo</name>
       <pose>-0.0315 -0.011 0.93 0 0 0</pose>
     </include>
 
@@ -321,13 +322,13 @@
     <include>
       <uri>model://light_cinder</uri>
       <name>lc_aosdf</name>
-      <pose>0.748794 -0.44451 1.0 0 0 0.000062</pose>
+      <pose>0.848794 -0.54451 1.0 0 0 0.000062</pose>
     </include>    
 
     <include>
       <uri>model://light_cinder</uri>
       <name>lc_aoasd</name>
-      <pose>0.748794 -0.44451 2.0 0 0 0.02431</pose>
+      <pose>0.848794 -0.54451 2.0 0 0 0.02431</pose>
     </include>    
 
     <!-- DRC Plugin -->

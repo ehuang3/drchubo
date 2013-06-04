@@ -39,11 +39,6 @@ namespace control {
 
     const control_factory_t* get_factory(std::string name)
     {
-        const std::vector<control_factory_t*>& f = factories();
-        for(int i=0; i < f.size(); i++) {
-            std::cout << "Factory " << f[i]->name() << std::endl;
-        }
-        
         BOOST_FOREACH(control_factory_t* factory, control_factory_t::factory_vector()) {
             if(name == factory->name())
                 return factory;
