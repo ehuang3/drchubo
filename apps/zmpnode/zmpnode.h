@@ -58,14 +58,20 @@ class zmpnode {
   zmpnode();
   ~zmpnode();    
   
-  void generateZMPGait(  size_t _max_step_count = 30,
-                         double _step_length = 0.3 ); 
+  void generateZMPGait( size_t _max_step_count = 30,
+			double _step_length = 0.3,
+                        bool _walk_sideways = false,
+			double _double_support_time = 0.05,
+			double _single_support_time = 0.70,
+			double _startup_time = 1.0,
+			double _shutdown_time = 1.0 ); 
 
   trajectory_msgs::JointTrajectory getJointTrajMsg();
   DRC_msgs::PoseStampedArray getPoseTrajMsg();
   DRC_msgs::PoseJointTrajectory getPoseJointTrajMsg( geometry_msgs::PosePtr _initPose,
 						     sensor_msgs::JointStatePtr _initJointState,
-                                                     double _smoothTransitionTime = 1.0 );
+                                                     double _smoothTransitionTime = 1.0,			
+						     bool _useInitArmConfig = false );
   // Helpers
   Eigen::Matrix4d tf2Mx( Transform3 _tf );
   

@@ -71,23 +71,69 @@ int main( int argc, char* argv[] ) {
   int _max_steps; size_t max_steps;
   double _step_length; double step_length; 
   double _transition_time; double transitionTime;
+  double _double_support_time; double double_support_time;
+  double _single_support_time; double single_support_time;
+  double _startup_time; double startup_time;
+  double _shutdown_time; double shutdown_time;
+  bool _walk_sideways; bool walk_sideways;
+  bool _useInitArmConfig; bool useInitArmConfig;
 
+  // Max steps
   if( node->getParam("/walk_max_steps", _max_steps ) ){
      max_steps = _max_steps;
   } else { printf("No /walk_max_steps parameter set. SET IT NOW OR I WON'T WALK! \n"); }	
+  // Step length
   if( node->getParam("/walk_step_length", _step_length ) ){
      step_length = _step_length;
   } else { printf("No /walk_step_length parameter set. SET IT NOW OR I WON'T WALK! \n"); }	
+
+  // Walk sideways
+  if( node->getParam("/walk_sideways", _walk_sideways ) ){
+     walk_sideways = _walk_sideways;
+  } else { printf("No /walk_sideways parameter set. SET IT NOW OR I WON'T WALK! \n"); }
+
+  // Walk sideways
+  if( node->getParam("/walk_useInitArmConfig", _useInitArmConfig ) ){
+     useInitArmConfig = _useInitArmConfig;
+  } else { printf("No /walk_sideways parameter set. SET IT NOW OR I WON'T WALK! \n"); }
+
+  // Transition time
   if( node->getParam("/walk_transition_time", _transition_time ) ){
      transitionTime = _transition_time;
   } else { printf("No /walk_transition_time parameter set. SET IT NOW OR I WON'T WALK! \n"); }	
 
-  zd.generateZMPGait( max_steps, step_length );
+  // Double support time
+  if( node->getParam("/walk_double_support_time", _double_support_time ) ){
+    double_support_time = _double_support_time;
+  } else { printf("No /walk_double_support_time parameter set. SET IT NOW OR I WON'T WALK! \n"); }	
+  // Single support time
+  if( node->getParam("/walk_single_support_time", _single_support_time ) ){
+    single_support_time = _single_support_time;
+  } else { printf("No /walk_single_support_time parameter set. SET IT NOW OR I WON'T WALK! \n"); }
+
+  // Startup time
+  if( node->getParam("/walk_startup_time", _startup_time ) ){
+    startup_time = _startup_time;
+  } else { printf("No /walk_startup_time parameter set. SET IT NOW OR I WON'T WALK! \n"); }	
+  // Shutdown time
+  if( node->getParam("/walk_shutdown_time", _shutdown_time ) ){
+    shutdown_time = _shutdown_time;
+  } else { printf("No /walk_shutdown_time parameter set. SET IT NOW OR I WON'T WALK! \n"); }		
+
+
+  zd.generateZMPGait( max_steps, 
+		      step_length,
+                      walk_sideways,
+		      double_support_time,
+		      single_support_time,
+		      startup_time,
+		      shutdown_time );
+
   ros::spinOnce();
   ros::Duration(0.1).sleep();
 
   // Convert it to a message
-    pjt_msg = zd.getPoseJointTrajMsg( initPose, initJointState, transitionTime );
+    pjt_msg = zd.getPoseJointTrajMsg( initPose, initJointState, transitionTime, useInitArmConfig );
     printf("Publishing pose animation \n" );
     pjt_msg.header.stamp = ros::Time::now();
     poseJointTrajPub.publish( pjt_msg );

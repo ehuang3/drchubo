@@ -921,15 +921,17 @@ void DRCPlugin::Drill::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf)
         } 
   
     
-        // Set inverse
-        math::Quaternion invLeftFoot = (leftFootPose.rot).GetInverse();
-        math::Quaternion newPoseWorld = invLeftFoot*worldPose.rot;
-        math::Pose flatPose;
-        // Set foot up from floor (since it is relative to ankle)
-        math::Vector3 worldPos( worldPose.pos.x, worldPose.pos.y, (worldPose.pos.z - leftFootPose.pos.z) + this->ankleOffset );
-        flatPose.Set( worldPos, invLeftFoot );
-        this->model->SetWorldPose( flatPose );
-        //printf( "[DRCPLUGIN - ParallelToFloor] Done  - setting foot up %f to account for ankle offset\n", this->ankleOffset );
+        // Set left foot parallel to plane, hopefully
+        math::Pose invLeftFoot = leftFootPose.GetInverse();
+        math::Pose worldPrime = worldPose; worldPrime.pos.z = 0;    
+        math::Pose newPoseWorld = worldPrime*invLeftFoot*worldPose;
+        newPoseWorld.pos.z = newPoseWorld.pos.z + this->ankleOffset; 
+
+        this->model->SetWorldPose( newPoseWorld );
+        printf( "[DRCPLUGIN - ParallelToFloor] Done  - setting foot up %f to account for ankle offset\n", this->ankleOffset );
+        leftFootPose = this->model->GetLink("Body_LAR")->GetWorldPose();
+        worldPose = this->model->GetWorldPose();
+        printf( "Left foot pos: %f %f %f World pos of torso: %f %f %f \n", leftFootPose.pos.x, leftFootPose.pos.y, leftFootPose.pos.z, worldPose.pos.x, worldPose.pos.y, worldPose.pos.z);
     }  
 
 

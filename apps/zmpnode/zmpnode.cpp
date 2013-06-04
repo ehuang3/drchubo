@@ -99,7 +99,7 @@ trajectory_msgs::JointTrajectory zmpnode::getJointTrajMsg() {
       vals[j] = mMzJointTraj[i](j-1);
     }
     // Left and Right Legs
-    for( int j = 14; j <= mNumJoints; ++j ) {
+    for( int j = 14; j <= 25; ++j ) {
       vals[j] = mMzJointTraj[i](j-2);
     }
     // Set all joints
@@ -164,7 +164,8 @@ DRC_msgs::PoseStampedArray zmpnode::getPoseTrajMsg() {
  */
 DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::PosePtr _initPose,
 							     sensor_msgs::JointStatePtr _initJointState,
-                                                             double _smoothTransitionTime ) {
+                                                             double _smoothTransitionTime,
+                                                             bool _useInitArmConfig ) {
 
   //**********************************
   // JOINT AND POSE ANIMATION
@@ -206,10 +207,10 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
   p0.position.x = _initPose->position.x;
   p0.position.y = _initPose->position.y;
   p0.position.z = _initPose->position.z;  // + 1.18 - DEFAULT FROM FLOOR
-  p0.orientation.x = 0;
-  p0.orientation.y = 0;
-  p0.orientation.z = 0;
-  p0.orientation.w = 1;
+  p0.orientation.x = _initPose->orientation.x;
+  p0.orientation.y = _initPose->orientation.y;
+  p0.orientation.z = _initPose->orientation.z;
+  p0.orientation.w = _initPose->orientation.w;
   
   // Append to trajectory
   pjt.points.push_back(jt0);
@@ -217,7 +218,7 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
   
   // Set duration
   pjt.points[0].time_from_start = ros::Duration().fromSec(0);
-  
+  printf("[DEBUG zmpNode] First position of walk (where robot was): %f %f %f \n", p0.position.x, p0.position.y, p0.position.z);
   // Add transition time
   t += smoothT;
 
@@ -234,14 +235,28 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
     geometry_msgs::Pose p;
     
     std::vector<double> vals(mNumJoints, 0.0);
-    // Left Arm
-    for( int j = 0; j <= 5; ++j ) {
-      vals[j] = mMzJointTraj[i](j);
+    
+    if( _useInitArmConfig == true ) {
+			// Left Arm
+    	for( int j = 0; j <= 5; ++j ) {
+      	vals[j] = vals0[j];
+    	}
+    	// Right Arm
+    	for( int j = 7; j <= 12; ++j ) {
+      	vals[j] = vals0[j-1];
+    	}
     }
-    // Right Arm
-    for( int j = 7; j <= 12; ++j ) {
-      vals[j] = mMzJointTraj[i](j-1);
-    }
+    else {
+			// Left Arm
+    	for( int j = 0; j <= 5; ++j ) {
+      	vals[j] = mMzJointTraj[i](j);
+    	}
+    	// Right Arm
+    	for( int j = 7; j <= 12; ++j ) {
+      	vals[j] = mMzJointTraj[i](j-1);
+    	}
+		}
+
     // Left and Right Legs (do not change the 25 - MATT CODE RETURNS 26 values)
     for( int j = 14; j <= 25; ++j ) {
       vals[j] = mMzJointTraj[i](j-2);
@@ -276,6 +291,8 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
   pjt.header.stamp = ros::Time::now();
   pjt.header.frame_id = "drchubo::Body_Torso";
 
+  printf("[DEBUG zmpNode] First position of walk after smoothing: %f %f %f \n", pjt.poses[1].position.x, pjt.poses[1].position.y, pjt.poses[1].position.z);
+
   printf("End of animation processing, returning \n");
 
   return pjt;
@@ -287,7 +304,12 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
  * @brief Executes Matt's code
  */
   void zmpnode::generateZMPGait( size_t _max_step_count,
-                                 double _step_length ) {
+                                 double _step_length,
+                                 bool _walk_sideways,
+				 double _double_support_time,
+				 double _single_support_time,
+				 double _startup_time,
+				 double _shutdown_time ) {
   printf(" Generate ZMP Gait \n");
   bool show_gui = false;
   bool use_ach = false;
@@ -299,8 +321,6 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
   double footsep_y = 0.10;//0.0985; // half of horizontal separation distance between feet
   double foot_liftoff_z = 0.05; // foot liftoff height
 
-  bool walk_sideways = false;
-
   double com_height = 0.48; // 0.48// height of COM above ANKLE
   double com_ik_ascl = 0;
 
@@ -309,15 +329,14 @@ DRC_msgs::PoseJointTrajectory zmpnode::getPoseJointTrajMsg(  geometry_msgs::Pose
 
   double lookahead_time = 2.5;
 
-  double startup_time = 1.0;
-  double shutdown_time = 1.0;
-  double double_support_time = 0.05;
-  double single_support_time = 0.70;
-
   // Values set by arguments
   double max_step_count = _max_step_count;
   double step_length = _step_length;
-
+  double startup_time = _startup_time;
+  double shutdown_time = _shutdown_time;
+  double double_support_time = _double_support_time;
+  double single_support_time = _single_support_time;
+  bool walk_sideways = _walk_sideways;
 
   double zmp_jerk_penalty = 1e-8; // jerk penalty on ZMP controller
 
