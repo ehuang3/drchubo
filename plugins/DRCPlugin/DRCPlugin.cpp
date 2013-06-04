@@ -34,7 +34,7 @@ double clamp2pi(double _ang) {
 namespace gazebo
 {
     GZ_REGISTER_WORLD_PLUGIN(DRCPlugin)
-
+/*
     const int DRCPlugin::mNumJoints = 35;
     std::string DRCPlugin::mFullJointNames[] = {"drchubo::LSP", "drchubo::LSR", "drchubo::LSY", "drchubo::LEP", "drchubo::LWY", "drchubo::LWP", "drchubo::LWR",
                                                 "drchubo::RSP", "drchubo::RSR", "drchubo::RSY", "drchubo::REP", "drchubo::RWY", "drchubo::RWP", "drchubo::RWR",
@@ -51,6 +51,21 @@ namespace gazebo
                                             "TSY", "NKY", "NKP",
                                             "LF1", "LF2", "LF3",
                                             "RF1", "RF2", "RF3"};
+*/
+
+    const int DRCPlugin::mNumJoints = 29;
+    std::string DRCPlugin::mFullJointNames[] = {"drchubo::LSP", "drchubo::LSR", "drchubo::LSY", "drchubo::LEP", "drchubo::LWY", "drchubo::LWP", "drchubo::LWR",
+                                                "drchubo::RSP", "drchubo::RSR", "drchubo::RSY", "drchubo::REP", "drchubo::RWY", "drchubo::RWP", "drchubo::RWR",
+                                                "drchubo::LHY", "drchubo::LHR", "drchubo::LHP", "drchubo::LKP", "drchubo::LAP", "drchubo::LAR",
+                                                "drchubo::RHY", "drchubo::RHR", "drchubo::RHP", "drchubo::RKP", "drchubo::RAP", "drchubo::RAR",
+                                                "drchubo::TSY", "drchubo::NKY", "drchubo::NKP"};
+
+    std::string DRCPlugin::mJointNames[] = {"LSP", "LSR", "LSY", "LEP", "LWY", "LWP", "LWR",
+                                            "RSP", "RSR", "RSY", "REP", "RWY", "RWP", "RWR",
+                                            "LHY", "LHR", "LHP", "LKP", "LAP", "LAR",
+                                            "RHY", "RHR", "RHP", "RKP", "RAP", "RAR",
+                                            "TSY", "NKY", "NKP"};
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Constructor
