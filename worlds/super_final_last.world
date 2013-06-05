@@ -286,19 +286,19 @@
     <include>
       <uri>model://beer</uri>
       <name>bear1</name>
-      <pose> 0.562488 0.258257 0.7 0 0 0.000418</pose>
+      <pose> 0.561127 0.210769 0.7 0 0 0.000418</pose>
     </include>
 
     <include>
       <uri>model://beer</uri>
       <name>beer2</name>
-      <pose> 1.2286 -0.271844 0.1 0 0.000008 0.000146</pose>
+      <pose> 0.004894 1.141844 0.1 0 0.000008 0.000146</pose>
     </include>
 
     <include>
       <uri>model://beer</uri>
       <name>beer3</name>
-      <pose> 1.495 0.271844 0.1 0 0.000008 0.000146</pose>
+      <pose> 1.1879 -0.795979 0.85 -1.570793 -1.339556 0.013769</pose>
     </include>
 
     <include>

@@ -3,7 +3,7 @@
 <!-- ******************** -->
 
 <launch>
-  <param name="/walk_max_steps" type="int" value="0" />
+  <param name="/walk_max_steps" type="int" value="15" />
   <param name="/walk_step_length" type="double" value="0.25" />
   <param name="/walk_sideways" type="bool" value="false" />
   <param name="/walk_transition_time" type="double" value="1.0" />

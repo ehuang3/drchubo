@@ -418,7 +418,7 @@ void run(robot::robot_state_t& robot, const sensor_msgs::Joy::ConstPtr& joy, con
         return;
     }
 
-    static bool hubo_ready = false;
+    static bool hubo_ready = fals
     if(!hubo_ready) {
         init_hubo(robot, data);
         //init_hubo(hubo_current, data); //< HACK hubo_current isn't use anyways
