@@ -5,7 +5,7 @@ include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 set(ROSBUILD_TYPE DEBUG)
 rosbuild_init()
 
-set(hubo_teleop_src hubo_captain.cpp teleop.cpp spnav.cpp hubo_fastrak.cpp Fastrak.cpp)
+set(hubo_teleop_src hubo_captain.cpp teleop.cpp spnav.cpp)
 set(hubo_teleop_hdr)
 
 include_directories(${GAZEBO_INCLUDE_DIRS})

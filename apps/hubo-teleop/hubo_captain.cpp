@@ -44,9 +44,6 @@
 // SPACENAV stuff
 #include "spnav.h"
 
-// Fastrak stuff
-#include "hubo_fastrak.h"
-
 // Control stuff
 #include <control/control.h>
 #include <control/control_factory.h>
@@ -75,7 +72,6 @@ control::control_t* fastrak_control;
 
 // PERIPHERALS
 teleop::spnav_t spnav;
-fastrak_t fastrak;
 
 // GUI
 pthread_t gui_thread;

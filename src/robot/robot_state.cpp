@@ -433,42 +433,6 @@ namespace robot {
         return g_s2d[joint];
     }
     
-    void robot_state_t::get_branch_indexes(vector<int>& indexes, BodyNode *end_effector) const
-    {
-        indexes.clear();
-        for(int i=0; i < end_effector->getNumDependentDofs(); ++i) {
-            int dd = end_effector->getDependentDof(i);
-            if(g_d2r.count(dd))
-                indexes.push_back(end_effector->getDependentDof(i));
-        }
-    }
-
-    void robot_state_t::get_chain_indexes(vector<int>& indexes, BodyNode* base, BodyNode *end_effector) const
-    {
-        // Translate to DART indexes
-        int b_index = g_s2d[base->getParentJoint()->getName()];
-        // 
-        bool shared_branch = end_effector->dependsOn(b_index);
-        //
-        indexes.clear();
-        if(shared_branch) {
-            // walk backwards b/c order is root->end effector
-            int i = end_effector->getNumDependentDofs() - 1;
-            int dd;
-            for(dd = -1; i > 0; --i) {
-                dd = end_effector->getDependentDof(i);
-                indexes.push_back(dd);
-                if(dd == b_index)
-                    break;
-            }
-        } else {
-            vector<int> a, b;
-            get_branch_indexes(a, base);
-            get_branch_indexes(b, end_effector);
-            indexes = set_union(a,b);
-        }
-    }
-
     void robot_state_t::get_full_indexes(vector<int>& indexes) const
     {
         indexes.clear();

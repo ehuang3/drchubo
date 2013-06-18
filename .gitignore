@@ -1,3 +1,6 @@
+DRC_RosPkgs/DRC_msgs/msg_gen/
+DRC_RosPkgs/DRC_msgs/src/
+
 *~
 *.py[cod]
 

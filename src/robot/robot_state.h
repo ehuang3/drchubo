@@ -35,7 +35,6 @@ namespace robot {
         double dofs(int i) const { return _dofs(i); }
         Eigen::VectorXd& dofs() { return _dofs; }
 
-        //TODO: rename to _dart_, _ros_
         void set_dart_pose(const Eigen::VectorXd& q) { _dofs = q; }
         void get_dart_pose(Eigen::VectorXd& q) const { q = _dofs; }
         void set_ros_pose(const Eigen::VectorXd& q);
@@ -57,16 +56,6 @@ namespace robot {
         // returns the joints initialized in g_d_limb
         // note: accepts both ManipIndex and LimbIndex
         void get_manip_indexes(std::vector<int>& indexes, int mi) const;
-        // returns chain from end effector to root (ala dart)
-        // warning: only returns joints mappable to ros (see init() of subclass)
-/***** FIXME: ROOT ON ATLAS MEANS PELVIS, KIND OF USELESS, BUILD CHAINS MANUALLY INSTEAD PLZ *****/
-        void get_branch_indexes(std::vector<int>& indexes, kinematics::BodyNode* end_effector) const;
-        // returns joints in chain from base to end effector
-        // warning: only returns joints mappable to ros (see init() of subclass)
-/***** FIXME: DOES NOT WORK AS EXPECTED B/C I'M NOT HANDLING NON-JOINT LINKS IN SKELETON *****/
-/***** PIECE TOGETHER CHAIN INDEXES MANUALLY *****/
-        void get_chain_indexes(std::vector<int>& indexes, kinematics::BodyNode* base,
-                               kinematics::BodyNode* end_effector) const;
         // returns all joints w/ mapping to ros (see init() of subclass)
         void get_full_indexes(std::vector<int>& indexes) const;
 
@@ -86,11 +75,14 @@ namespace robot {
         bool clamp_indexes(const std::vector<int>& indexes, bool err_msg = true, double zero_tol = 1e-9);
         bool clamp_dof(int i, bool err_msy = true, double zero_tol = 1e-9);
 
+        // Returns the mappings
+        // Notation is: d = DART r = ROS s = STRING
         std::map<int,int> get_d2r() const { return g_d2r; }
         std::map<int,int> get_r2d() const { return g_r2d; }
         std::map<std::string, int> get_s2r() const { return g_s2r; }
         std::map<std::string, int> get_s2d() const { return g_s2d; }
 
+        // Prints out the mappings and related information 
         void print_nodes(const std::vector<int>& indexes) const; //< nodes <--> links
         void print_joints(const std::vector<int>& indexes) const; //< joints <--> dofs
         void print_limits(const std::vector<int>& indexes) const;
