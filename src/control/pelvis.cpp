@@ -14,7 +14,7 @@ namespace control {
         // 1. Init
         kinematics::Skeleton* robot = data->robot;
         robot::robot_kinematics_t* robot_kin = data->kin;
-        Eigen::Isometry3d (&end_effectors)[robot::NUM_MANIPULATORS] = data->manip_xform;
+        Eigen::Isometry3d (&end_effectors)[robot::NUM_MANIPULATORS] = data->Tf_global_manip;
         robot::IK_Mode mode[robot::NUM_MANIPULATORS];
         mode[robot::MANIP_L_HAND] = robot::IK_MODE_FREE;
         mode[robot::MANIP_R_HAND] = robot::IK_MODE_FREE;

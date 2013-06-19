@@ -1513,15 +1513,7 @@
                     </mesh>
                 </geometry>
             </collision>
-            <collision name="Body_RWR_collision_drill_link">
-                <pose>0 0 0 0 -0 0</pose>
-                <geometry>
-                    <mesh>
-                        <scale>1 1 1</scale>
-                        <uri>model://cordless_drill/meshes/cordless_drill.stl</uri>
-                    </mesh>
-                </geometry>
-            </collision>
+
             <visual name="Body_RWR_vis">
                 <pose>0 -0 0 0 -0 0</pose>
                 <geometry>
@@ -1532,7 +1524,7 @@
                 </geometry>
             </visual>
             <visual name="Body_RWR_vis_drill_link">
-                <pose>0 0.0 -0.3 0 -0 0</pose>
+                <pose>-0.00 -0.22 -0.15 -1.57 0 0</pose>
                 <geometry>
                     <mesh>
                         <scale>1 1 1</scale>

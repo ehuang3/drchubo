@@ -7,9 +7,11 @@
 #include "arms.h"
 REGISTER_CONTROLLER(control::ARM_AIK_T, ARM_AIK)
 REGISTER_CONTROLLER(control::ARM_SENSOR_AIK_T, ARM_SENSOR_AIK)
+REGISTER_CONTROLLER(control::ARM_DUAL_AIK_T, ARM_DUAL_AIK)
+REGISTER_CONTROLLER(control::ARM_MASTER_SLAVE_AIK_T, ARM_MASTER_SLAVE_AIK)
 //REGISTER_CONTROLLER(control::ARM_AJIK_T, ARM_AJIK)
 REGISTER_CONTROLLER(control::ARM_JIT_T, ARM_JIT)
-REGISTER_CONTROLLER(control::ARM_BOTH_JIT_T, ARM_BOTH_JIT)
+//REGISTER_CONTROLLER(control::ARM_BOTH_JIT_T, ARM_BOTH_JIT)
 //REGISTER_CONTROLLER(control::ARM_JIK_T, ARM_JIK)
 #include "legs.h"
 REGISTER_CONTROLLER(control::LEG_AIK_T, LEG_AIK)
@@ -37,11 +39,6 @@ namespace control {
 
     const control_factory_t* get_factory(std::string name)
     {
-        const std::vector<control_factory_t*>& f = factories();
-        for(int i=0; i < f.size(); i++) {
-            std::cout << "Factory " << f[i]->name() << std::endl;
-        }
-        
         BOOST_FOREACH(control_factory_t* factory, control_factory_t::factory_vector()) {
             if(name == factory->name())
                 return factory;

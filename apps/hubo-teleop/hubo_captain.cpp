@@ -84,6 +84,21 @@ gui::params_t gui_params;
 
 // DRC
 ros::Publisher animation_publisher;
+ros::Subscriber pose_subscriber;
+ros::Subscriber joint_subscriber;
+
+// SIMULATION
+const double GROUND_HEIGHT = 0.05;
+
+//############################################################
+//# Utility functions
+//############################################################
+int toggle(bool &b, bool c) {
+    if(b == c)
+        return 0;
+    b = c;
+    return b ? 1 :-1;
+}
 
 //############################################################
 //# HUBO driver functions
@@ -97,14 +112,29 @@ void init_world_pose(robot::robot_state_t& robot)
     kinematics::BodyNode* left_foot = hubo_skel->getNode("leftFoot");
     kinematics::Shape* left_shoe = left_foot->getCollisionShape();
 
-    Eigen::Matrix4d Twlf = left_foot->getWorldTransform();
+    Eigen::Isometry3d Twlf;
+    Twlf = left_foot->getWorldTransform();
     
-    double pelvis_height = fabs(Twlf(2,3));
-
     Eigen::Isometry3d Twb;
     robot.get_body(Twb);
-    Twb(2,3) = pelvis_height;
+
+    Eigen::Vector3d v = Twb.translation();
+    
+    Twb = Twlf.inverse() * Twb;
+    Twb(0,3) = v(0);
+    Twb(1,3) = v(1);
+    Twb(2,3) += GROUND_HEIGHT;
+
     robot.set_body(Twb);
+}
+
+void init_current_pose(robot::robot_state_t& target, robot::robot_state_t& current, control::control_data_t* data)
+{
+    target.set_dart_pose( current.dart_pose() );
+    for(int i=0; i < robot::NUM_MANIPULATORS; i++) {
+        data->fill_IK_target(target, i, control::ALL_MANIP);
+    }
+    data->last_command = target.dart_pose();
 }
 
 bool init_sensors(const sensor_msgs::Joy::ConstPtr& joy, control::control_data_t* data)
@@ -131,12 +161,12 @@ void init_hubo(robot::robot_state_t& state, control::control_data_t* data)
     init_world_pose(state);
 
     // 2. Get HUBO out of the singularity.
-    std::vector<int> manip_enum = { robot::MANIP_L_HAND, robot::MANIP_R_HAND };
-    Eigen::VectorXd arm_dofs(7);
-    arm_dofs << 0, 0, 0, -M_PI/2, 0, M_PI/2, 0;
-    for(int i=0; i < manip_enum.size(); i++) {
-        state.set_manip(arm_dofs, manip_enum[i]);
-    }
+    // std::vector<int> manip_enum = { robot::MANIP_L_HAND, robot::MANIP_R_HAND };
+    // Eigen::VectorXd arm_dofs(7);
+    // arm_dofs << 0, 0, 0, -M_PI/2, 0, M_PI/2, 0;
+    // for(int i=0; i < manip_enum.size(); i++) {
+    //     state.set_manip(arm_dofs, manip_enum[i]);
+    // }
 
     // 3. Set target com to current
     hubo_skel->setPose( state.dart_pose() );
@@ -153,14 +183,24 @@ void init_hubo(robot::robot_state_t& state, control::control_data_t* data)
     }
 
     // 6. Calibrate fastrak to agree with this pose.
-    fastrak.calibrate(state, data);
+    // fastrak.calibrate(state, data);
+
+    // 7. Feet on ground?
+    data->fill_IK_target(state, robot::MANIP_L_FOOT, control::ALL_MANIP);
+    data->fill_IK_target(state, robot::MANIP_R_FOOT, control::ALL_MANIP);
+
+    data->last_command = state.dart_pose();
 }
 
 void update_sensors(const sensor_msgs::Joy::ConstPtr& joy, control::control_data_t* data)
 {
     spnav.sensor_update(joy);
     spnav.get_teleop_data(data);
-    fastrak.update_sensors(data);
+    // fastrak.update_sensors(data);
+    // Mock up fastrak updates so we can use fixed IK stuff
+    data->sensor_ok = true;
+    data->sensor_tf[0] = Eigen::Matrix4d::Identity();
+    data->sensor_tf[1] = Eigen::Matrix4d::Identity();
 }
 
 bool get_key(char& ch) {
@@ -188,7 +228,7 @@ void do_keyboard(robot::robot_state_t& state, control::control_data_t* data)
     spnav_keys['a'] = "GRASP";
     spnav_keys['s'] = "BODY_XZP_FIX_LEGS";
     spnav_keys['d'] = "JOINT";
-    spnav_keys['f'] = "ARM_JIT";
+    spnav_keys['f'] = "ARM_MASTER_SLAVE_AIK";
     spnav_keys['g'] = "ARM_AIK";
     spnav_keys['z'] = "FLOATING";
     spnav_keys['x'] = "BODY_ZY_FIX_LEGS";
@@ -196,7 +236,7 @@ void do_keyboard(robot::robot_state_t& state, control::control_data_t* data)
     spnav_keys['q'] = "NULL";
     //... add more controllers
 
-    fastrak_keys['j'] = "ARM_BOTH_JIT";
+    fastrak_keys['j'] = "ARM_DUAL_AIK";
     fastrak_keys['k'] = "ARM_SENSOR_AIK";
     fastrak_keys['y'] = "NULL";
 
@@ -204,6 +244,7 @@ void do_keyboard(robot::robot_state_t& state, control::control_data_t* data)
     if(spnav_keys.count(key)) {
         delete spnav_control;
         spnav_control = control::get_factory(spnav_keys[key])->create();
+        spnav_control->change_mode(0, state);
         std::cout << "Switched SPNAV to " << spnav_control->name() << std::endl;
         return;
     }
@@ -211,7 +252,7 @@ void do_keyboard(robot::robot_state_t& state, control::control_data_t* data)
         delete fastrak_control;
         fastrak_control = control::get_factory(fastrak_keys[key])->create();
         std::cout << "Switched FASTRAK to " << fastrak_control->name() << std::endl;
-        fastrak.calibrate(state, data);
+        //fastrak.calibrate(state, data);
         return;
     }
     
@@ -227,7 +268,7 @@ void do_keyboard(robot::robot_state_t& state, control::control_data_t* data)
     case 'c':
     {
         std::cout << "Zeroing fastrak" << std::endl;
-        fastrak.calibrate(state, data);
+        //fastrak.calibrate(state, data);
         break;
     }
     case 'r':
@@ -236,74 +277,135 @@ void do_keyboard(robot::robot_state_t& state, control::control_data_t* data)
         init_hubo(state, data);
         break;
     }
+    case '`':
+    {
+        std::cout << "Setting pose to current\n";
+        init_current_pose(state, hubo_current, data);
+    }
+    case '-':
+    case '_':
+        data->command_char--;
+        spnav_control->change_mode(data->command_char, state);
+        break;
+    case '+':
+    case '=':
+        data->command_char++;
+        spnav_control->change_mode(data->command_char, state);
+        break;
+    case '1':
+        data->ik_target = control::UARM_MANIP;
+        std::cout << "Switch IK target to UARM" << std::endl;
+        break;
+    case '2':
+        data->ik_target = control::BODY_MANIP;
+        std::cout << "Switch IK target to BODY" << std::endl;
+        break;
+    case '3':
+        data->ik_target = control::GLOBAL_MANIP;
+        std::cout << "Switch IK target to GLOBAL" << std::endl;
+        break;
     default:
         break;
     }
 }
 
 // runs both the spnav and fastrak controllers
-void do_control(robot::robot_state_t& target, control::control_data_t* data)
+bool do_control(robot::robot_state_t& target, control::control_data_t* data)
 {
+    Eigen::VectorXd save = target.dart_pose();
+    
+    bool spnav_ok = false;
     if (spnav_control && data->joystick_ok) {
-        spnav_control->run(target, data);
+        spnav_ok = spnav_control->run(target, data);
     }
 
-    //FIXME: hubo_target should have the latest configuration.
-    // If it fails, it should be reset? 
+    if(!spnav_ok)
+        target.set_dart_pose(save);
+    else
+        save = target.dart_pose();
 
+    bool fastrak_ok = false;
     if (fastrak_control && data->sensor_ok) {
-        fastrak_control->run(target, data);
+        fastrak_ok = fastrak_control->run(target, data);
     }
 
-    // FIXME: IF it fails i should be reset?
+    if(!fastrak_ok)
+        target.set_dart_pose(save);
+    else
+        save = target.dart_pose();
 
+    // State keeping
     data->joystick_ok = false; // reset joystick
     data->sensor_ok = false; // reset fastrak
 
-    // FIXME: reset arms to match target location?
+    if(!fastrak_ok) {
+        data->fill_IK_target(target, robot::MANIP_L_HAND, control::ALL_MANIP);
+        data->fill_IK_target(target, robot::MANIP_R_HAND, control::ALL_MANIP);
+    }
+    // data->fill_IK_target(target, robot::MANIP_L_FOOT, control::ALL_MANIP);
+    // data->fill_IK_target(target, robot::MANIP_R_FOOT, control::ALL_MANIP);
 
+    // Run only some controller succeeded
+    return spnav_ok || fastrak_ok;
 }
 
 void send_animation(robot::robot_state_t& target)
 {
     DRC_msgs::PoseJointTrajectory pjt;
     trajectory_msgs::JointTrajectoryPoint jt;
+    trajectory_msgs::JointTrajectoryPoint past;
+
+    // Generate pose trajectory
     geometry_msgs::Pose p;
-
-    std::map<std::string, int> s2r = target.get_s2r();
-    Eigen::VectorXd points = target.ros_pose();
-
-    jt.positions.resize( points.size() );
-
-    int i=0;
-    for(auto iter = s2r.begin(); iter != s2r.end(); ++iter) {
-        pjt.joint_names.push_back( iter->first );
-        jt.positions[ i++  ] = points[ iter->second ];
-    }
 
     Eigen::Isometry3d body;
     target.get_body(body);
     
     Eigen::Quaterniond quat;
     quat = body.linear();
-    
 
     p.position.x = body(0,3);
     p.position.y = body(1,3);
-    p.position.z = body(2,3) + 0.05;
+    p.position.z = body(2,3);
     p.orientation.x = quat.x();
     p.orientation.y = quat.y();
     p.orientation.z = quat.z();
     p.orientation.w = quat.w();
-    
+
+    static geometry_msgs::Pose past_pose = p;
+
+    // Generate Joint trajectory
+    std::map<std::string, int> s2r = target.get_s2r();
+    Eigen::VectorXd points = target.ros_pose();
+
+    static Eigen::VectorXd past_points = points;
+
+    past.positions.resize( points.size() );
+    jt.positions.resize( points.size() );
+
+    int i=0;
+    for(auto iter = s2r.begin(); iter != s2r.end(); ++iter) {
+        pjt.joint_names.push_back( iter->first );
+
+        past.positions[ i ] = past_points[ iter->second ];
+
+        jt.positions[ i++  ] = points[ iter->second ];
+    }
+
+    pjt.points.push_back(past);
     pjt.points.push_back(jt);
+
+    pjt.poses.push_back(past_pose);
     pjt.poses.push_back(p);
 
-    pjt.points[0].time_from_start = ros::Duration().fromSec(0.01);
-
+    pjt.points[0].time_from_start = ros::Duration().fromSec(0);
+    pjt.points[1].time_from_start = ros::Duration().fromSec(0.01);
 
     animation_publisher.publish( pjt );
-    
+
+    // Save
+    past_pose = p;
+    past_points = points;
 }
 
 //############################################################
@@ -319,7 +421,7 @@ void run(robot::robot_state_t& robot, const sensor_msgs::Joy::ConstPtr& joy, con
     static bool hubo_ready = false;
     if(!hubo_ready) {
         init_hubo(robot, data);
-        init_hubo(hubo_current, data); //< HACK hubo_current isn't use anyways
+        //init_hubo(hubo_current, data); //< HACK hubo_current isn't use anyways
         hubo_ready = true;
     }
 
@@ -327,9 +429,33 @@ void run(robot::robot_state_t& robot, const sensor_msgs::Joy::ConstPtr& joy, con
 
     update_sensors(joy, data);
     
-    do_control(robot, data);
+    bool ok = do_control(robot, data);
+    
+    Eigen::VectorXd this_command = robot.dart_pose();
+    Eigen::VectorXd last_command = data->last_command;
 
-    send_animation(robot);
+    // Do check
+
+    // Toggle sending printout
+    static bool sending_animation=false;
+    int t = toggle(sending_animation, ok);
+    switch(t){
+    case 1: std::cout << "Starting animation" << std::endl; break;
+    case -1: std::cout << "Stopping animation" << std::endl; break;
+    default: break;
+    }
+    if(ok) {
+
+        if((this_command - last_command).norm() > 0.2) {
+            std::cout << "Command delta = " << (this_command - last_command).norm() << std::endl;
+            robot.set_dart_pose( last_command );
+            this_command = last_command;
+        }
+
+        send_animation(robot);
+        
+        data->last_command = this_command;
+    }
 }
 
 //############################################################
@@ -338,6 +464,29 @@ void run(robot::robot_state_t& robot, const sensor_msgs::Joy::ConstPtr& joy, con
 void spnav_handler(const sensor_msgs::Joy::ConstPtr& joy)
 {
     run(hubo_target, joy, control_data);
+}
+
+void pose_handler(const geometry_msgs::PosePtr &_pose)
+{
+    Eigen::Isometry3d Tbody;
+    Tbody.translation() << _pose->position.x, _pose->position.y, _pose->position.z;
+    Eigen::Quaterniond q;
+    q.w() = _pose->orientation.w;
+    q.x() = _pose->orientation.x;
+    q.y() = _pose->orientation.y;
+    q.z() = _pose->orientation.z;
+    Tbody.linear() = q.matrix();
+    hubo_current.set_body(Tbody);
+}
+
+void joint_handler(const sensor_msgs::JointStatePtr &_jointState)
+{
+    std::map<std::string, int> s2r = hubo_current.get_s2r();
+    Eigen::VectorXd ros_dofs(s2r.size());
+    for(int i=0; i < _jointState->name.size(); i++) {
+        ros_dofs( s2r[ _jointState->name[i] ] ) = _jointState->position[i];
+    }
+    hubo_current.set_ros_pose(ros_dofs);
 }
 
 //############################################################
@@ -366,14 +515,17 @@ int main(int argc, char *argv[])
     control_data->kin = &hubo_kin;
     control_data->jac = &hubo_jac;
     control_data->manip_index = robot::MANIP_L_HAND;
+    control_data->ik_target = control::UARM_MANIP;
+    control_data->command_char = 0;
 
-    spnav_control = control::get_factory("ARM_AIK")->create();
+    spnav_control = control::get_factory("NULL")->create();
     fastrak_control = control::get_factory("NULL")->create();
 
     //###########################################################
     //# GUI initialization
     control_data->manip_target = Eigen::Matrix4d::Identity();
     gui_params.goal = &control_data->manip_target;
+    gui_params.Tf_global_manips = control_data->Tf_global_manip;
     gui_params.current = &hubo_current;
     gui_params.target = &hubo_target;
     gui_params.draw_limits = true;
@@ -412,6 +564,8 @@ int main(int argc, char *argv[])
     mode_msg.data = "no_gravity";
     modePub.publish( mode_msg );
     
+    pose_subscriber = ros_node->subscribe("drchubo/pose", 1, pose_handler);
+    joint_subscriber = ros_node->subscribe("drchubo/jointStates", 1, joint_handler);
     
 
     //############################################################

@@ -16,20 +16,34 @@ namespace control {
         robot::robot_kinematics_t* robot_kin = data->kin;
         int ms = data->manip_side;
         int mi = ms ? robot::MANIP_L_HAND : robot::MANIP_R_HAND;
-        Eigen::Isometry3d Twhand = data->manip_xform[mi];
+        Eigen::Isometry3d Twhand;
+        data->get_IK_target(Twhand, mi, data->ik_target);
+
+        // 1 Save joint angles to check for later
+        Eigen::VectorXd q_prev;
+        target.get_manip(q_prev, mi);
 
         // 2. Add delta transform
         Twhand.linear() = Twhand.linear() * data->joy_rotation;
         Twhand.translation() += data->joy_position;
 
-        // 2. Run IK
+        // 3. Convert to global frame
+        data->convert_to_global(Twhand, target, mi, data->ik_target);
+
+        // 4.. Run IK
         bool ok = robot_kin->arm_ik(Twhand, ms, target);
 
-        // 23. Save new manip
-        data->manip_xform[mi] = Twhand;
-
-        // 3. Visualize target
+        // 5.. Visualize target
         data->manip_target = Twhand;
+
+        // Check joint angles for large discontinuity
+        Eigen::VectorXd q_new;
+        target.get_manip(q_new, mi);
+
+        std::cout << "AIK delta = " << (q_new-q_prev).norm() << std::endl;
+
+        if((q_new - q_prev).norm() > 0.1)
+            ok = false;
 
         return ok;
     }
@@ -44,18 +58,92 @@ namespace control {
         robot::robot_kinematics_t* robot_kin = data->kin;
         int ms = data->manip_side;
         int mi = ms ? robot::MANIP_L_HAND : robot::MANIP_R_HAND;
-        Eigen::Isometry3d Twhand = data->manip_xform[ms];
+        Eigen::Isometry3d Twhand;
+        data->get_IK_target(Twhand, mi, data->ik_target);
 
-        // 2. Run IK
+        // 0. save
+        Eigen::VectorXd q(7);
+        target.get_manip(q, mi);
+
+        // 2. Add delta transform
+        Twhand = Twhand * data->sensor_tf[ms];
+
+        // 3. Convert to global frame
+        data->convert_to_global(Twhand, target, mi, data->ik_target);
+
+        // 4. Run IK
         bool ok = robot_kin->arm_ik(Twhand, ms, target);
-
-        // 23. Save new manip
-        data->manip_xform[mi] = Twhand;
 
         // 3. Visualize target
         data->manip_target = Twhand;
 
+        // %. fix bad stuff
+        if(!ok)
+            target.set_manip(q, mi);
+
+        return true; //< Never fill IK targets when running fastrak
+    }
+
+    bool ARM_MASTER_SLAVE_AIK_T::change_mode(int key, robot::robot_state_t& target)
+    {
+        do_init = 1;
+    }
+
+    bool ARM_MASTER_SLAVE_AIK_T::run(robot::robot_state_t& target, control_data_t* data)
+    {
+        assert(data);
+
+        // Require that the slave transform is relative between the fake HUBO wrist pitches
+        if (do_init) {
+            std::cout << "[ARM_MASTER_SLAVE_AIK] Attaching slave to master\n";
+
+            Eigen::Isometry3d Tf_rwp, Tf_lwp;
+            data->get_IK_target(Tf_rwp, robot::MANIP_R_HAND, control::GLOBAL_MANIP);
+            data->get_IK_target(Tf_lwp, robot::MANIP_L_HAND, control::GLOBAL_MANIP);
+
+            Tf_slave = Tf_rwp.inverse() * Tf_lwp;
+
+            do_init = 0;
+        }
+
+        // Master hand
+        Eigen::Isometry3d Tf_left, Tf_right;
+        data->get_IK_target(Tf_right, robot::MANIP_R_HAND, control::GLOBAL_MANIP);
+
+        // Delta motion
+        Tf_right.linear() = Tf_right.linear() * data->joy_rotation;
+        Tf_right.translation() += data->joy_position;
+
+        // Slave hand
+        Tf_left = Tf_right * Tf_slave;
+
+        // Do IK
+        robot::robot_kinematics_t* robot_kin = data->kin;
+        bool ok;
+
+        ok = robot_kin->arm_ik(Tf_right, false, target);
+        ok &= robot_kin->arm_ik(Tf_left, true, target);
+
+        data->manip_target = Tf_right;
+
         return ok;
+    }
+
+    bool ARM_DUAL_AIK_T::run(robot::robot_state_t& target, control::control_data_t* data)
+    {
+        // save
+        int ms = data->manip_side;
+
+        bool ok = true;
+
+        data->manip_side = 0;
+        ok &= sensor_aik.run(target, data);
+        data->manip_side = 1;
+        ok &= sensor_aik.run(target, data);
+
+        data->manip_side = ms;
+
+        return true;
     }
 
     bool ARM_AJIK_T::run(robot::robot_state_t& target, control_data_t* data)
@@ -131,7 +219,7 @@ namespace control {
         robot::robot_kinematics_t* robot_kin = data->kin;
         Eigen::Isometry3d Twhand_hubo; //< Get "Hubo" hand location
 
-        robot_kin->arm_fk(Twhand_hubo, ms, target, true);
+        robot_kin->arm_fk(Twhand_hubo, ms, target);
         data->manip_xform[mi] = Twhand_hubo;
         data->manip_target = Twhand_hubo;
 

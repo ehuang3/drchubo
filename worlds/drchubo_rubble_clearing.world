@@ -195,6 +195,8 @@
       <pose>0.401 -0.3265 0.669813 0 1.570796327 0</pose>
     </include>
 
+    
+
     <include>
       <uri>model://barrier_stand</uri>
       <name>barrier_right</name>
@@ -207,6 +209,12 @@
          <model_name>drchubo</model_name>
          <pin_link>Body_Torso</pin_link>
       </drchubo>
+      <drill>
+        <drill_model>drill</drill_model>
+        <coupling_link>link</coupling_link>
+        <thread_pitch>-1000</thread_pitch>
+        <coupling_relative_pose>0.001784 -4.6e-05 0.023 1.56985 1.55991 -0.000936</coupling_relative_pose>
+      </drill> 	
     </plugin>
 
   </world>

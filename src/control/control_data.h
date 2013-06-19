@@ -62,10 +62,11 @@ namespace control {
         Eigen::Isometry3d Tf_uarm_manip[robot::NUM_MANIPULATORS];
         Eigen::Isometry3d Tf_body_manip[robot::NUM_MANIPULATORS];
         Eigen::Isometry3d Tf_global_manip[robot::NUM_MANIPULATORS];
+        int ik_target;
 
-        /* void fill_IK_targets(robot::robot_state_t& robot, control::IK_Target ik); */
-        /* void get_IK_target(Eigen::Isometry3d& B, int mi, int ik); */
-        //void get_IK_target_global(Eigen::Isometry3d& B, int mi, int ik);
+        void fill_IK_target(robot::robot_state_t& robot, int mi, control::IK_Target ik);
+        void get_IK_target(Eigen::Isometry3d& B, int mi, int ik);
+        void convert_to_global(Eigen::Isometry3d& B, robot::robot_state_t& robot, int mi, int ik);
 
         int command_char;
         // last command

@@ -22,10 +22,16 @@ namespace gui {
         bool draw_limits;
         // COM stuff always true
         bool com_projection;
+
         // Target transforms of end effectors
         Eigen::Isometry3d end_effectors[robot::NUM_MANIPULATORS];
+
         // Goal isometry
         Eigen::Isometry3d* goal;
+
+        // Global transforms of end effectors
+        Eigen::Isometry3d *Tf_global_manips;
+
         // Target index of single joint manipulation
         int target_joint; //< in dart convention
         // Robot states
@@ -86,7 +92,7 @@ namespace gui {
                                        Eigen::Vector4d color = Eigen::Vector4d(1,0,0,1)) {}
         virtual void render_link_wires(kinematics::BodyNode *link,
                                        Eigen::Vector4d color = Eigen::Vector4d(1,0,0,1)) {}
-        virtual void render_xform_arrows(Eigen::Isometry3d xform);
+        virtual void render_xform_arrows(Eigen::Isometry3d xform, double alpha = 0.9);
         
                 
         params_t* gui_params;

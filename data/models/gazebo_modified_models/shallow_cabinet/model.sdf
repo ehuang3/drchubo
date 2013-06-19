@@ -1,7 +1,6 @@
 <?xml version="1.0" ?>
 <sdf version="1.4">
-  <model name="cabinet">
-    <static>true</static>
+  <model name="shallow_cabinet">
     <link name="cabinet_bottom_plate">
       <inertial>
         <pose>0 0 -1 0 0 0</pose>

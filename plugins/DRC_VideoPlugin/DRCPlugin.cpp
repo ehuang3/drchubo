@@ -206,11 +206,31 @@ void DRCPlugin::RobotGrabDrill(const geometry_msgs::Pose::ConstPtr &_cmd)
    this->drchubo.model->GetLink("Body_RF2")->SetSelfCollide(false);  
    this->drchubo.model->GetLink("Body_RF2")->SetCollideMode("none"); 
    this->drchubo.model->GetLink("Body_RF3")->SetSelfCollide(false); 
-   this->drchubo.model->GetLink("Body_RF3")->SetCollideMode("none"); 
+   this->drchubo.model->GetLink("Body_RF3")->SetCollideMode("none");
+
+   this->drchubo.model->GetLink("Body_LF1")->SetSelfCollide(false); 
+   this->drchubo.model->GetLink("Body_LF1")->SetCollideMode("none");
+   this->drchubo.model->GetLink("Body_LF2")->SetSelfCollide(false);  
+   this->drchubo.model->GetLink("Body_LF2")->SetCollideMode("none"); 
+   this->drchubo.model->GetLink("Body_LF3")->SetSelfCollide(false); 
+   this->drchubo.model->GetLink("Body_LF3")->SetCollideMode("none"); 
 
     // Set drillModel to no collision
     this->drill.drillModel->GetLink("link")->SetSelfCollide(false);
     this->drill.drillModel->GetLink("link")->SetCollideMode("none"); 
+
+    for(int i=0; i < mNumJoints; i++) {
+        std::cout << mJointNames[i] << std::endl;
+        if(mJointNames[i] != "TSY") {
+            this->drchubo.model->GetLink("Body_" + mJointNames[i])->SetSelfCollide(false);
+            this->drchubo.model->GetLink("Body_" + mJointNames[i])->SetCollideMode("none");
+        } else {
+            this->drchubo.model->GetLink("Body_Torso")->SetSelfCollide(false);
+            this->drchubo.model->GetLink("Body_Torso")->SetCollideMode("none");
+        }
+    }
+
+    // Nothing should self collide?
 
 
       if (!this->grabJoint)
@@ -298,7 +318,9 @@ void DRCPlugin::Drill::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf)
 // Play the trajectory, update states
     void DRCPlugin::UpdateStates()
     {
+        std::cout << "Aquiring lock in UpdateStates" << std::endl;
         boost::mutex::scoped_lock lock(this->update_mutex);
+
     
         double curTime = this->world->GetSimTime().Double();
     
@@ -315,9 +337,6 @@ void DRCPlugin::Drill::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf)
             // Set world pose   
             this->drchubo.model->SetWorldPose( defaultPose_p );
 
-            if(this->grabJoint) {
-                this->drchubo.model->SetJointPosition( this->grabJoint->GetName(), 0 );
-            }
         }
       
         // **************************************************
@@ -355,6 +374,7 @@ void DRCPlugin::Drill::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf)
         jointStatesPub.publish( jointState_msg );
 
         // **************************************************
+        std::cout << "Releasing lock in UpdateStates" << std::endl;
 
     }
 
@@ -564,6 +584,7 @@ void DRCPlugin::Drill::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf)
     // SetRobotPoseAnimation
     //******************************
     void DRCPlugin::SetRobotPoseAnimation(const DRC_msgs::PoseStampedArray::ConstPtr &_cmd ) {
+
         //printf("Setting Pose animation \n");
     
         // Set flag
@@ -602,7 +623,11 @@ void DRCPlugin::Drill::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf)
      */
     void DRCPlugin::SetRobotPoseJointAnimation(const DRC_msgs::PoseJointTrajectory::ConstPtr &_cmd ) {
 
+        std::cout << "Aquiring lock in SetRobotPoseJointAnimation" << std::endl;
         boost::mutex::scoped_lock lock(this->update_mutex);
+
+
+        this->world->EnablePhysicsEngine(false);
     
         //printf("Setting Robot pose + joint animation \n");
 
@@ -657,7 +682,13 @@ void DRCPlugin::Drill::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf)
 
         this->drchubo.model->SetAnimation( pose_anim, poseAnim_callback );
 
+        
+        this->world->EnablePhysicsEngine(true);
+        
+
         //printf("End loading Joint + Pose animation \n");
+
+        std::cout << "Releasing lock in SetRobotPoseJointAnimation" << std::endl;
     
     }
 

@@ -89,6 +89,7 @@ namespace robot {
         std::map<int,int> get_d2r() const { return g_d2r; }
         std::map<int,int> get_r2d() const { return g_r2d; }
         std::map<std::string, int> get_s2r() const { return g_s2r; }
+        std::map<std::string, int> get_s2d() const { return g_s2d; }
 
         void print_nodes(const std::vector<int>& indexes) const; //< nodes <--> links
         void print_joints(const std::vector<int>& indexes) const; //< joints <--> dofs
