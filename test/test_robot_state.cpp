@@ -8,7 +8,7 @@ using namespace simulation;
 using namespace dynamics;
 
 using namespace robot;
-using namespace atlas;
+using namespace hubo;
 /* ********************************************************************************************* */
 TEST(STATE, TEST_INIT) {
     robot_state_t *rs = PREPARE_ROBOT_STATE();
@@ -70,24 +70,24 @@ TEST(STATE, TEST_CLAMP) {
 }
 /* ********************************************************************************************* */
 TEST(STATE, TEST_CHAIN_INDEXES) {
-    Skeleton *robot = PREPARE_ROBOT();
-    robot_state_t *state = PREPARE_ROBOT_STATE();
+//     Skeleton *robot = PREPARE_ROBOT();
+//     robot_state_t *state = PREPARE_ROBOT_STATE();
     
-    vector<int> chain;
-    state->get_chain_indexes(chain, robot->getNode(ROBOT_LEFT_HAND), robot->getNode(ROBOT_RIGHT_HAND));
-//    state->print_children(chain);
+//     vector<int> chain;
+//     state->get_chain_indexes(chain, robot->getNode(ROBOT_LEFT_HAND), robot->getNode(ROBOT_RIGHT_HAND));
+// //    state->print_children(chain);
     
-    state->get_chain_indexes(chain, robot->getNode(ROBOT_LEFT_HAND), robot->getNode(ROBOT_RIGHT_FOOT));
-//    state->print_children(chain);
+//     state->get_chain_indexes(chain, robot->getNode(ROBOT_LEFT_HAND), robot->getNode(ROBOT_RIGHT_FOOT));
+// //    state->print_children(chain);
 
-    vector<int> full_body;
-    state->get_full_indexes(full_body);
-    for(int i=0; i < full_body.size(); i++) {
-        state->print_backchain(full_body[i]);
-        cout << endl;
-        state->print_dependent_dofs(full_body[i]);
-        cout << endl << endl;
-    }
+//     vector<int> full_body;
+//     state->get_full_indexes(full_body);
+//     for(int i=0; i < full_body.size(); i++) {
+//         state->print_backchain(full_body[i]);
+//         cout << endl;
+//         state->print_dependent_dofs(full_body[i]);
+//         cout << endl << endl;
+//     }
 }
 /* ********************************************************************************************* */
 int main(int argc, char* argv[]) {

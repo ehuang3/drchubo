@@ -102,6 +102,6 @@ add_subdirectory( apps )
 #link_directories(${CMAKE_SOURCE_DIR}/lib)
 #add_subdirectory(src)
 
-#enable_testing()
-#add_subdirectory(test)
+enable_testing()
+add_subdirectory(test)
 #add_subdirectory(apps)

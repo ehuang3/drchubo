@@ -8,7 +8,7 @@ using namespace simulation;
 using namespace dynamics;
 
 using namespace robot;
-using namespace atlas;
+using namespace hubo;
 
 // Global variables for use in functions below
 kinematics::Skeleton* robot_skel;  // DART skeleton of hubo
@@ -23,9 +23,9 @@ TEST(HUBO, SETUP)
     // Use DART to load in a Skeleton drc-hubo
     DartLoader dart_loader; // This loads the world file
     // The macros VRC_DATA_PATH and ROBOT_URDF are defined in utils/data_paths.h and utils/robot_configs.h, respectively
-    simulation::World *mWorld = dart_loader.parseWorld(VRC_DATA_PATH ROBOT_URDF);
+    simulation::World *mWorld = dart_loader.parseWorld(DRC_DATA_PATH ROBOT_URDF);
     // Likewise with the ROBOT_NAME macro
-    kinematics::SkeletonDynamics* hubo_skel = mWorld->getSkeleton(ROBOT_NAME);
+    dynamics::SkeletonDynamics* hubo_skel = mWorld->getSkeleton(ROBOT_NAME);
 
     // Initialize hubo classes
     hubo::hubo_state_t* state = new hubo::hubo_state_t();
@@ -52,7 +52,7 @@ TEST(HUBO, STATE)
     // robot_state_t implements all the functionality, hubo_state_t just defines
     // the mapping.
 
-    // In this library, functions take in a reference to the state,
+    // Functions take in a reference to the state,
     // compute, and write the result into that state.
     hubo::hubo_state_t &state = *hubo_state;
 
@@ -72,7 +72,7 @@ TEST(HUBO, STATE)
     // To use DART's kinematics functions we need to write the
     // dofs of a robot_state_t into the kinematics::Skeleton
 
-    kinematics::hubo_skel = state.robot(); // Retrieve the Skeleton*
+    kinematics::Skeleton* hubo_skel = state.robot(); // Retrieve the Skeleton*
     hubo_skel->setPose(state.dart_pose());
 
     // 3. Obtain the Tf of Hubo's left wrist
@@ -94,7 +94,7 @@ TEST(HUBO, STATE)
     state.get_manip_indexes(left_arm_indexes, robot::MANIP_L_HAND);
     state.get_manip_indexes(left_arm_indexes, robot::LIMB_L_ARM);
 
-    // Clamp the left arm angles
+    // This clamps the left arm angles
     left_arm << 100, 21043, 121421, 12931, 1023, 591;
     state.set_manip(left_arm, robot::MANIP_L_HAND);
 

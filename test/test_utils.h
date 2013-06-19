@@ -6,7 +6,6 @@
 #include <Eigen/Geometry>
 #include <gtest/gtest.h>
 
-#include <atlas/atlas_kinematics.h>
 #include <utils/math_utils.h>
 #include <utils/data_paths.h>
 #include <math/EigenHelper.h>
@@ -30,7 +29,7 @@ kinematics::Skeleton* _robot_;
 kinematics::Skeleton* PREPARE_ROBOT() {
     if(_robot_ == 0) {
         DartLoader dart_loader;
-        simulation::World *mWorld = dart_loader.parseWorld(VRC_DATA_PATH ROBOT_URDF);
+        simulation::World *mWorld = dart_loader.parseWorld(DRC_DATA_PATH ROBOT_URDF);
 		_robot_ = mWorld->getSkeleton(ROBOT_NAME);
     }
     return _robot_;

@@ -10,7 +10,7 @@ using namespace simulation;
 using namespace dynamics;
 
 using namespace robot;
-using namespace atlas;
+using namespace hubo;
 
 
 /* ********************************************************************************************* */

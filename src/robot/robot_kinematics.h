@@ -56,40 +56,76 @@ namespace robot
     ////////////////////////////////////////////////////////////////////////////
     class robot_kinematics_t {
     public:
-        ////////////////////////////////////////////////////////////////////////
+        //**********************************************************************        
         /// LIFECYLE
-        ////////////////////////////////////////////////////////////////////////
+        //**********************************************************************        
         robot_kinematics_t();
         virtual ~robot_kinematics_t();
         virtual void init(kinematics::Skeleton *_robot) = 0;
 
-        ////////////////////////////////////////////////////////////////////////
+        //**********************************************************************
         /// SPECIAL IK METHODS
-        ////////////////////////////////////////////////////////////////////////
-        bool com_ik(const Eigen::Vector3d& desired_com, 
+        //**********************************************************************
+        // function: com_ik(desired_com, end_effectors, ik_mode, state)
+        // brief: Iteratively computes COM IK by moving the robot body frame
+        //        until the COM is at the desired location. Maintains fixed foot
+        //        locations.
+        // input: desired_com: Target COM.
+        //        end_effectors: Target manipulator frames.
+        //        ik_mode: Modes for manipulator IKs.
+        //        state: The solution is written into here.
+        bool com_ik(const Eigen::Vector3d& desired_com,
                     const Eigen::Isometry3d end_effectors[NUM_MANIPULATORS],
-                    robot::IK_Mode ik_mode[NUM_MANIPULATORS], 
+                    robot::IK_Mode ik_mode[NUM_MANIPULATORS],
                     robot_state_t& state);
 
+        // function: stance_ik(end_effectors, ik_mode, state)
+        // brief: Currently only calls manip_ik.
         bool stance_ik(const Eigen::Isometry3d end_effectors[NUM_MANIPULATORS],
-                       robot::IK_Mode ik_mode[NUM_MANIPULATORS], 
+                       robot::IK_Mode ik_mode[NUM_MANIPULATORS],
                        robot_state_t& state);
 
-        bool manip_ik(const Eigen::Isometry3d end_effectors[NUM_MANIPULATORS], 
-                      robot::IK_Mode mode[NUM_MANIPULATORS], 
+        // function: manip_ik(end_effectors, mode, state)
+        // brief: Runs IK for every manipulator. Currently only supports world
+        //        frame mode and free mode (no IK). See "robot.h" for the modes.
+        // return: True if every manipulator IK returns true.
+        bool manip_ik(const Eigen::Isometry3d end_effectors[NUM_MANIPULATORS],
+                      robot::IK_Mode mode[NUM_MANIPULATORS],
                       robot_state_t& state);
 
-        ////////////////////////////////////////////////////////////////////////
+        //**********************************************************************
         /// LEG IK
-        ////////////////////////////////////////////////////////////////////////
-        // Global-frame FK/IK
+        //**********************************************************************
+        // function: leg_fk(B, left, state)
+        // brief: Computes the global FK to the ankle roll using the joint angles
+        //        and body frame stored in state.
+        // input: B - The global ankle roll frame result of the FK is written into
+        //            this isometry.
+        //        left - Left or right side.
+        //        state - Contains desired joint angles and body frame.
         void leg_fk(Eigen::Isometry3d& B, bool left, robot_state_t& state);
+
+        // function: leg_ik(B, left, state)
+        // brief: Computes IK from the input ankle roll frame and stores the joint
+        //        angles into state.
+        // input: B - Desired ankle roll in the global frame.
+        //        left - Left or right side.
+        //        state - Contains the previous joint angles for nearest selection.
+        //                The solution is written into it.
+        // return: True if solution is within joint limits and FK agrees with IK.
+        // caveat: Does not check for jumps from one IK solution to another. This
+        //         can be detected by checking if the joint angle delta norm is
+        //         larger than ~3 roughly?
         bool leg_ik(const Eigen::Isometry3d& B, bool left, robot_state_t& state);
-        
-        // Helper function for transforming leg from world to DH frame
+
+        // function: leg_world_to_dh(B)
+        // brief: Helper function for transforming the world ankle roll frame into
+        //        the DH frame used internally by the IK solver.
         Eigen::Matrix4d leg_world_to_dh(const Eigen::Matrix4d& B);
 
-        // Body-frame FK/IK
+        // functions: Body-frame FK/IK
+        // brief: Older functions called by the global FK/IK above. They are part of
+        //        the IK solver.
         Eigen::Matrix4d legT(int _frame, double _u);
         Eigen::Matrix4d legFK(const Eigen::Vector6d& _u, bool _left);
         bool legIK(const Eigen::Matrix4d& _Tbf, bool _left, const Eigen::Vector6d& _p, Eigen::Vector6d& _u);
@@ -97,12 +133,31 @@ namespace robot
         ////////////////////////////////////////////////////////////////////////
         /// ARM IK
         ////////////////////////////////////////////////////////////////////////
-        // Global-frame FK/IK
+        // function: arm_fk(B, left, state, use_hubo_fk)
+        // brief: Computes FK to the global wrist roll frame using the joint angles
+        //        and body frame stored in state. There is the option of using the
+        //        FK that does not account for the elbow offset.
+        // input: B - The global wrist roll frame is written into this isometry.
+        //        left - Left or right side.
+        //        state - Contains the desired joint angles and body frame.
+        //        use_hubo_fk - Uses the DH version (instead of DART) FK that does
+        //                      not account for the elbow offset.
         void arm_fk(Eigen::Isometry3d& B, bool left, robot_state_t& state, bool use_hubo_fk = false);
-        // Inexact, expect ~8cm pos error, exact orientation; Implemented using HUBO FK/IK solver
+
+        // function: arm_ik(B, left, state)
+        // brief: Computes IK to global wrist pitch using Rowland's Hubo IK with
+        //        modified link lengths.
+        // input: B - Target wrist pitch in global frame.
+        //        left - Left or right side.
+        //        state - Contains previous joint angles for nearest selection.
+        //                The solution is written into the state.
+        // return: True if solution is within joint limits and FK agrees with IK.
+        // caveat: Same as leg_ik, no check for solution jumps.
         bool arm_ik(const Eigen::Isometry3d& B, bool left, robot_state_t& state);
-        
-        // Analytic arm IK with additional jacobian ik to resolve inexact errors
+
+        // FIXME: Untested.
+        // function: arm_jac_ik(B, left, state)
+        // brief: Analytic arm IK with additional jacobian ik to resolve elbow offset.
         bool arm_jac_ik(const Eigen::Isometry3d& B, bool left, robot_state_t& state);
 
         // calculates transform from world to dsy (DH shoulder origin)

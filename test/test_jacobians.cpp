@@ -3,7 +3,7 @@
 
 using namespace std;
 using namespace Eigen;
-using namespace atlas;
+using namespace hubo;
 using namespace robot;
 
 using namespace kinematics;
